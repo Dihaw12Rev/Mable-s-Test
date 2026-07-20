@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Audit Console — RevGravy</title>
+<style>
+  :root{
+    --paper:#FAFAF7; --ink:#1A2332; --ink-soft:#4A5568; --rule:#D8D5CC; --card:#FFFFFF;
+    --gravy:#B8641A; /* unslop-ignore: RevGravy brand amber, deliberate */
+    --pass:#2E7D4F; --warn:#C28A00; --fail:#B3383C; --na:#8A8F98; --info:#3E6B8A;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Menlo,monospace;
+    --cond:"Avenir Next Condensed","Arial Narrow",Arial,sans-serif;
+    --body:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+
+  /* Topbar */
+  .topbar{position:sticky;top:0;z-index:20;background:var(--ink);color:#F2F0EA;display:flex;align-items:center;gap:18px;padding:10px 22px;flex-wrap:wrap}
+  .topbar .brand{font-family:var(--cond);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:13px}
+  .topbar .brand span{color:#E8A15C}
+  .topbar .stamp-mini{font-family:var(--cond);font-weight:700;font-size:22px;color:#F2B8BB;border:2px solid #F2B8BB;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;transform:rotate(-6deg)}
+  .topbar .score{font-family:var(--mono);font-size:13px}
+  .topbar .cov{font-family:var(--mono);font-size:12px;color:#C9C5BA;margin-left:auto}
+  .cov b{color:#E8A15C}
+
+  /* Tabs */
+  nav{position:sticky;top:58px;z-index:19;background:var(--paper);border-bottom:2px solid var(--ink);display:flex;gap:2px;padding:0 16px;overflow-x:auto}
+  nav button{font-family:var(--cond);text-transform:uppercase;letter-spacing:.08em;font-size:13px;background:none;border:none;border-bottom:3px solid transparent;padding:12px 14px 9px;cursor:pointer;color:var(--ink-soft);white-space:nowrap}
+  nav button.active{color:var(--ink);border-bottom-color:var(--gravy);font-weight:700}
+  nav button .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:6px;vertical-align:1px}
+
+  main{max-width:1080px;margin:0 auto;padding:26px 20px 70px}
+  .tab{display:none}.tab.active{display:block}
+  h2{font-family:var(--cond);font-size:20px;text-transform:uppercase;letter-spacing:.1em;margin:6px 0 14px}
+  h2 .tag{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--ink-soft);letter-spacing:0;text-transform:none;margin-left:8px}
+  .muted{color:var(--ink-soft);font-size:13.5px}
+
+  /* Overview grid */
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+  .card{background:var(--card);border:1px solid var(--rule);padding:16px}
+  .card h3{font-family:var(--cond);font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-bottom:10px}
+  .span4{grid-column:span 4}.span6{grid-column:span 6}.span8{grid-column:span 8}.span12{grid-column:span 12}
+  @media(max-width:820px){.span4,.span6,.span8{grid-column:span 12}}
+
+  .bignum{font-family:var(--mono);font-size:30px;font-weight:700}
+  .bignum small{font-size:13px;font-weight:400;color:var(--ink-soft)}
+  .statusrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .pillbtn{font-family:var(--mono);font-size:11px;padding:3px 9px;border:1px solid;cursor:pointer;background:none;letter-spacing:.04em}
+  .pillbtn.fail{color:var(--fail);border-color:var(--fail)} .pillbtn.warn{color:var(--warn);border-color:var(--warn)}
+  .pillbtn.pass{color:var(--pass);border-color:var(--pass)} .pillbtn.na{color:var(--na);border-color:var(--na)}
+  .pillbtn.info{color:var(--info);border-color:var(--info)}
+  .pillbtn.all{color:var(--ink);border-color:var(--ink)}
+  .pillbtn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+  .pbar{display:grid;grid-template-columns:190px 1fr 66px;gap:12px;align-items:center;margin:10px 0;cursor:pointer}
+  .pbar .nm{font-family:var(--cond);font-size:14px;text-transform:uppercase;letter-spacing:.05em}
+  .pbar .tr{height:13px;background:#EDEBE3;border:1px solid var(--rule);position:relative}
+  .pbar .tr i{position:absolute;top:0;bottom:0;left:0}
+  .pbar .vv{font-family:var(--mono);font-size:12.5px;text-align:right}
+
+  .hbar{margin:7px 0}
+  .hbar .lbl{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:2px}
+  .hbar .lbl b{font-family:var(--mono);font-weight:400}
+  .hbar .tr{height:12px;background:#EDEBE3;border:1px solid var(--rule)}
+  .hbar .tr i{display:block;height:100%;background:var(--gravy)}
+
+  /* Check list */
+  .checks{margin-top:8px}
+  .chk{border:1px solid var(--rule);background:var(--card);margin-bottom:8px}
+  .chk-head{display:grid;grid-template-columns:52px 1fr 90px 74px;gap:10px;padding:11px 14px;cursor:pointer;align-items:center}
+  .chk-head:hover{background:#F5F3EC}
+  .chk-id{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .chk-name{font-size:14px}
+  .chk-metric{font-family:var(--mono);font-size:13px;text-align:right}
+  .chip{font-family:var(--mono);font-size:10.5px;padding:2px 0;text-align:center;border:1px solid;letter-spacing:.05em}
+  .chip.pass{color:var(--pass);border-color:var(--pass)} .chip.warn{color:var(--warn);border-color:var(--warn)}
+  .chip.fail{color:var(--fail);border-color:var(--fail);font-weight:700} .chip.na{color:var(--na);border-color:var(--na)}
+  .chip.info{color:var(--info);border-color:var(--info)}
+  .chk-body{display:none;border-top:1px dashed var(--rule);padding:12px 14px;font-size:13.5px;background:#FDFCF9}
+  .chk.open .chk-body{display:block}
+  .chk-body p{margin:5px 0}
+  .chk-body .k{font-family:var(--cond);text-transform:uppercase;font-size:11px;letter-spacing:.1em;color:var(--gravy)}
+  .skuchip{display:inline-block;font-family:var(--mono);font-size:11px;border:1px solid var(--ink);padding:2px 8px;margin-top:4px}
+
+  /* Simulator */
+  .sim-item{display:grid;grid-template-columns:26px 52px 1fr 120px;gap:10px;padding:9px 6px;border-bottom:1px solid var(--rule);align-items:center;font-size:13.5px}
+  .sim-item input{width:16px;height:16px;accent-color:var(--gravy)}
+  .sim-item .sk{font-family:var(--mono);font-size:11px;color:var(--ink-soft);text-align:right}
+  .simscore{display:flex;gap:26px;align-items:center;flex-wrap:wrap}
+  .simstamp{width:120px;height:120px;border:4px double;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(-7deg)}
+  .simstamp .g{font-family:var(--cond);font-size:56px;font-weight:700;line-height:1}
+  .simstamp .s{font-family:var(--mono);font-size:11px}
+  .arrow{font-size:26px;color:var(--ink-soft)}
+  .delta{font-family:var(--mono);font-size:13px}
+  .delta b{color:var(--pass)}
+  #simskus{margin-top:14px;font-size:13.5px}
+  #simskus .skuchip{margin-right:6px;margin-bottom:6px}
+  .actions{margin:6px 0 2px 20px;font-size:13px}
+  .actions li{margin:4px 0}
+  .actions li::marker{font-family:var(--mono);color:var(--gravy);font-size:11px}
+  .workpkg{border:1px solid var(--rule);background:#FDFCF9;padding:10px 12px;margin-top:10px}
+  .wp-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .wp-finds{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+
+  footer{max-width:1080px;margin:0 auto;padding:0 20px 40px;font-family:var(--mono);font-size:11px;color:var(--ink-soft);line-height:1.8;border-top:2px solid var(--ink);padding-top:12px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">Rev<span>Gravy</span> · Portal Audit Console</div>
+  <div class="stamp-mini" id="topStamp">D</div>
+  <div class="score" id="topScore">51 / 100 · assessed pillars</div>
+  <div class="cov">COVERAGE <b id="topCov">10/32</b> CHECKS · PORTAL ····1490 · 2026-07-20 · RUBRIC v1.0</div>
+</div>
+
+<nav id="tabs">
+  <button data-tab="overview" class="active">Overview</button>
+  <button data-tab="p1">1 · Data Hygiene<span class="dot" style="background:var(--fail)"></span></button>
+  <button data-tab="p2">2 · Automation<span class="dot" style="background:var(--na)"></span></button>
+  <button data-tab="p3">3 · Pipeline<span class="dot" style="background:var(--warn)"></span></button>
+  <button data-tab="p4">4 · Reporting<span class="dot" style="background:var(--pass)"></span></button>
+  <button data-tab="p5">5 · Governance<span class="dot" style="background:var(--na)"></span></button>
+  <button data-tab="sim">Fix Simulator</button>
+  <button data-tab="meth">Methodology</button>
+</nav>
+
+<main>
+
+<!-- OVERVIEW -->
+<section class="tab active" id="tab-overview">
+  <div class="grid">
+    <div class="card span4">
+      <h3>Overall Grade</h3>
+      <div class="bignum" style="color:var(--fail)">D <small>· 51 / 100</small></div>
+      <p class="muted" style="margin-top:6px">Weighted across the 3 pillars with live data. Two pillars could not be scored — see coverage.</p>
+    </div>
+    <div class="card span4">
+      <h3>What's Missing — Coverage</h3>
+      <div class="bignum">31% <small>· 10 of 32 checks assessed</small></div>
+      <div class="hbar" style="margin-top:8px"><div class="tr"><i style="width:31%"></i></div></div>
+      <p class="muted">21 checks blocked by missing API scopes or pending the extraction script, plus 1 [info]-only check that's never scored. Each is listed in its pillar tab with what's needed to unlock it.</p>
+    </div>
+    <div class="card span4">
+      <h3>Findings</h3>
+      <div class="statusrow" style="font-family:var(--mono);font-size:13px">
+        <span style="color:var(--fail)">● 4 FAIL</span>
+        <span style="color:var(--warn)">● 4 WARN</span>
+        <span style="color:var(--pass)">● 2 PASS</span>
+        <span style="color:var(--na)">● 21 N/A</span>
+        <span style="color:var(--info)">● 1 INFO</span>
+      </div>
+      <p class="muted" style="margin-top:8px">Worst finding: <b>97.5% of contacts have never had a logged activity</b>. Click any pillar below to drill in.</p>
+    </div>
+
+    <div class="card span6">
+      <h3>Pillar Scores (click to open)</h3>
+      <div class="pbar" data-go="p1"><span class="nm">1 · Data Hygiene</span><span class="tr"><i style="width:23%;background:var(--fail)"></i></span><span class="vv">23 · F</span></div>
+      <div class="pbar" data-go="p2"><span class="nm">2 · Automation Health</span><span class="tr"></span><span class="vv" style="color:var(--na)">N/A</span></div>
+      <div class="pbar" data-go="p3"><span class="nm">3 · Pipeline &amp; Sales</span><span class="tr"><i style="width:50%;background:var(--warn)"></i></span><span class="vv">50 · D</span></div>
+      <div class="pbar" data-go="p4"><span class="nm">4 · Reporting &amp; Attrib.</span><span class="tr"><i style="width:100%;background:var(--pass)"></i></span><span class="vv">100 · A*</span></div>
+      <div class="pbar" data-go="p5"><span class="nm">5 · Adoption &amp; Governance</span><span class="tr"></span><span class="vv" style="color:var(--na)">N/A</span></div>
+      <p class="muted">* Reporting grade based on 1 of 5 scoreable checks — treat as provisional.</p>
+    </div>
+
+    <div class="card span6">
+      <h3>Lifecycle Funnel — Contacts (17,492)</h3>
+      <div class="hbar"><div class="lbl"><span>Unassigned</span><b>6,916 · 39.5%</b></div><div class="tr"><i style="width:100%;background:var(--fail)"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>Opportunity</span><b>4,291</b></div><div class="tr"><i style="width:62%"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>Subscriber</span><b>3,668</b></div><div class="tr"><i style="width:53%"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>Lead</span><b>2,054</b></div><div class="tr"><i style="width:30%"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>Customer</span><b>508</b></div><div class="tr"><i style="width:7%"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>SQL / MQL</span><b>36 / 19</b></div><div class="tr"><i style="width:1%"></i></div></div>
+      <p class="muted">The funnel is inverted: more contacts sit in "Opportunity" than in Lead+MQL+SQL combined, and the largest cohort has no stage at all.</p>
+    </div>
+
+    <div class="card span6">
+      <h3>Open Deals by Stage (2,583)</h3>
+      <div class="hbar"><div class="lbl"><span>Discovery</span><b>1,769 · 68.5%</b></div><div class="tr"><i style="width:100%;background:var(--warn)"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>Proposal Sent (×2 pipelines)</span><b>595</b></div><div class="tr"><i style="width:34%"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>Project Identified (×2)</span><b>89</b></div><div class="tr"><i style="width:5%"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>RFQ Received (×2)</span><b>72</b></div><div class="tr"><i style="width:4%"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>All other stages</span><b>58</b></div><div class="tr"><i style="width:3%"></i></div></div>
+      <p class="muted">68.5% of pipeline parked in one stage = stage definitions aren't being used. Duplicate stage names across pipelines flagged under Governance.</p>
+    </div>
+
+    <div class="card span6">
+      <h3>Database Reachability — Contacts</h3>
+      <div class="hbar"><div class="lbl"><span>Never any logged activity</span><b>17,046 · 97.5%</b></div><div class="tr"><i style="width:97.5%;background:var(--fail)"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>No owner assigned</span><b>15,830 · 90.5%</b></div><div class="tr"><i style="width:90.5%;background:var(--fail)"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>No email address</span><b>1,085 · 6.2%</b></div><div class="tr"><i style="width:6.2%;background:var(--warn)"></i></div></div>
+      <div class="hbar"><div class="lbl"><span>Hard-bounced</span><b>1,000 · 5.7%</b></div><div class="tr"><i style="width:5.7%;background:var(--fail)"></i></div></div>
+      <p class="muted">Taken together: this database is largely unworked and partially unreachable — a hygiene sprint changes the denominator of every other metric.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PILLAR TABS (rendered by JS) -->
+<section class="tab" id="tab-p1"><h2>Pillar 1 — Data Hygiene <span class="tag">weight 25% · score 23 · F</span></h2><div class="statusrow" data-filter="p1"></div><div class="checks" data-pillar="p1"></div></section>
+<section class="tab" id="tab-p2"><h2>Pillar 2 — Automation Health <span class="tag">weight 20% · not assessed</span></h2><div class="statusrow" data-filter="p2"></div><div class="checks" data-pillar="p2"></div></section>
+<section class="tab" id="tab-p3"><h2>Pillar 3 — Pipeline &amp; Sales Process <span class="tag">weight 20% · score 50 · D</span></h2><div class="statusrow" data-filter="p3"></div><div class="checks" data-pillar="p3"></div></section>
+<section class="tab" id="tab-p4"><h2>Pillar 4 — Reporting &amp; Attribution <span class="tag">weight 15% · score 100 · A (provisional)</span></h2><div class="statusrow" data-filter="p4"></div><div class="checks" data-pillar="p4"></div></section>
+<section class="tab" id="tab-p5"><h2>Pillar 5 — Adoption &amp; Governance <span class="tag">weight 20% · not assessed</span></h2><div class="statusrow" data-filter="p5"></div><div class="checks" data-pillar="p5"></div></section>
+
+<!-- SIMULATOR -->
+<section class="tab" id="tab-sim">
+  <h2>Fix Simulator <span class="tag">select fixes → grade recomputes live (rubric math, not hand-waving)</span></h2>
+  <div class="card">
+    <div class="simscore">
+      <div class="simstamp" id="simBefore" style="border-color:var(--fail);color:var(--fail)"><div class="g">D</div><div class="s">51 / 100</div></div>
+      <div class="arrow">→</div>
+      <div class="simstamp" id="simAfter" style="border-color:var(--fail);color:var(--fail)"><div class="g">D</div><div class="s">51 / 100</div></div>
+      <div class="delta" id="simDelta">Select findings below to model the engagement.</div>
+    </div>
+    <div id="simskus"></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>Findings available to fix <span class="muted" style="font-family:var(--mono);font-size:11px;text-transform:none;letter-spacing:0">— sorted by severity (pillar weight × check weight)</span></h3>
+    <div id="simList"></div>
+  </div>
+</section>
+
+<!-- METHODOLOGY -->
+<section class="tab" id="tab-meth">
+  <h2>Methodology &amp; Access</h2>
+  <div class="card">
+    <p style="font-size:13.5px;line-height:1.7">Read-only scan via the HubSpot API on <b>2026-07-20</b>, covering 17,492 contacts, 6,128 companies, and 7,037 deals (2,583 open). Scored against RevGravy Assessment Rubric v1.0: each check is Pass (100), Warn (50), or Fail (0), weighted within its pillar; pillar scores are weighted 25/20/20/15/20 into the overall grade. Pillars with zero assessed checks are excluded and the remainder re-weighted — they are never counted as failures. Every Fail/Warn finding below carries a severity score (pillar weight × check weight ÷ 100), a fix-skill slug, and a RevGravy SKU, per the rubric's output contract.</p>
+    <p style="font-size:13.5px;margin-top:10px;line-height:1.7"><b>Blocked by connection scopes:</b> forms and marketing email require reauthorization of the HubSpot connection; workflows, seat/login activity, and dashboards are not exposed through the current connector at all. <b>Pending extraction script:</b> duplicate-company grouping, property-usage sprawl, lifecycle regression sampling, list staleness, integration health. The companion Python extractor (private app token) unlocks all remaining checks. <b>[info]-only:</b> UTM discipline (4.5) is diagnostic per the rubric — reported, never scored, regardless of access.</p>
+    <p style="font-size:13.5px;margin-top:10px;line-height:1.7"><b>Observed but unscored:</b> in a sample of 100 owner records, roughly 72 are deactivated, with duplicate and blank-name entries. Deal-stage names are duplicated across pipelines. Both are logged as governance flags pending full assessment.</p>
+    <p style="font-size:13.5px;margin-top:10px;line-height:1.7">Machine-readable source of truth: <code style="font-family:var(--mono)">audit/revgravy/portal_snapshot.json</code> — every number on this page traces to a <code style="font-family:var(--mono)">checks[].evidence</code> field in that file.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+RevGravy · RevOps Audit Division · Internal pilot — portal ····1490 · No client-identifying record data is displayed. Prototype console; production version is generated per client by the revgravy-portal-assessment skill.
+</footer>
+
+<script>
+// ---- Single source of truth ------------------------------------------------
+// Generated from audit/revgravy/portal_snapshot.json (RUBRIC v1.0 output contract) —
+// do not hand-edit; regenerate from the snapshot if findings change.
+// status: pass | warn | fail | na ; w = weight within pillar ; severity = pillar_wt% × w ÷ 100 (fail/warn only)
+const CHECKS = [
+ // Pillar data-hygiene — Data Hygiene
+ {p:"p1",id:"1.1",name:"Contacts with no email address",status:"warn",w:15,metric:"6.2%",ev:"1,085 of 17,492 contacts have no email.",why:"Unreachable contacts inflate every marketing metric's denominator.",severity:3.75,sku:"RG-HYG-01",skuName:"Database Hygiene Sprint",fixSkill:"reachability-triage"},
+ {p:"p1",id:"1.2",name:"Hard-bounced contacts not suppressed",status:"fail",w:15,metric:"5.7%",ev:"1,000 contacts carry a hard-bounce reason.",why:"Sending to bounced addresses damages deliverability for the whole domain.",severity:3.75,sku:"RG-HYG-02",skuName:"Deliverability Rescue",fixSkill:"suppress-hard-bounced"},
+ {p:"p1",id:"1.3",name:"Duplicate companies (domain match)",status:"na",w:15,metric:"—",ev:"",why:"Duplicates split activity history and double-count reporting.",sku:null,skuName:null,needs:"Extraction script — full domain grouping across 6,128 companies."},
+ {p:"p1",id:"1.4",name:"Unowned contacts",status:"fail",w:10,metric:"90.5%",ev:"15,830 of 17,492 contacts have no owner.",why:"No owner means no accountability for follow-up.",severity:2.5,sku:"RG-HYG-03",skuName:"Dedupe & Ownership Cleanup",fixSkill:"bulk-owner-assignment"},
+ {p:"p1",id:"1.5",name:"Key-property fill rate",status:"warn",w:15,metric:"60–62%",ev:"6,916 contacts without lifecycle stage; 2,314 companies without domain.",why:"Empty key fields break segmentation, dedupe, and funnel reporting.",severity:3.75,sku:"RG-ENR-01",skuName:"Data Enrichment Pass",fixSkill:"enrich-key-properties"},
+ {p:"p1",id:"1.6",name:"Property sprawl (unused custom properties)",status:"na",w:10,metric:"—",ev:"",why:"Dead properties confuse users and slow adoption.",sku:null,skuName:null,needs:"Extraction script — property definitions x usage counts."},
+ {p:"p1",id:"1.7",name:"Records owned by deactivated users",status:"na",w:10,metric:"flag",ev:"~72 of 100 sampled owners deactivated, incl. duplicates and blank names.",why:"Records owned by ghosts are invisible in rep-based views and reports.",sku:null,skuName:null,needs:"Record-level ownership scan against the full (paginated) owner list."},
+ {p:"p1",id:"1.8",name:"Ghost contacts (no activity ever / ≥12 months)",status:"fail",w:10,metric:"97.5%",ev:"17,046 contacts have never had a logged activity.",why:"An unworked database at this scale is a storage bill, not an asset.",severity:2.5,sku:"RG-HYG-01",skuName:"Database Hygiene Sprint",fixSkill:"reengage-or-archive-ghosts"},
+ // Pillar automation-health — Automation Health
+ {p:"p2",id:"2.1",name:"Workflows off / zero enrollments (90d)",status:"na",w:20,metric:"—",ev:"",why:"Dead workflows hide the live ones and rot silently.",sku:null,skuName:null,needs:"Automation API v4 — not exposed via connector; extraction script."},
+ {p:"p2",id:"2.2",name:"Workflows with execution errors (30d)",status:"na",w:20,metric:"—",ev:"",why:"Erroring workflows silently drop leads and tasks.",sku:null,skuName:null,needs:"Automation API v4 — extraction script."},
+ {p:"p2",id:"2.3",name:"Workflow naming & descriptions",status:"na",w:10,metric:"—",ev:"",why:"Unnamed automation is unmaintainable automation.",sku:null,skuName:null,needs:"Automation API v4 — extraction script."},
+ {p:"p2",id:"2.4",name:"Forms with zero submissions (90d)",status:"na",w:15,metric:"—",ev:"",why:"Dead forms signal broken funnels or abandoned campaigns.",sku:null,skuName:null,needs:"Connection scope — reauthorize HubSpot connector with forms read."},
+ {p:"p2",id:"2.5",name:"Stale / dead active lists",status:"na",w:15,metric:"—",ev:"",why:"List sprawl slows the portal and hides real segments.",sku:null,skuName:null,needs:"Lists API sweep — extraction script."},
+ {p:"p2",id:"2.6",name:"Core hygiene automations exist",status:"na",w:20,metric:"—",ev:"",why:"Bounce suppression + lifecycle progression are the minimum automation floor.",sku:null,skuName:null,needs:"Automation API v4 — extraction script."},
+ // Pillar pipeline-sales — Pipeline & Sales Process
+ {p:"p3",id:"3.1",name:"Open deals with close date in the past",status:"warn",w:20,metric:"12.5%",ev:"323 of 2,583 open deals are overdue.",why:"Overdue deals make every forecast date-shifted fiction.",severity:4.0,sku:"RG-SAL-01",skuName:"Pipeline Hygiene & Forecast Readiness",fixSkill:"close-date-cleanup"},
+ {p:"p3",id:"3.2",name:"Open deals with no amount",status:"fail",w:15,metric:"68.3%",ev:"1,764 of 2,583 open deals carry no value.",why:"Pipeline value is unknowable; forecasting is impossible.",severity:3.0,sku:"RG-SAL-01",skuName:"Pipeline Hygiene & Forecast Readiness",fixSkill:"backfill-deal-amounts"},
+ {p:"p3",id:"3.3",name:"Stale deals (no activity ≥45 days)",status:"warn",w:20,metric:"19.3%",ev:"499 open deals untouched since Jun 5.",why:"Stale deals inflate pipeline and hide real coverage gaps.",severity:4.0,sku:"RG-SAL-01",skuName:"Pipeline Hygiene & Forecast Readiness",fixSkill:"stale-deal-sweep"},
+ {p:"p3",id:"3.4",name:"Deals with no associated contact/company",status:"pass",w:15,metric:"1.1%",ev:"28 orphaned open deals — within threshold.",why:"Orphaned deals can't be attributed or followed up.",sku:null,skuName:null},
+ {p:"p3",id:"3.5",name:"Stage probabilities configured (not defaults)",status:"na",w:10,metric:"—",ev:"68.5% of open deals sit in a single stage (Discovery).",why:"Unused stage definitions make weighted pipeline meaningless.",sku:null,skuName:null,needs:"Pipelines API config read — extraction script."},
+ {p:"p3",id:"3.6",name:"Win rate & cycle length computable",status:"na",w:10,metric:"—",ev:"",why:"Without these, coaching and capacity planning are guesswork.",sku:null,skuName:null,needs:"Closed-deal property sweep — extraction script."},
+ {p:"p3",id:"3.7",name:"Lifecycle stage regressions",status:"na",w:10,metric:"—",ev:"",why:"Regressions corrupt funnel conversion rates.",sku:null,skuName:null,needs:"Lifecycle history sampling — extraction script."},
+ // Pillar reporting-attribution — Reporting & Attribution
+ {p:"p4",id:"4.1",name:"Dashboards viewed in last 30 days",status:"na",w:25,metric:"—",ev:"",why:"Unviewed dashboards mean decisions are made outside the data.",sku:null,skuName:null,needs:"Not exposed via connector — extraction script (reporting API)."},
+ {p:"p4",id:"4.2",name:"Original source populated on contacts",status:"pass",w:25,metric:"100%",ev:"0 of 17,492 contacts missing original source.",why:"The foundation of all attribution — and it's solid.",sku:null,skuName:null},
+ {p:"p4",id:"4.3",name:"Campaigns in active use (90d)",status:"na",w:20,metric:"—",ev:"",why:"Campaigns tie spend to outcomes; unused means untracked.",sku:null,skuName:null,needs:"Campaign read partially available — full assessment via script."},
+ {p:"p4",id:"4.4",name:"Revenue attribution report exists",status:"na",w:20,metric:"—",ev:"",why:"Without it, marketing ROI is anecdote.",sku:null,skuName:null,needs:"Reports scan — extraction script."},
+ {p:"p4",id:"4.5",name:"UTM discipline on inbound traffic",status:"na",w:10,metric:"—",ev:"",why:"[info] Diagnostic only — not scored.",info:true,sku:null,skuName:null},
+ // Pillar adoption-governance — Adoption & Governance
+ {p:"p5",id:"5.1",name:"Paid seats with no login (30d)",status:"na",w:25,metric:"—",ev:"Seat types present: core, sales-pro, view-only, partner.",why:"Unused seats are pure spend with zero adoption.",sku:null,skuName:null,needs:"Login activity — not exposed via connector; extraction script."},
+ {p:"p5",id:"5.2",name:"Sales activity logging on open deals",status:"na",w:20,metric:"—",ev:"",why:"If reps don't log, the CRM is fiction.",sku:null,skuName:null,needs:"Engagement x owner sweep — extraction script."},
+ {p:"p5",id:"5.3",name:"Naming conventions followed",status:"na",w:15,metric:"flag",ev:"Duplicate stage names across pipelines; duplicate & blank owner entries.",why:"Naming chaos compounds every other governance problem.",sku:null,skuName:null,needs:"Metadata scan across workflows, lists, properties — extraction script."},
+ {p:"p5",id:"5.4",name:"Super-admin count proportionate",status:"na",w:15,metric:"—",ev:"",why:"Everyone-is-admin means no change control.",sku:null,skuName:null,needs:"User permission read — extraction script."},
+ {p:"p5",id:"5.5",name:"Connected integrations healthy",status:"na",w:15,metric:"—",ev:"",why:"Failing syncs silently corrupt data downstream.",sku:null,skuName:null,needs:"Integrations status — extraction script."},
+ {p:"p5",id:"5.6",name:"Teams & permission sets configured",status:"na",w:10,metric:"—",ev:"",why:"Flat permissions don't scale past one team.",sku:null,skuName:null,needs:"Org teams read available — full assessment via script."},
+];
+const PILLAR_W = {p1:25,p2:20,p3:20,p4:15,p5:20};
+// Concrete work inside each SKU (maps to fix-skills in the repo fork; shown as action items)
+const ACTIONS = {
+ "RG-HYG-01":["Export baseline CSV of the 17,046 never-touched contacts before changing anything","Segment them: archive candidates vs. nurture-worthy vs. enrich-first","Set the no-email + no-activity cohort to non-marketing (or delete after review)","Suppress global unsubscribes from all sends","Re-run checks 1.1 / 1.8 and compare against baseline"],
+ "RG-HYG-02":["Export the 1,000 hard-bounced contacts (baseline CSV)","Set all hard-bounces to non-marketing and add to a suppression list","Build a bounce-monitoring workflow so new bounces auto-suppress","Verify sender domain health after the purge","Re-run check 1.2"],
+ "RG-HYG-03":["Pull the FULL paginated owner list; map active vs. deactivated (sample showed ~72/100 inactive)","Merge duplicate owner identities (Karen Dasprez x2, Didier Germain x3, blank names)","Define ownership routing rules (territory, source, or round-robin)","Bulk-assign the 15,830 unowned contacts via those rules","Reassign books of deactivated owners, then retire them; re-run 1.4 / 1.7"],
+ "RG-ENR-01":["Backfill domain on the 2,314 domain-less companies via enrichment","Infer + set lifecycle stage for the 6,916 unassigned contacts (rules first, manual review for edge cases)","Standardize key picklist values while properties are open","Re-run check 1.5 and the funnel chart"],
+ "RG-SAL-01":["Sweep the 323 overdue deals: close, push with a real date, or kill","Make amount + close date required at deal creation (pipeline settings)","Backfill amounts on the 1,764 unvalued open deals, owners confirm values","Work the 499 stale deals: one outreach cycle, then archive non-responders","Consolidate duplicate stage names across pipelines; re-run 3.1-3.3"],
+};
+const SVAL = {pass:100,warn:50,fail:0};
+const gradeOf = s => s>=90?"A":s>=75?"B":s>=60?"C":s>=45?"D":"F";
+const colorOf = g => g==="A"||g==="B"?"var(--pass)":g==="C"?"var(--warn)":"var(--fail)";
+
+// ---- Score engine ----------------------------------------------------------
+function pillarScore(p, fixed){ // fixed: Set of check ids treated as pass
+  let num=0, den=0;
+  for(const c of CHECKS){
+    if(c.p!==p||c.status==="na") continue;
+    const v = fixed && fixed.has(c.id) ? 100 : SVAL[c.status];
+    num += v*c.w; den += c.w;
+  }
+  return den? Math.round(num/den) : null;
+}
+function overall(fixed){
+  let num=0, den=0;
+  for(const p in PILLAR_W){
+    const s = pillarScore(p, fixed);
+    if(s===null) continue;
+    num += s*PILLAR_W[p]; den += PILLAR_W[p];
+  }
+  return Math.round(num/den);
+}
+
+// ---- Tabs ------------------------------------------------------------------
+const tabs=document.getElementById("tabs");
+function go(t){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===t));
+  document.querySelectorAll(".tab").forEach(s=>s.classList.toggle("active",s.id==="tab-"+t));
+  window.scrollTo({top:0});
+}
+tabs.addEventListener("click",e=>{const b=e.target.closest("button");if(b)go(b.dataset.tab)});
+document.querySelectorAll(".pbar[data-go]").forEach(el=>el.addEventListener("click",()=>go(el.dataset.go)));
+
+// ---- Render checks + filters ------------------------------------------------
+const FILTERS={};
+function chipStatus(c){ return c.info ? "info" : c.status; }
+function chipLabel(c){ return c.info ? "INFO" : (c.status==="na"?"N/A":c.status.toUpperCase()); }
+function renderPillar(p){
+  const host=document.querySelector(`.checks[data-pillar="${p}"]`);
+  const f=FILTERS[p]||"all";
+  host.innerHTML="";
+  for(const c of CHECKS.filter(c=>c.p===p)){
+    if(f!=="all"&&chipStatus(c)!==f) continue;
+    const el=document.createElement("div");
+    el.className="chk";
+    el.innerHTML=`
+      <div class="chk-head">
+        <span class="chk-id">${c.id}</span>
+        <span class="chk-name">${c.name}</span>
+        <span class="chk-metric">${c.metric}</span>
+        <span class="chip ${chipStatus(c)}">${chipLabel(c)}</span>
+      </div>
+      <div class="chk-body">
+        ${c.ev?`<p><span class="k">Evidence</span><br>${c.ev}</p>`:""}
+        <p><span class="k">Why it matters</span><br>${c.why}</p>
+        ${c.severity!=null?`<p><span class="k">Severity</span><br>${c.severity.toFixed(2)} <span style="color:var(--ink-soft)">(pillar weight ${PILLAR_W[p]}% × check weight ${c.w} ÷ 100)</span></p>`:""}
+        ${c.status==="na"
+          ?`<p><span class="k">To assess this</span><br>${c.needs||"Diagnostic-only per rubric — not scored regardless of access."}</p>`
+          :(c.sku?`<p><span class="k">Fix</span><br><span class="skuchip">${c.sku} · ${c.skuName}</span> <span style="font-family:var(--mono);font-size:11px;color:var(--ink-soft)">fix-skill: ${c.fixSkill}</span></p>
+             <p><span class="k">Action items</span></p>
+             <ol class="actions">${(ACTIONS[c.sku]||[]).map(a=>`<li>${a}</li>`).join("")}</ol>`:"")}
+      </div>`;
+    el.querySelector(".chk-head").addEventListener("click",()=>el.classList.toggle("open"));
+    host.appendChild(el);
+  }
+  if(!host.children.length) host.innerHTML=`<p class="muted">No checks match this filter.</p>`;
+}
+function renderFilters(p){
+  const bar=document.querySelector(`.statusrow[data-filter="${p}"]`);
+  const counts={all:0,fail:0,warn:0,pass:0,na:0,info:0};
+  CHECKS.filter(c=>c.p===p).forEach(c=>{counts.all++;counts[chipStatus(c)]++});
+  bar.innerHTML="";
+  for(const k of ["all","fail","warn","pass","na","info"]){
+    if(k==="info"&&counts.info===0) continue;
+    const b=document.createElement("button");
+    b.className=`pillbtn ${k}${(FILTERS[p]||"all")===k?" on":""}`;
+    b.textContent=`${k==="na"?"N/A":k.toUpperCase()} ${counts[k]}`;
+    b.addEventListener("click",()=>{FILTERS[p]=k;renderFilters(p);renderPillar(p)});
+    bar.appendChild(b);
+  }
+}
+["p1","p2","p3","p4","p5"].forEach(p=>{renderFilters(p);renderPillar(p)});
+
+// ---- Simulator -------------------------------------------------------------
+const fixed=new Set();
+const simList=document.getElementById("simList");
+const simCandidates=CHECKS.filter(c=>c.status==="fail"||c.status==="warn")
+  .sort((a,b)=>(b.severity||0)-(a.severity||0));
+for(const c of simCandidates){
+  const row=document.createElement("label");
+  row.className="sim-item";
+  row.innerHTML=`<input type="checkbox" data-id="${c.id}">
+    <span class="chk-id">${c.id}</span>
+    <span>${c.name} — <span style="font-family:var(--mono)">${c.metric}</span> <span style="font-family:var(--mono);color:var(--ink-soft)">sev ${c.severity.toFixed(2)}</span></span>
+    <span class="sk">${c.sku||""}</span>`;
+  row.querySelector("input").addEventListener("change",e=>{
+    e.target.checked?fixed.add(c.id):fixed.delete(c.id);
+    updateSim();
+  });
+  simList.appendChild(row);
+}
+function stamp(el,score){
+  const g=gradeOf(score), col=colorOf(g);
+  el.style.borderColor=col;el.style.color=col;
+  el.querySelector(".g").textContent=g;
+  el.querySelector(".s").textContent=score+" / 100";
+}
+function updateSim(){
+  const before=overall(null), after=overall(fixed);
+  stamp(document.getElementById("simBefore"),before);
+  stamp(document.getElementById("simAfter"),after);
+  const d=after-before;
+  document.getElementById("simDelta").innerHTML = fixed.size
+    ? `${fixed.size} finding(s) selected · <b>+${d} points</b> · ${gradeOf(before)} → ${gradeOf(after)}`
+    : "Select findings below to model the engagement.";
+  const skuIds=[...new Set(CHECKS.filter(c=>fixed.has(c.id)&&c.sku).map(c=>c.sku))];
+  document.getElementById("simskus").innerHTML = skuIds.length
+    ? `<span class="k" style="font-family:var(--cond);text-transform:uppercase;font-size:11px;letter-spacing:.1em;color:var(--gravy)">Engagement scope — work packages</span>`
+      + skuIds.map(id=>{
+          const name=CHECKS.find(c=>c.sku===id).skuName;
+          const finds=CHECKS.filter(c=>fixed.has(c.id)&&c.sku===id).map(c=>c.id).join(", ");
+          return `<div class="workpkg">
+            <div class="wp-head"><span class="skuchip">${id} · ${name}</span><span class="wp-finds">resolves ${finds}</span></div>
+            <ol class="actions">${(ACTIONS[id]||[]).map(a=>`<li>${a}</li>`).join("")}</ol>
+          </div>`;
+        }).join("")
+    : "";
+}
+updateSim();
+</script>
+</body>
+</html>

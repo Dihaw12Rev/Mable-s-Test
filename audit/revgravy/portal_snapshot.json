@@ -1,0 +1,425 @@
+{
+  "client": "revgravy",
+  "portal_id": "\u00b7\u00b7\u00b7\u00b71490",
+  "run_date": "2026-07-20",
+  "rubric_version": "1.0",
+  "coverage": {
+    "assessed_checks": 10,
+    "total_checks": 32,
+    "pct": 31
+  },
+  "pillars": [
+    {
+      "id": "data-hygiene",
+      "name": "Data Hygiene",
+      "weight": 25,
+      "score": 23,
+      "grade": "F",
+      "status": "assessed",
+      "checks": [
+        {
+          "id": "1.1",
+          "name": "Contacts with no email address",
+          "metric": "6.2%",
+          "result": "warn",
+          "evidence": "1,085 of 17,492 contacts have no email.",
+          "severity": 3.75,
+          "fix_skill": "reachability-triage",
+          "sku": "RG-HYG-01"
+        },
+        {
+          "id": "1.2",
+          "name": "Hard-bounced contacts not suppressed",
+          "metric": "5.7%",
+          "result": "fail",
+          "evidence": "1,000 contacts carry a hard-bounce reason.",
+          "severity": 3.75,
+          "fix_skill": "suppress-hard-bounced",
+          "sku": "RG-HYG-02"
+        },
+        {
+          "id": "1.3",
+          "name": "Duplicate companies (domain match)",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Extraction script \u2014 full domain grouping across 6,128 companies."
+        },
+        {
+          "id": "1.4",
+          "name": "Unowned contacts",
+          "metric": "90.5%",
+          "result": "fail",
+          "evidence": "15,830 of 17,492 contacts have no owner.",
+          "severity": 2.5,
+          "fix_skill": "bulk-owner-assignment",
+          "sku": "RG-HYG-03"
+        },
+        {
+          "id": "1.5",
+          "name": "Key-property fill rate",
+          "metric": "60\u201362%",
+          "result": "warn",
+          "evidence": "6,916 contacts without lifecycle stage; 2,314 companies without domain.",
+          "severity": 3.75,
+          "fix_skill": "enrich-key-properties",
+          "sku": "RG-ENR-01"
+        },
+        {
+          "id": "1.6",
+          "name": "Property sprawl (unused custom properties)",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Extraction script \u2014 property definitions x usage counts."
+        },
+        {
+          "id": "1.7",
+          "name": "Records owned by deactivated users",
+          "metric": "flag",
+          "result": "na",
+          "evidence": "~72 of 100 sampled owners deactivated, incl. duplicates and blank names.",
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Record-level ownership scan against the full (paginated) owner list."
+        },
+        {
+          "id": "1.8",
+          "name": "Ghost contacts (no activity ever / \u226512 months)",
+          "metric": "97.5%",
+          "result": "fail",
+          "evidence": "17,046 contacts have never had a logged activity.",
+          "severity": 2.5,
+          "fix_skill": "reengage-or-archive-ghosts",
+          "sku": "RG-HYG-01"
+        }
+      ]
+    },
+    {
+      "id": "automation-health",
+      "name": "Automation Health",
+      "weight": 20,
+      "score": null,
+      "grade": null,
+      "status": "not_assessed",
+      "checks": [
+        {
+          "id": "2.1",
+          "name": "Workflows off / zero enrollments (90d)",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Automation API v4 \u2014 not exposed via connector; extraction script."
+        },
+        {
+          "id": "2.2",
+          "name": "Workflows with execution errors (30d)",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Automation API v4 \u2014 extraction script."
+        },
+        {
+          "id": "2.3",
+          "name": "Workflow naming & descriptions",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Automation API v4 \u2014 extraction script."
+        },
+        {
+          "id": "2.4",
+          "name": "Forms with zero submissions (90d)",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Connection scope \u2014 reauthorize HubSpot connector with forms read."
+        },
+        {
+          "id": "2.5",
+          "name": "Stale / dead active lists",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Lists API sweep \u2014 extraction script."
+        },
+        {
+          "id": "2.6",
+          "name": "Core hygiene automations exist",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Automation API v4 \u2014 extraction script."
+        }
+      ]
+    },
+    {
+      "id": "pipeline-sales",
+      "name": "Pipeline & Sales Process",
+      "weight": 20,
+      "score": 50,
+      "grade": "D",
+      "status": "assessed",
+      "checks": [
+        {
+          "id": "3.1",
+          "name": "Open deals with close date in the past",
+          "metric": "12.5%",
+          "result": "warn",
+          "evidence": "323 of 2,583 open deals are overdue.",
+          "severity": 4.0,
+          "fix_skill": "close-date-cleanup",
+          "sku": "RG-SAL-01"
+        },
+        {
+          "id": "3.2",
+          "name": "Open deals with no amount",
+          "metric": "68.3%",
+          "result": "fail",
+          "evidence": "1,764 of 2,583 open deals carry no value.",
+          "severity": 3.0,
+          "fix_skill": "backfill-deal-amounts",
+          "sku": "RG-SAL-01"
+        },
+        {
+          "id": "3.3",
+          "name": "Stale deals (no activity \u226545 days)",
+          "metric": "19.3%",
+          "result": "warn",
+          "evidence": "499 open deals untouched since Jun 5.",
+          "severity": 4.0,
+          "fix_skill": "stale-deal-sweep",
+          "sku": "RG-SAL-01"
+        },
+        {
+          "id": "3.4",
+          "name": "Deals with no associated contact/company",
+          "metric": "1.1%",
+          "result": "pass",
+          "evidence": "28 orphaned open deals \u2014 within threshold.",
+          "severity": null,
+          "fix_skill": null,
+          "sku": null
+        },
+        {
+          "id": "3.5",
+          "name": "Stage probabilities configured (not defaults)",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": "68.5% of open deals sit in a single stage (Discovery).",
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Pipelines API config read \u2014 extraction script."
+        },
+        {
+          "id": "3.6",
+          "name": "Win rate & cycle length computable",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Closed-deal property sweep \u2014 extraction script."
+        },
+        {
+          "id": "3.7",
+          "name": "Lifecycle stage regressions",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Lifecycle history sampling \u2014 extraction script."
+        }
+      ]
+    },
+    {
+      "id": "reporting-attribution",
+      "name": "Reporting & Attribution",
+      "weight": 15,
+      "score": 100,
+      "grade": "A",
+      "status": "assessed",
+      "checks": [
+        {
+          "id": "4.1",
+          "name": "Dashboards viewed in last 30 days",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Not exposed via connector \u2014 extraction script (reporting API)."
+        },
+        {
+          "id": "4.2",
+          "name": "Original source populated on contacts",
+          "metric": "100%",
+          "result": "pass",
+          "evidence": "0 of 17,492 contacts missing original source.",
+          "severity": null,
+          "fix_skill": null,
+          "sku": null
+        },
+        {
+          "id": "4.3",
+          "name": "Campaigns in active use (90d)",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Campaign read partially available \u2014 full assessment via script."
+        },
+        {
+          "id": "4.4",
+          "name": "Revenue attribution report exists",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Reports scan \u2014 extraction script."
+        },
+        {
+          "id": "4.5",
+          "name": "UTM discipline on inbound traffic",
+          "metric": "\u2014",
+          "result": "info",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Analytics API \u2014 extraction script."
+        }
+      ]
+    },
+    {
+      "id": "adoption-governance",
+      "name": "Adoption & Governance",
+      "weight": 20,
+      "score": null,
+      "grade": null,
+      "status": "not_assessed",
+      "checks": [
+        {
+          "id": "5.1",
+          "name": "Paid seats with no login (30d)",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": "Seat types present: core, sales-pro, view-only, partner.",
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Login activity \u2014 not exposed via connector; extraction script."
+        },
+        {
+          "id": "5.2",
+          "name": "Sales activity logging on open deals",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Engagement x owner sweep \u2014 extraction script."
+        },
+        {
+          "id": "5.3",
+          "name": "Naming conventions followed",
+          "metric": "flag",
+          "result": "na",
+          "evidence": "Duplicate stage names across pipelines; duplicate & blank owner entries.",
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Metadata scan across workflows, lists, properties \u2014 extraction script."
+        },
+        {
+          "id": "5.4",
+          "name": "Super-admin count proportionate",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "User permission read \u2014 extraction script."
+        },
+        {
+          "id": "5.5",
+          "name": "Connected integrations healthy",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Integrations status \u2014 extraction script."
+        },
+        {
+          "id": "5.6",
+          "name": "Teams & permission sets configured",
+          "metric": "\u2014",
+          "result": "na",
+          "evidence": null,
+          "severity": null,
+          "fix_skill": null,
+          "sku": null,
+          "blocked_by": "Org teams read available \u2014 full assessment via script."
+        }
+      ]
+    }
+  ],
+  "portal_score": 51,
+  "portal_grade": "D",
+  "not_assessed_pillars": [
+    "automation-health",
+    "adoption-governance"
+  ],
+  "access_notes": {
+    "blocked_by_connection_scope": [
+      "Forms read (2.4) and marketing email require HubSpot connector reauthorization.",
+      "Workflows (2.1-2.3, 2.6), seat/login activity (5.1), and dashboards (4.1) are not exposed through the current connector at all."
+    ],
+    "pending_extraction_script": [
+      "Duplicate-company grouping (1.3), property-usage sprawl (1.6), lifecycle regression sampling (3.7), list staleness (2.5), integration health (5.5).",
+      "The companion Python extractor (private app token) unlocks all remaining checks."
+    ],
+    "observed_but_unscored": [
+      "In a sample of 100 owner records, roughly 72 are deactivated, with duplicate and blank-name entries (feeds 1.7, 5.3).",
+      "Deal-stage names are duplicated across pipelines (feeds 3.5, 5.3)."
+    ]
+  }
+}
