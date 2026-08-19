@@ -213,128 +213,68 @@ def recency_buckets(a: dict[str, Any]) -> list[tuple[str, int]]:
 
 
 def build_html(a: dict[str, Any], portal_name: str) -> str:
-    workflows = a["workflows"]
-    props = a["properties"]
-    custom = [p for p in props if not p["hubspot_defined"]]
-    unused = [p for p in custom if p["unused"]]
-    active = sum(1 for w in workflows if w["enabled"])
+    """The printed overview — the guide's landing page, minus the drilling-in.
 
-    tiles = [
-        ("Workflows", len(workflows), f"{active} active"),
-        ("Properties", len(props), f"{len(custom)} custom"),
-        ("Lists", len(a["lists"]), ""),
-        ("Forms", len(a["forms"]), ""),
-        ("Marketing emails", len(a["marketing_emails"]), ""),
-        ("Landing pages", len(a["landing_pages"]), ""),
-        ("Site pages", len(a["site_pages"]), ""),
-        ("Owners", len(a["owners"]), ""),
-    ]
+    Deliberately the same five scores, the same findings and the same eight areas
+    the interactive guide opens with, so a reader who has seen one recognises the
+    other. Anything that only makes sense when clicked is left to the guide.
+    """
+    from . import areas as areas_mod
+    from . import graph as graph_mod
 
-    def tile(label, value, sub):
-        return (
-            f'<div class="tile"><div class="tv">{value}</div>'
-            f'<div class="tk">{escape(label)}</div>'
-            + (f'<div class="ts">{escape(sub)}</div>' if sub else "")
-            + "</div>"
-        )
-
-    page_one_has_charts = False
-    sys_rows = system_rows(a)
-    prop_rows = top_property_rows(a)
-    inv_rows = inventory_rows(a)
-    buckets = recency_buckets(a)
+    g = graph_mod.build(a)
+    scores = areas_mod.health(a)
+    portal_areas = areas_mod.build(a, g)
     obs = findings(a)
 
-    generated = str(a.get("extracted_at") or "")[:10]
+    counts: dict[str, int] = {}
+    for node in g.nodes.values():
+        counts[node["type"]] = counts.get(node["type"], 0) + 1
+    order = ["workflow", "property", "list", "form", "email", "page", "pipeline", "stage"]
 
+    generated = str(a.get("extracted_at") or "")[:10]
     body = [
         '<div class="page">',
         '<header class="mast">',
-        '<div class="eyebrow">HubSpot portal audit</div>',
+        '<div class="eyebrow">HubSpot account guide</div>',
         f"<h1>{escape(portal_name)}</h1>",
-        # The heading already carries the portal number when the account has no name.
-        f'<div class="meta">'
+        '<div class="meta">'
         + (f'Portal {escape(str(a["portal_id"]))} · ' if portal_name != f"Portal {a['portal_id']}" else "")
-        + f"snapshot {escape(generated)} · {len(workflows)} workflows, "
-        f"{len(props)} properties</div>",
+        + f"snapshot {escape(generated)}</div>",
         "</header>",
-        '<div class="tiles">' + "".join(tile(*t) for t in tiles) + "</div>",
+        '<p class="lede">A plain-language map of everything running in this HubSpot account — '
+        "what each piece does and what it is connected to. This is the summary; the '"
+        "interactive guide lets you click into any area or asset.</p>",
     ]
 
-    if sys_rows:
-        body += [
-            '<section class="block">',
-            "<h2>What this portal automates</h2>",
-            '<p class="note">Workflows grouped by the job they do, inferred from their names and '
-            "the properties they write.</p>",
-            charts.legend(_present(sys_rows, [(charts.ACTIVE, "Active"), (charts.IDLE, "Turned off")])),
-            charts.stacked_bars(sys_rows, [charts.ACTIVE, charts.IDLE]),
-            "</section>",
-        ]
-        page_one_has_charts = True
+    # -- health -----------------------------------------------------------
+    body.append('<section class="block"><h2>Health check</h2>')
+    body.append(
+        '<p class="note">Five measures of how maintainable this account is today. Each says '
+        "what it counted and why it matters.</p>"
+    )
+    body.append('<div class="dials">')
+    for score in scores:
+        body.append(
+            '<div class="dial">'
+            + charts.gauge(score["pct"], score["grade"])
+            + f'<div class="dial-t">{escape(score["label"])}</div>'
+            + f'<div class="dial-d">{escape(score["detail"])}</div>'
+            + f'<div class="dial-w">{escape(score["why"])}</div>'
+            "</div>"
+        )
+    body.append("</div></section>")
 
-    if any(v for _, v in buckets):
-        stale_total = sum(v for i, (_, v) in enumerate(buckets) if i >= STALE_FROM)
-        body += [
-            '<section class="block">',
-            "<h2>When workflows were last edited</h2>",
-            f'<p class="note">{stale_total} workflow(s) have gone six months or more without a '
-            "change. Amber marks those buckets.</p>",
-            charts.column_bars(buckets, highlight_from=STALE_FROM),
-            "</section>",
-        ]
-        page_one_has_charts = True
-
-    # Only break when the opening page actually carried charts; otherwise a portal
-    # with no readable workflows would print a page of white space.
-    body.append('</div><div class="page">' if page_one_has_charts else "")
-
-    if prop_rows:
-        body += [
-            '<section class="block">',
-            "<h2>What the automation depends on</h2>",
-            '<p class="note">The properties the portal leans on hardest, counted by how many '
-            "workflows, forms, and lists reference each one.</p>",
-            charts.legend(_present(prop_rows, [
-                (charts.SERIES[0], "Workflows"),
-                (charts.SERIES[1], "Forms"),
-                (charts.SERIES[2], "Lists"),
-            ])),
-            charts.stacked_bars(prop_rows, charts.SERIES),
-            "</section>",
-        ]
-
-    if inv_rows:
-        complete = a.get("usage_complete", True)
-        third_label = "Custom, unreferenced" if complete else "Custom, usage unknown"
-        body += [
-            '<section class="block">',
-            "<h2>Property inventory</h2>",
-            '<div class="split"><div class="split-main">',
-            '<p class="note">Standard properties against custom ones, split by whether anything '
-            "in the portal references them.</p>" if complete else
-            '<p class="note">Standard properties against custom ones. Usage could not be measured '
-            "for this portal, so no custom property is claimed to be unreferenced.</p>",
-            charts.legend(_present(inv_rows, [
-                (charts.IDLE, "HubSpot standard"),
-                (charts.SERIES[0], "Custom, in use"),
-                (charts.WARNING, third_label),
-            ])),
-            charts.stacked_bars(inv_rows, [charts.IDLE, charts.SERIES[0], charts.WARNING], width=470),
-            "</div><div class='split-side'>",
-        ]
-        if complete:
-            body += [
-                charts.donut_share(len(unused), len(custom)),
-                f'<div class="dial-k">of {len(custom)} custom properties<br>'
-                "are referenced by nothing</div>",
-            ]
-        else:
-            body += [
-                '<div class="unknown-dial">?</div>',
-                f'<div class="dial-k">usage of {len(custom)} custom<br>properties is unmeasured</div>',
-            ]
-        body.append("</div></div></section>")
+    # -- inventory + findings ---------------------------------------------
+    rows = "".join(
+        f"<tr><td>{escape(charts_label(t))}</td><td class='num'>{counts[t]}</td></tr>"
+        for t in order if counts.get(t)
+    )
+    body += [
+        '<section class="block"><h2>What is in the account</h2>',
+        f'<table class="inv">{rows}</table>',
+        "</section>",
+    ]
 
     if obs:
         items = "".join(
@@ -342,31 +282,63 @@ def build_html(a: dict[str, Any], portal_name: str) -> str:
             for h, d in obs
         )
         body += [
-            '<section class="block">',
-            "<h2>What stands out</h2>",
+            '<section class="block"><h2>What we found</h2>',
+            '<p class="note">The things most worth acting on, biggest first.</p>',
             f'<ul class="findings">{items}</ul>',
             "</section>",
         ]
 
+    # -- areas -------------------------------------------------------------
+    body += [
+        '<section class="block"><h2>The account by area</h2>',
+        '<p class="note">Each area groups the workflows, fields and assets that do one job '
+        "together. In the interactive guide these are the doors you open.</p>",
+        '<div class="areas">',
+    ]
+    for area in portal_areas:
+        tags = "".join(
+            f'<span class="tag"><b>{n}</b> {escape(_type_word(kind, n))}</span>'
+            for kind, n in area["counts"].items()
+        )
+        body.append(
+            '<div class="areacard">'
+            f'<h3>{escape(area["name"])}</h3>'
+            f'<p>{escape(area["blurb"])}</p>'
+            f'<div class="tags">{tags}</div>'
+            f'<div class="headline">{escape(area["headline"])}</div>'
+            "</div>"
+        )
+    body.append("</div></section>")
+
     skipped = a.get("skipped") or []
     caveat = (
-        "Workflow definitions come from HubSpot's v4 Automation API, which returns logic but not "
-        "enrollment history — how many records a workflow has touched lives only in the HubSpot UI, "
-        "so nothing here is called unused on that basis. Property references are resolved by exact "
-        "name match against this portal's own schema, so a reference made through an integration or "
-        "a custom-coded action will not appear."
+        "Connections are read from the account's own settings. Anything driven by an outside "
+        "integration or custom code is not visible here, so treat every footprint as a minimum. "
+        "HubSpot's API returns what a workflow does but not how many records it has touched, so "
+        "nothing here is called unused on that basis — only turned off."
     )
     if skipped:
-        caveat += " Endpoints not reachable with the supplied token: " + ", ".join(
+        caveat += " Not reachable with the token used: " + ", ".join(
             sorted({s["endpoint"] for s in skipped})
         ) + "."
     body += [
-        '<section class="block caveat">',
-        "<h2>How to read this</h2>",
+        '<section class="block caveat"><h2>How to read this</h2>',
         f'<p class="note">{escape(caveat)}</p>',
-        '<p class="note">Full asset-by-asset detail, including every workflow\'s step breakdown and '
-        "the complete property table, is in the accompanying Portal Reference document.</p>",
+        '<p class="note">Asset-by-asset detail lives in the Account Reference document, and the '
+        "full connection list is in the accompanying spreadsheet.</p>",
         "</section>",
         "</div>",
     ]
     return "".join(body)
+
+
+def charts_label(kind: str) -> str:
+    from . import graph as graph_mod
+
+    return graph_mod.TYPE_PLURALS.get(kind, kind)
+
+
+def _type_word(kind: str, n: int) -> str:
+    from . import graph as graph_mod
+
+    return graph_mod.TYPE_LABELS.get(kind, kind) if n == 1 else graph_mod.TYPE_PLURALS.get(kind, kind)

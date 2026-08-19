@@ -116,5 +116,49 @@
 
   .caveat { border-left: 2.5pt solid var(--rule); padding-left: 10pt; }
   .caveat h2 { border-bottom: 0; padding-bottom: 0; font-size: 10.5pt; }
+
+  .lede {
+    font-family: Charter, "Bitstream Charter", Georgia, "Liberation Serif", serif;
+    font-size: 10.5pt; color: var(--muted); max-width: 70ch; margin: 0 0 4pt;
+  }
+
+  /* health dials */
+  .dials { display: flex; flex-wrap: wrap; gap: 6pt; }
+  .dial {
+    /* Fixed basis, no grow: five dials hold one row instead of the last
+       one stretching across the page. */
+    flex: 0 0 calc(20% - 4.8pt); min-width: 0; text-align: center;
+    border: .75pt solid var(--rule); border-radius: 4pt; padding: 8pt 6pt;
+  }
+  .dial-t { font-size: 9pt; font-weight: 700; margin-top: 3pt; }
+  .dial-d { font-size: 7.5pt; color: var(--faint); margin-top: 3pt; line-height: 1.3; }
+  .dial-w { font-size: 7.5pt; color: var(--muted); margin-top: 3pt; line-height: 1.35; }
+
+  /* inventory */
+  table.inv { border-collapse: collapse; width: 62%; }
+  table.inv td { padding: 4pt 8pt; border-bottom: .5pt solid var(--rule); font-size: 9.5pt; }
+  table.inv td.num {
+    text-align: right; font-family: "SF Mono", Menlo, "Liberation Mono", monospace;
+    font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+
+  /* area cards */
+  .areas { display: flex; flex-wrap: wrap; gap: 8pt; }
+  .areacard {
+    flex: 1 1 210pt; min-width: 190pt; border: .75pt solid var(--rule);
+    border-radius: 5pt; padding: 9pt 11pt; page-break-inside: avoid;
+  }
+  .areacard h3 { font-size: 11pt; margin: 0 0 3pt; letter-spacing: -.01em; }
+  .areacard p {
+    font-family: Charter, "Bitstream Charter", Georgia, serif;
+    font-size: 8.5pt; color: var(--muted); margin: 0 0 6pt;
+  }
+  .tags { display: flex; flex-wrap: wrap; gap: 3pt; }
+  .tag {
+    font-family: "SF Mono", Menlo, "Liberation Mono", monospace; font-size: 7.5pt;
+    background: var(--sunken); border-radius: 3pt; padding: 1pt 5pt; color: var(--muted);
+  }
+  .tag b { color: var(--ink); }
+  .headline { font-size: 8pt; color: var(--faint); margin-top: 6pt; font-style: italic; }
 </style>
 __BODY__

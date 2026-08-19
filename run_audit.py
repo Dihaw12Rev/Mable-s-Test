@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["requests>=2.31", "python-dotenv>=1.0", "python-docx>=1.1", "weasyprint>=62"]
+# dependencies = ["requests>=2.31", "python-dotenv>=1.0", "python-docx>=1.1",
+#                 "weasyprint>=62", "openpyxl>=3.1"]
 # ///
 """Document a HubSpot portal: extract, cross-reference, and report.
 
@@ -20,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from hubspot_audit import analyze, extract, graph, render  # noqa: E402
+from hubspot_audit import analyze, extract, graph, render, workbook  # noqa: E402
 from hubspot_audit.client import Client  # noqa: E402
 
 
@@ -33,6 +34,8 @@ def main() -> int:
     parser.add_argument("--no-docx", action="store_true", help="skip the Word reference")
     parser.add_argument("--no-guide", action="store_true",
                         help="skip the interactive account guide")
+    parser.add_argument("--no-xlsx", action="store_true",
+                        help="skip the spreadsheet inventory")
     parser.add_argument("--explorer", action="store_true",
                         help="also write the flat dependency explorer")
     parser.add_argument("--html", action="store_true",
@@ -85,6 +88,9 @@ def main() -> int:
     if not args.no_guide:
         outputs.append(render.render_guide(
             analysis, args.out / "hubspot-account-guide.html"))
+    if not args.no_xlsx:
+        outputs.append(workbook.build(
+            analysis, args.out / "hubspot-account-inventory.xlsx"))
     if args.explorer:
         outputs.append(render.render_explorer(
             analysis, args.out / "hubspot-portal-explorer.html"))

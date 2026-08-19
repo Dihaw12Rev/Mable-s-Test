@@ -207,6 +207,32 @@ def donut_share(part: int, whole: int, *, size: int = 92, color: str = WARNING) 
     return _svg(size, size, "".join(parts))
 
 
+GRADE_COLORS = {"A": "#2E6B3F", "B": "#2E6B3F", "C": "#0F5F63", "D": "#8A5A12", "F": "#A03028"}
+
+
+def gauge(pct: int, grade: str, *, size: int = 96) -> str:
+    """An open-arc dial for a 0–100 score, coloured by its grade band.
+
+    The arc stops short of a full circle so the gap reads as a scale with a start
+    and an end, rather than as a pie with a missing slice.
+    """
+    r = size / 2 - 10
+    circumference = 2 * 3.141592653589793 * r
+    track = circumference * 0.72
+    filled = track * max(0, min(100, pct)) / 100
+    cx = cy = size / 2
+    colour = GRADE_COLORS.get(grade, ACTIVE)
+    return _svg(size, size, "".join([
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{RULE}" stroke-width="9" '
+        f'stroke-linecap="round" stroke-dasharray="{track:.1f} {circumference:.1f}" '
+        f'transform="rotate(129 {cx} {cy})"/>',
+        f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="none" stroke="{colour}" stroke-width="9" '
+        f'stroke-linecap="round" stroke-dasharray="{filled:.1f} {circumference:.1f}" '
+        f'transform="rotate(129 {cx} {cy})"/>',
+        _t(cx, cy + 6, f"{pct}%", size=17, anchor="middle", fill=INK, weight=600, mono=True),
+    ]))
+
+
 def _clip(text: str, limit: int) -> str:
     text = str(text)
     return text if len(text) <= limit else text[: limit - 1] + "…"
