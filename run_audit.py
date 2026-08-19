@@ -31,8 +31,10 @@ def main() -> int:
     parser.add_argument("--snapshot", type=Path, help="re-render from an existing snapshot.json")
     parser.add_argument("--no-pdf", action="store_true", help="skip the PDF dashboard")
     parser.add_argument("--no-docx", action="store_true", help="skip the Word reference")
-    parser.add_argument("--no-explorer", action="store_true",
-                        help="skip the interactive dependency explorer")
+    parser.add_argument("--no-guide", action="store_true",
+                        help="skip the interactive account guide")
+    parser.add_argument("--explorer", action="store_true",
+                        help="also write the flat dependency explorer")
     parser.add_argument("--html", action="store_true",
                         help="also write the interactive HTML report")
     args = parser.parse_args()
@@ -80,7 +82,10 @@ def main() -> int:
     if not args.no_docx:
         outputs.append(render.render_docx(
             analysis, args.out / "hubspot-portal-reference.docx"))
-    if not args.no_explorer:
+    if not args.no_guide:
+        outputs.append(render.render_guide(
+            analysis, args.out / "hubspot-account-guide.html"))
+    if args.explorer:
         outputs.append(render.render_explorer(
             analysis, args.out / "hubspot-portal-explorer.html"))
     if args.html:

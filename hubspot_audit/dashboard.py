@@ -42,6 +42,10 @@ def _bucket(days: int) -> int:
 # --------------------------------------------------------------------- findings
 
 
+def _plural(n: int, singular: str, plural: str | None = None) -> str:
+    return f"{n} {singular if n == 1 else (plural or singular + 's')}"
+
+
 def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
     """Derived observations, most consequential first. Each is (headline, detail)."""
     out: list[tuple[str, str]] = []
@@ -79,16 +83,15 @@ def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
         ))
 
     # Properties written by more than one active workflow are a contention risk.
-    contended = [
-        p for p in props
-        if len([w for w in p["written_by_workflows"]]) > 1
-    ]
+    contended = [p for p in props if len(p["written_by_workflows"]) > 1]
     if contended:
         top = sorted(contended, key=lambda p: -len(p["written_by_workflows"]))[:3]
         out.append((
             f"{len(contended)} properties are written by more than one workflow",
             "Competing writes are the usual cause of values that flip back and forth. Worst: "
-            + ", ".join(f"{p['name']} ({len(p['written_by_workflows'])} workflows)" for p in top)
+            + ", ".join(
+                f"{p['key']} ({_plural(len(p['written_by_workflows']), 'workflow')})" for p in top
+            )
             + ".",
         ))
 
@@ -96,7 +99,7 @@ def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
              and not w["properties_written"] and not w["properties_read"]]
     if empty:
         out.append((
-            f"{len(empty)} workflow(s) contain no steps at all",
+            f"{_plural(len(empty), 'workflow')} contain no steps at all",
             "No actions, no enrolment criteria, no property references — empty shells taking up "
             "space in the workflows list.",
         ))
@@ -117,7 +120,7 @@ def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
     ]
     if test_like:
         out.append((
-            f"{len(test_like)} workflow(s) look like leftovers",
+            f"{_plural(len(test_like), 'workflow')} look like leftovers",
             "Named as tests, copies, or drafts: "
             + ", ".join(f"“{w['name']}”" for w in test_like[:4]) + ".",
         ))
@@ -128,14 +131,14 @@ def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
     ]
     if stale:
         out.append((
-            f"{len(stale)} active workflow(s) have not been edited in over a year",
+            f"{_plural(len(stale), 'active workflow')} have not been edited in over a year",
             "Still enrolling records against logic nobody has reviewed recently.",
         ))
 
     no_def = [w for w in workflows if not w["definition_available"]]
     if no_def:
         out.append((
-            f"{len(no_def)} workflow(s) could not be read in full",
+            f"{_plural(len(no_def), 'workflow')} could not be read in full",
             "The token or plan tier did not expose their definitions, so their property "
             "dependencies are missing from this analysis.",
         ))
@@ -143,7 +146,7 @@ def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
     orphan_forms = [f for f in a["forms"] if not f["archived"] and f["field_count"] == 0]
     if orphan_forms:
         out.append((
-            f"{len(orphan_forms)} live form(s) collect no mapped fields",
+            f"{_plural(len(orphan_forms), 'live form')} collect no mapped fields",
             "Submissions land with nothing written to the CRM record.",
         ))
 

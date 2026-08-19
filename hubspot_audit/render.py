@@ -11,6 +11,7 @@ from typing import Any
 TEMPLATE = Path(__file__).parent / "templates" / "report.html"
 DASHBOARD_SHELL = Path(__file__).parent / "templates" / "dashboard.html"
 EXPLORER = Path(__file__).parent / "templates" / "explorer.html"
+GUIDE = Path(__file__).parent / "templates" / "guide.html"
 
 
 # ------------------------------------------------------------------------- shared
@@ -91,6 +92,47 @@ def render_explorer(analysis: dict[str, Any], out_path: Path) -> Path:
     blob = json.dumps(payload, default=str).replace("</", "<\\/")
     html = (
         EXPLORER.read_text()
+        .replace("__PORTAL_TITLE__", _escape(portal_name(analysis)))
+        .replace("__PAYLOAD_JSON__", blob)
+    )
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(html)
+    return out_path
+
+
+def render_guide(analysis: dict[str, Any], out_path: Path) -> Path:
+    """The client-facing account guide.
+
+    Three levels of disclosure — overview, business area, single asset — because a
+    flat index of a few thousand assets is unusable to anyone who did not build the
+    portal. The reader starts from a concept they recognise and drills in.
+    """
+    from . import areas as areas_mod
+    from . import dashboard
+    from . import graph as graph_mod
+
+    g = graph_mod.build(analysis)
+    counts: dict[str, int] = {}
+    for node in g.nodes.values():
+        counts[node["type"]] = counts.get(node["type"], 0) + 1
+    order = ["workflow", "property", "list", "form", "email", "page", "pipeline", "stage"]
+
+    payload = {
+        "portal_name": portal_name(analysis),
+        "portal_id": analysis.get("portal_id"),
+        "extracted_at": _date(analysis.get("extracted_at")),
+        "graph": g.to_dict(),
+        "areas": areas_mod.build(analysis, g),
+        "health": areas_mod.health(analysis),
+        "findings": dashboard.findings(analysis),
+        "stats": [(graph_mod.TYPE_PLURALS.get(t, t), counts[t]) for t in order if counts.get(t)],
+        "verbs": graph_mod.RELATIONS,
+        "type_labels": graph_mod.TYPE_LABELS,
+        "type_plurals": graph_mod.TYPE_PLURALS,
+    }
+    blob = json.dumps(payload, default=str).replace("</", "<\\/")
+    html = (
+        GUIDE.read_text()
         .replace("__PORTAL_TITLE__", _escape(portal_name(analysis)))
         .replace("__PAYLOAD_JSON__", blob)
     )
