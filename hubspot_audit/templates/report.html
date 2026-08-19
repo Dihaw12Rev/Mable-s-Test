@@ -1,0 +1,493 @@
+<title>__PORTAL_TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #FBF9F7;
+    --surface: #FFFFFF;
+    --sunken: #F3EFEB;
+    --ink: #12171A;
+    --muted: #6E6862;
+    --faint: #9A938B;
+    --rule: #E2DCD5;
+    --accent: #0F5F63;
+    --accent-soft: #DCEBEA;
+    --ok: #2E6B3F;
+    --ok-soft: #E0EDE3;
+    --warn: #8A5A12;
+    --warn-soft: #F5EAD8;
+    --crit: #A03028;
+    --crit-soft: #F6E2E0;
+    --shadow: 0 1px 2px rgba(18, 23, 26, .06);
+    --sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #15161A;
+      --surface: #1C1E23;
+      --sunken: #22242A;
+      --ink: #ECE8E3;
+      --muted: #A29A92;
+      --faint: #766F68;
+      --rule: #2E3138;
+      --accent: #5CC3BC;
+      --accent-soft: #1B3A3B;
+      --ok: #77C48D;
+      --ok-soft: #1D3324;
+      --warn: #D9A75A;
+      --warn-soft: #3A2F1B;
+      --crit: #E58076;
+      --crit-soft: #3A211F;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #15161A;
+    --surface: #1C1E23;
+    --sunken: #22242A;
+    --ink: #ECE8E3;
+    --muted: #A29A92;
+    --faint: #766F68;
+    --rule: #2E3138;
+    --accent: #5CC3BC;
+    --accent-soft: #1B3A3B;
+    --ok: #77C48D;
+    --ok-soft: #1D3324;
+    --warn: #D9A75A;
+    --warn-soft: #3A2F1B;
+    --crit: #E58076;
+    --crit-soft: #3A211F;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px;
+  }
+  code, .mono { font-family: var(--mono); font-size: .86em; }
+
+  .shell { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 0; min-height: 100vh; }
+  @media (max-width: 860px) { .shell { grid-template-columns: minmax(0, 1fr); } .rail { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--rule); } }
+
+  .rail {
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    border-right: 1px solid var(--rule); background: var(--surface);
+    padding: 22px 18px; display: flex; flex-direction: column; gap: 18px;
+  }
+  .rail .mark { font-weight: 700; letter-spacing: -.01em; font-size: 15px; line-height: 1.25; }
+  .rail .pid { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .rail nav { display: flex; flex-direction: column; gap: 1px; }
+  .rail nav a {
+    text-decoration: none; color: var(--muted); font-size: 13px; font-weight: 500;
+    padding: 5px 8px; border-radius: 4px; display: flex; justify-content: space-between; gap: 8px;
+  }
+  .rail nav a:hover { background: var(--sunken); color: var(--ink); }
+  .rail nav a .n { font-family: var(--mono); font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+  main { padding: 34px clamp(20px, 4vw, 52px) 96px; max-width: 1180px; }
+
+  header.masthead { border-bottom: 2px solid var(--ink); padding-bottom: 20px; margin-bottom: 30px; }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.1; margin: 8px 0 10px; letter-spacing: -.025em; text-wrap: balance; }
+  .standfirst { font-family: var(--serif); font-size: 17px; color: var(--muted); max-width: 62ch; margin: 0; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin: 26px 0 0; }
+  .stat { background: var(--surface); padding: 12px 14px; }
+  .stat .v { font-family: var(--mono); font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .stat .k { font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); font-weight: 600; }
+
+  section { margin-top: 52px; scroll-margin-top: 16px; }
+  h2 { font-size: 21px; letter-spacing: -.015em; margin: 0 0 4px; padding-bottom: 8px; border-bottom: 1px solid var(--ink); }
+  .sec-note { font-family: var(--serif); color: var(--muted); margin: 10px 0 18px; max-width: 66ch; }
+  h3 { font-size: 15px; margin: 26px 0 8px; letter-spacing: -.01em; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+    padding: 2px 7px; border-radius: 3px; letter-spacing: .02em; white-space: nowrap;
+  }
+  .chip.on { background: var(--ok-soft); color: var(--ok); }
+  .chip.off { background: var(--sunken); color: var(--muted); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.crit { background: var(--crit-soft); color: var(--crit); }
+  .chip.neutral { background: var(--accent-soft); color: var(--accent); }
+
+  .filterbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+  .filterbar input {
+    flex: 1 1 240px; min-width: 0; font: inherit; font-size: 13px; padding: 7px 10px;
+    border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); color: var(--ink);
+  }
+  .filterbar input::placeholder { color: var(--faint); }
+  .filterbar select { font: inherit; font-size: 13px; padding: 7px 8px; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); color: var(--ink); }
+  .count { font-family: var(--mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
+
+  .scroller { overflow-x: auto; border: 1px solid var(--rule); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 11px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th {
+    position: sticky; top: 0; background: var(--sunken); font-size: 11px; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--muted); font-weight: 600; white-space: nowrap; cursor: pointer; z-index: 1;
+  }
+  th[aria-sort="ascending"]::after { content: " ↑"; color: var(--accent); }
+  th[aria-sort="descending"]::after { content: " ↓"; color: var(--accent); }
+  tbody tr:hover { background: var(--sunken); }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+
+  .bar { display: inline-block; height: 7px; background: var(--accent); border-radius: 1px; vertical-align: middle; min-width: 2px; }
+  .bar.zero { background: var(--rule); }
+
+  .wf { border-bottom: 1px solid var(--rule); padding: 16px 0; }
+  .wf:last-child { border-bottom: 0; }
+  .wf-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .wf-head .name { font-weight: 600; font-size: 15px; letter-spacing: -.01em; }
+  .wf-desc { font-family: var(--serif); color: var(--ink); margin: 7px 0 0; max-width: 76ch; }
+  .wf-desc code { background: var(--sunken); padding: 1px 4px; border-radius: 3px; }
+  .wf-refs { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 9px; font-size: 12px; color: var(--muted); }
+  .wf-refs b { font-weight: 600; color: var(--ink); font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+  .wf-refs .mono { color: var(--muted); }
+
+  .empty { color: var(--faint); font-style: italic; padding: 18px 0; font-family: var(--serif); }
+  footer { margin-top: 64px; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--faint); font-size: 12px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <div>
+      <div class="mark">Portal Documentation</div>
+      <div class="pid" id="railPid"></div>
+    </div>
+    <nav id="railNav"></nav>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<script id="analysis" type="application/json">__ANALYSIS_JSON__</script>
+<script>
+(function () {
+  "use strict";
+  var A = JSON.parse(document.getElementById("analysis").textContent);
+  var esc = function (s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  };
+  var wfById = {};
+  A.workflows.forEach(function (w) { wfById[w.id] = w; });
+
+  function date(s) {
+    if (!s) return "—";
+    var d = new Date(s);
+    return isNaN(d) ? String(s).slice(0, 10) : d.toISOString().slice(0, 10);
+  }
+  function link(href, text) {
+    return '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + esc(text) + "</a>";
+  }
+  // Workflow descriptions are generated server-side with `backtick` spans for property names.
+  function ticks(s) {
+    return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+  }
+
+  /* ------------------------------------------------------------------ masthead */
+  var acct = A.account || {};
+  var propCount = A.properties.length;
+  var activeWf = A.workflows.filter(function (w) { return w.enabled; }).length;
+  var unusedProps = A.properties.filter(function (p) { return p.unused; }).length;
+
+  var stats = [
+    ["Workflows", A.workflows.length],
+    ["Active", activeWf],
+    ["Properties", propCount],
+    ["Unused custom", unusedProps],
+    ["Lists", A.lists.length],
+    ["Forms", A.forms.length],
+    ["Emails", A.marketing_emails.length],
+    ["Landing pages", A.landing_pages.length],
+    ["Site pages", A.site_pages.length]
+  ];
+
+  var html = "";
+  html += '<header class="masthead">';
+  html += '<div class="eyebrow">HubSpot portal audit</div>';
+  html += "<h1>" + esc(acct.companyName || acct.uiDomain || ("Portal " + A.portal_id)) + "</h1>";
+  html += '<p class="standfirst">An as-built record of what this portal automates and which properties carry the load — every workflow, property, list, form, email, and page, cross-referenced and linked back to the asset in HubSpot.</p>';
+  html += '<div class="stats">' + stats.map(function (s) {
+    return '<div class="stat"><div class="v">' + s[1] + '</div><div class="k">' + esc(s[0]) + "</div></div>";
+  }).join("") + "</div>";
+  html += "</header>";
+
+  var sections = [];
+  function section(id, title, count, note, body) {
+    sections.push({ id: id, title: title, count: count });
+    html += '<section id="' + id + '"><h2>' + esc(title) + "</h2>";
+    if (note) html += '<p class="sec-note">' + note + "</p>";
+    html += body + "</section>";
+  }
+
+  /* ------------------------------------------------------------------- systems */
+  var sysBody = "";
+  var sysNames = Object.keys(A.systems);
+  if (!sysNames.length) {
+    sysBody = '<p class="empty">No workflows were readable, so no systems could be reconstructed.</p>';
+  } else {
+    sysNames.forEach(function (name) {
+      var ids = A.systems[name];
+      var members = ids.map(function (i) { return wfById[i]; }).filter(Boolean);
+      var on = members.filter(function (w) { return w.enabled; }).length;
+      var props = {};
+      members.forEach(function (w) {
+        w.properties_written.forEach(function (p) { props[p] = (props[p] || 0) + 1; });
+      });
+      var topProps = Object.keys(props).sort(function (a, b) { return props[b] - props[a]; }).slice(0, 8);
+
+      sysBody += "<h3>" + esc(name) + ' <span class="chip neutral">' + members.length +
+        " workflow" + (members.length === 1 ? "" : "s") + "</span> " +
+        '<span class="chip ' + (on ? "on" : "off") + '">' + on + " active</span></h3>";
+      if (topProps.length) {
+        sysBody += '<p class="sec-note" style="margin:6px 0 10px">Writes to ' +
+          topProps.map(function (p) { return "<code>" + esc(p) + "</code>"; }).join(", ") + ".</p>";
+      }
+      sysBody += '<div class="scroller"><table><thead><tr><th>Workflow</th><th>Status</th><th>Writes</th><th>Reads</th><th>Steps</th><th>Updated</th></tr></thead><tbody>';
+      members.sort(function (a, b) { return (b.enabled - a.enabled) || a.name.localeCompare(b.name); });
+      members.forEach(function (w) {
+        sysBody += "<tr><td>" + link(w.link, w.name) + "</td>" +
+          '<td><span class="chip ' + (w.enabled ? "on" : "off") + '">' + (w.enabled ? "Active" : "Off") + "</span></td>" +
+          '<td class="mono">' + (w.properties_written.slice(0, 3).join(", ") || "—") +
+          (w.properties_written.length > 3 ? " +" + (w.properties_written.length - 3) : "") + "</td>" +
+          '<td class="mono">' + (w.properties_read.slice(0, 3).join(", ") || "—") +
+          (w.properties_read.length > 3 ? " +" + (w.properties_read.length - 3) : "") + "</td>" +
+          '<td class="num">' + w.action_count + "</td>" +
+          '<td class="num">' + date(w.updated_at) + "</td></tr>";
+      });
+      sysBody += "</tbody></table></div>";
+    });
+  }
+  section("systems", "Automation systems", sysNames.length,
+    "Workflows grouped by the job they do, inferred from their names and the properties they write. This is the read-through view: start here to understand what the portal actually runs.",
+    sysBody);
+
+  /* ----------------------------------------------------------------- workflows */
+  var wfBody = '<div class="filterbar">' +
+    '<input id="wfq" type="search" placeholder="Filter workflows by name, property, or description" aria-label="Filter workflows">' +
+    '<select id="wfstate" aria-label="Filter by status"><option value="">All statuses</option><option value="on">Active only</option><option value="off">Turned off only</option></select>' +
+    '<span class="count" id="wfcount"></span></div><div id="wflist"></div>';
+  section("workflows", "Workflow reference", A.workflows.length,
+    "Every workflow in the portal with its enrollment logic, the properties it reads and writes, its step breakdown, and a link straight into the editor.",
+    wfBody);
+
+  /* ---------------------------------------------------------------- properties */
+  var propBody = '<div class="filterbar">' +
+    '<input id="pq" type="search" placeholder="Filter properties by name, label, group, or object" aria-label="Filter properties">' +
+    '<select id="pobj" aria-label="Filter by object"><option value="">All objects</option></select>' +
+    '<select id="pused" aria-label="Filter by usage"><option value="">All properties</option><option value="used">Referenced somewhere</option><option value="unused">Unused custom properties</option><option value="custom">Custom only</option></select>' +
+    '<span class="count" id="pcount"></span></div>' +
+    '<div class="scroller"><table id="ptable"><thead><tr>' +
+    '<th data-k="name">Property</th><th data-k="label">Label</th><th data-k="object_type">Object</th>' +
+    '<th data-k="type">Type</th><th data-k="group">Group</th>' +
+    '<th data-k="usage_score">Usage</th><th data-k="_wf">Workflows</th>' +
+    '<th data-k="_forms">Forms</th><th data-k="_lists">Lists</th>' +
+    '</tr></thead><tbody id="pbody"></tbody></table></div>';
+  section("properties", "Property reference", A.properties.length,
+    "Sorted by how much of the portal depends on each property. Usage counts writes and reads by workflows, collection by forms, and segmentation by lists — a property nothing references is a property nothing would miss.",
+    propBody);
+
+  /* --------------------------------------------------------- other asset types */
+  function assetTable(items, cols) {
+    if (!items.length) return '<p class="empty">None found, or the endpoint was not reachable with this token.</p>';
+    var h = '<div class="scroller"><table><thead><tr>' +
+      cols.map(function (c) { return "<th>" + esc(c[0]) + "</th>"; }).join("") + "</tr></thead><tbody>";
+    items.forEach(function (it) {
+      h += "<tr>" + cols.map(function (c) { return c[1](it); }).join("") + "</tr>";
+    });
+    return h + "</tbody></table></div>";
+  }
+
+  section("lists", "Lists", A.lists.length,
+    "Active and static lists with the properties their membership criteria depend on.",
+    assetTable(A.lists, [
+      ["List", function (l) { return "<td>" + link(l.link, l.name) + "</td>"; }],
+      ["Type", function (l) { return '<td><span class="chip ' + (l.processing_type === "DYNAMIC" ? "neutral" : "off") + '">' + esc(l.processing_type || "—") + "</span></td>"; }],
+      ["Size", function (l) { return '<td class="num">' + (l.size == null ? "—" : l.size) + "</td>"; }],
+      ["Segments on", function (l) { return '<td class="mono">' + esc(l.properties.slice(0, 5).join(", ") || "—") + (l.properties.length > 5 ? " +" + (l.properties.length - 5) : "") + "</td>"; }],
+      ["Updated", function (l) { return '<td class="num">' + date(l.updated_at) + "</td>"; }]
+    ]));
+
+  section("forms", "Forms", A.forms.length,
+    "Each form and the CRM properties it writes into on submission.",
+    assetTable(A.forms, [
+      ["Form", function (f) { return "<td>" + link(f.link, f.name) + "</td>"; }],
+      ["Type", function (f) { return "<td>" + esc(f.type || "—") + "</td>"; }],
+      ["Fields", function (f) { return '<td class="num">' + f.field_count + "</td>"; }],
+      ["Writes to", function (f) { return '<td class="mono">' + esc(f.fields.slice(0, 6).join(", ") || "—") + (f.fields.length > 6 ? " +" + (f.fields.length - 6) : "") + "</td>"; }],
+      ["Status", function (f) { return '<td><span class="chip ' + (f.archived ? "off" : "on") + '">' + (f.archived ? "Archived" : "Live") + "</span></td>"; }]
+    ]));
+
+  section("emails", "Marketing emails", A.marketing_emails.length,
+    "Every marketing email in the portal, with its publish state.",
+    assetTable(A.marketing_emails, [
+      ["Email", function (e) { return "<td>" + link(e.link, e.name) + "</td>"; }],
+      ["Subject", function (e) { return "<td>" + esc(e.subject || "—") + "</td>"; }],
+      ["State", function (e) { return '<td><span class="chip ' + (/PUBLISHED|SENT|AUTOMATED/i.test(e.state || "") ? "on" : "off") + '">' + esc(e.state || "—") + "</span></td>"; }],
+      ["Updated", function (e) { return '<td class="num">' + date(e.updated_at) + "</td>"; }]
+    ]));
+
+  section("pages", "Landing & site pages", A.landing_pages.length + A.site_pages.length,
+    "CMS pages hosted in this portal, landing pages first.",
+    assetTable(A.landing_pages.concat(A.site_pages), [
+      ["Page", function (p) { return "<td>" + link(p.link, p.name) + "</td>"; }],
+      ["Kind", function (p) { return '<td><span class="chip neutral">' + esc(p.kind) + "</span></td>"; }],
+      ["URL", function (p) { return "<td>" + (p.url ? link(p.url, p.url.replace(/^https?:\/\//, "")) : "—") + "</td>"; }],
+      ["State", function (p) { return '<td><span class="chip ' + (/PUBLISHED/i.test(p.state || "") ? "on" : "off") + '">' + esc(p.state || "—") + "</span></td>"; }],
+      ["Updated", function (p) { return '<td class="num">' + date(p.updated_at) + "</td>"; }]
+    ]));
+
+  /* ------------------------------------------------------------------ coverage */
+  var cov = "";
+  if (A.skipped && A.skipped.length) {
+    cov += "<h3>Endpoints not covered</h3><div class=\"scroller\"><table><thead><tr><th>Endpoint</th><th>Status</th><th>Reason</th></tr></thead><tbody>";
+    A.skipped.forEach(function (s) {
+      cov += '<tr><td class="mono">' + esc(s.endpoint) + '</td><td class="num">' + esc(s.status || "—") +
+        "</td><td>" + esc(String(s.reason).slice(0, 180)) + "</td></tr>";
+    });
+    cov += "</tbody></table></div>";
+  } else {
+    cov += '<p class="sec-note">Every endpoint this audit queries returned data.</p>';
+  }
+  var unknown = Object.keys(A.unknown_action_types || {});
+  if (unknown.length) {
+    cov += "<h3>Unrecognised workflow action types</h3><p class=\"sec-note\">These action type IDs appear in the portal's workflows but are not in this tool's label table. They are reported by raw ID in the workflow breakdowns rather than guessed at.</p><p class=\"mono\">" +
+      unknown.map(function (k) { return esc(k) + " ×" + A.unknown_action_types[k]; }).join(" · ") + "</p>";
+  }
+  cov += "<h3>How to read this</h3><p class=\"sec-note\">Workflow definitions come from HubSpot's v4 Automation API, which returns logic but not enrollment history — how many records a workflow has touched lives only in the HubSpot UI. Property references are resolved by scanning each workflow, list, and form definition for names matching this portal's own property schema, so a reference built through an integration or custom-coded action may not appear.</p>";
+
+  section("coverage", "Coverage & caveats", 0, "", cov);
+
+  html += '<footer>Generated ' + esc(date(A.extracted_at)) + " · portal " + esc(A.portal_id) +
+    " · read-only snapshot. Figures reflect the portal at extraction time.</footer>";
+
+  document.getElementById("main").innerHTML = html;
+  document.getElementById("railPid").textContent = "Portal " + A.portal_id;
+  document.getElementById("railNav").innerHTML = sections.map(function (s) {
+    return '<a href="#' + s.id + '">' + esc(s.title) + '<span class="n">' + (s.count || "") + "</span></a>";
+  }).join("");
+
+  /* ----------------------------------------------------------- workflow filter */
+  var wfq = document.getElementById("wfq"), wfstate = document.getElementById("wfstate");
+  function renderWorkflows() {
+    var q = wfq.value.trim().toLowerCase(), st = wfstate.value;
+    var rows = A.workflows.filter(function (w) {
+      if (st === "on" && !w.enabled) return false;
+      if (st === "off" && w.enabled) return false;
+      if (!q) return true;
+      return (w.name + " " + w.description + " " + w.properties_written.join(" ") + " " +
+        w.properties_read.join(" ")).toLowerCase().indexOf(q) > -1;
+    });
+    document.getElementById("wfcount").textContent = rows.length + " of " + A.workflows.length;
+    if (!rows.length) {
+      document.getElementById("wflist").innerHTML = '<p class="empty">No workflows match that filter.</p>';
+      return;
+    }
+    document.getElementById("wflist").innerHTML = rows.map(function (w) {
+      var h = '<div class="wf"><div class="wf-head"><span class="name">' + link(w.link, w.name) + "</span>" +
+        '<span class="chip ' + (w.enabled ? "on" : "off") + '">' + (w.enabled ? "Active" : "Off") + "</span>";
+      if (!w.definition_available) h += '<span class="chip warn">Definition unavailable</span>';
+      if (w.re_enrollment) h += '<span class="chip neutral">Re-enrollment</span>';
+      h += '<span class="count mono">#' + esc(w.id) + "</span></div>";
+      h += '<p class="wf-desc">' + ticks(w.description) + "</p>";
+      var refs = [];
+      if (w.properties_written.length) refs.push("<span><b>Writes</b> <span class=\"mono\">" + esc(w.properties_written.join(", ")) + "</span></span>");
+      if (w.properties_read.length) refs.push("<span><b>Reads</b> <span class=\"mono\">" + esc(w.properties_read.join(", ")) + "</span></span>");
+      if (w.workflows_triggered.length) {
+        refs.push("<span><b>Triggers</b> " + w.workflows_triggered.map(function (id) {
+          var t = wfById[id];
+          return t ? link(t.link, t.name) : '<span class="mono">' + esc(id) + "</span>";
+        }).join(", ") + "</span>");
+      }
+      if (w.lists_referenced.length) refs.push("<span><b>Lists</b> <span class=\"mono\">" + esc(w.lists_referenced.join(", ")) + "</span></span>");
+      refs.push("<span><b>Updated</b> <span class=\"mono\">" + date(w.updated_at) + "</span></span>");
+      h += '<div class="wf-refs">' + refs.join("") + "</div></div>";
+      return h;
+    }).join("");
+  }
+  wfq.addEventListener("input", renderWorkflows);
+  wfstate.addEventListener("change", renderWorkflows);
+  renderWorkflows();
+
+  /* ---------------------------------------------------------- property filter */
+  var pq = document.getElementById("pq"), pobj = document.getElementById("pobj"), pused = document.getElementById("pused");
+  var objects = Array.from(new Set(A.properties.map(function (p) { return p.object_type; }))).sort();
+  pobj.innerHTML += objects.map(function (o) { return '<option value="' + esc(o) + '">' + esc(o) + "</option>"; }).join("");
+  var maxScore = Math.max(1, Math.max.apply(null, A.properties.map(function (p) { return p.usage_score; })));
+  var sortKey = "usage_score", sortDir = -1;
+
+  function renderProps() {
+    var q = pq.value.trim().toLowerCase(), obj = pobj.value, used = pused.value;
+    var rows = A.properties.filter(function (p) {
+      if (obj && p.object_type !== obj) return false;
+      if (used === "used" && p.usage_score === 0) return false;
+      if (used === "unused" && !p.unused) return false;
+      if (used === "custom" && p.hubspot_defined) return false;
+      if (!q) return true;
+      return (p.name + " " + (p.label || "") + " " + (p.group || "") + " " + p.object_type + " " +
+        (p.description || "")).toLowerCase().indexOf(q) > -1;
+    });
+    rows.sort(function (a, b) {
+      var av, bv;
+      if (sortKey === "_wf") { av = a.written_by_workflows.length + a.read_by_workflows.length; bv = b.written_by_workflows.length + b.read_by_workflows.length; }
+      else if (sortKey === "_forms") { av = a.collected_by_forms.length; bv = b.collected_by_forms.length; }
+      else if (sortKey === "_lists") { av = a.segmented_by_lists.length; bv = b.segmented_by_lists.length; }
+      else { av = a[sortKey]; bv = b[sortKey]; }
+      if (typeof av === "string" || typeof bv === "string") {
+        return String(av || "").localeCompare(String(bv || "")) * sortDir * -1;
+      }
+      return ((av || 0) - (bv || 0)) * sortDir * -1;
+    });
+    document.getElementById("pcount").textContent = rows.length + " of " + A.properties.length;
+    var capped = rows.slice(0, 1200);
+    document.getElementById("pbody").innerHTML = capped.map(function (p) {
+      var w = Math.round((p.usage_score / maxScore) * 54);
+      return "<tr>" +
+        '<td><span class="mono">' + link(p.link, p.name) + "</span>" +
+        (p.hubspot_defined ? "" : ' <span class="chip neutral">custom</span>') +
+        (p.unused ? ' <span class="chip warn">unused</span>' : "") +
+        (p.calculated ? ' <span class="chip off">calc</span>' : "") + "</td>" +
+        "<td>" + esc(p.label || "—") + "</td>" +
+        "<td>" + esc(p.object_type) + "</td>" +
+        "<td>" + esc(p.field_type || p.type || "—") + "</td>" +
+        "<td>" + esc(p.group || "—") + "</td>" +
+        '<td class="num"><span class="bar' + (p.usage_score ? "" : " zero") + '" style="width:' + Math.max(w, 2) + 'px"></span> ' + p.usage_score + "</td>" +
+        '<td class="num">' + (p.written_by_workflows.length + p.read_by_workflows.length) + "</td>" +
+        '<td class="num">' + p.collected_by_forms.length + "</td>" +
+        '<td class="num">' + p.segmented_by_lists.length + "</td>" +
+        "</tr>";
+    }).join("") + (rows.length > capped.length
+      ? '<tr><td colspan="9" class="empty">Showing the first 1,200 of ' + rows.length + " matches — narrow the filter to see the rest.</td></tr>"
+      : "");
+    Array.prototype.forEach.call(document.querySelectorAll("#ptable th"), function (th) {
+      th.setAttribute("aria-sort", th.dataset.k === sortKey ? (sortDir === -1 ? "descending" : "ascending") : "none");
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll("#ptable th"), function (th) {
+    th.addEventListener("click", function () {
+      if (sortKey === th.dataset.k) sortDir *= -1; else { sortKey = th.dataset.k; sortDir = -1; }
+      renderProps();
+    });
+  });
+  [pq, pobj, pused].forEach(function (el) {
+    el.addEventListener(el.tagName === "INPUT" ? "input" : "change", renderProps);
+  });
+  renderProps();
+})();
+</script>
