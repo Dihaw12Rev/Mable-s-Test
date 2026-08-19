@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["requests>=2.31", "python-dotenv>=1.0", "python-docx>=1.1"]
+# dependencies = ["requests>=2.31", "python-dotenv>=1.0", "python-docx>=1.1", "weasyprint>=62"]
 # ///
 """Document a HubSpot portal: extract, cross-reference, and report.
 
@@ -29,8 +29,10 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=Path("reports"), help="report output directory")
     parser.add_argument("--data", type=Path, default=Path("data"), help="raw snapshot directory")
     parser.add_argument("--snapshot", type=Path, help="re-render from an existing snapshot.json")
-    parser.add_argument("--no-docx", action="store_true", help="skip the Word document")
-    parser.add_argument("--no-html", action="store_true", help="skip the HTML report")
+    parser.add_argument("--no-pdf", action="store_true", help="skip the PDF dashboard")
+    parser.add_argument("--no-docx", action="store_true", help="skip the Word reference")
+    parser.add_argument("--html", action="store_true",
+                        help="also write the interactive HTML report")
     args = parser.parse_args()
 
     try:
@@ -61,10 +63,15 @@ def main() -> int:
     )
 
     outputs = []
-    if not args.no_html:
-        outputs.append(render.render_html(analysis, args.out / "hubspot-portal-documentation.html"))
+    if not args.no_pdf:
+        outputs.append(render.render_dashboard_pdf(
+            analysis, args.out / "hubspot-portal-dashboard.pdf"))
     if not args.no_docx:
-        outputs.append(render.render_docx(analysis, args.out / "hubspot-portal-documentation.docx"))
+        outputs.append(render.render_docx(
+            analysis, args.out / "hubspot-portal-reference.docx"))
+    if args.html:
+        outputs.append(render.render_html(
+            analysis, args.out / "hubspot-portal-reference.html"))
 
     print("\nReports:")
     for path in outputs:

@@ -1,0 +1,120 @@
+<meta charset="utf-8">
+<title>__TITLE__</title>
+<style>
+  @page {
+    size: A4;
+    margin: 15mm 15mm 14mm;
+    @bottom-left {
+      content: "__FOOTER__";
+      font-family: "Helvetica Neue", Helvetica, "Liberation Sans", Arial, sans-serif;
+      font-size: 7.5pt; color: #9A938B;
+    }
+    @bottom-right {
+      content: counter(page) " / " counter(pages);
+      font-family: "SF Mono", Menlo, "Liberation Mono", monospace;
+      font-size: 7.5pt; color: #9A938B;
+    }
+  }
+
+  :root {
+    --ink: #12171A;
+    --muted: #6E6862;
+    --faint: #9A938B;
+    --rule: #E2DCD5;
+    --sunken: #F3EFEB;
+    --accent: #0F5F63;
+    --warn: #8A5A12;
+  }
+
+  * { box-sizing: border-box; }
+  html { font-size: 10pt; }
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: #fff;
+    font-family: "Helvetica Neue", Helvetica, "Liberation Sans", Arial, sans-serif;
+    line-height: 1.45;
+    -weasy-hyphens: none;
+  }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+
+  /* -- masthead ---------------------------------------------------------- */
+  .mast { border-bottom: 2pt solid var(--ink); padding-bottom: 8pt; margin-bottom: 14pt; }
+  .eyebrow {
+    font-size: 7.5pt; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 3pt;
+  }
+  h1 { font-size: 24pt; line-height: 1.05; margin: 0 0 5pt; letter-spacing: -.02em; }
+  .meta {
+    font-family: "SF Mono", Menlo, "Liberation Mono", monospace;
+    font-size: 8pt; color: var(--muted);
+  }
+
+  /* -- stat tiles -------------------------------------------------------- */
+  .tiles {
+    display: flex; flex-wrap: wrap;
+    border-top: .75pt solid var(--rule); border-left: .75pt solid var(--rule);
+    margin-bottom: 18pt;
+  }
+  .tile {
+    width: 25%; padding: 7pt 9pt;
+    border-right: .75pt solid var(--rule); border-bottom: .75pt solid var(--rule);
+  }
+  .tv {
+    font-family: "SF Mono", Menlo, "Liberation Mono", monospace;
+    font-size: 17pt; line-height: 1.1; letter-spacing: -.02em;
+  }
+  .tk {
+    font-size: 7pt; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--faint); font-weight: 700; margin-top: 2pt;
+  }
+  .ts { font-size: 7.5pt; color: var(--muted); margin-top: 1pt; }
+
+  /* -- blocks ------------------------------------------------------------ */
+  .block { margin-bottom: 17pt; page-break-inside: avoid; }
+  h2 {
+    font-size: 12.5pt; margin: 0 0 4pt; letter-spacing: -.01em;
+    padding-bottom: 4pt; border-bottom: .75pt solid var(--ink);
+  }
+  .note {
+    font-family: Charter, "Bitstream Charter", Georgia, "Liberation Serif", serif;
+    font-size: 9pt; color: var(--muted); margin: 6pt 0 8pt; max-width: 68ch;
+  }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 4pt 14pt; margin-bottom: 7pt; }
+  .lg { font-size: 8pt; color: var(--muted); display: flex; align-items: center; }
+  .sw {
+    display: inline-block; width: 8pt; height: 8pt; border-radius: 2pt;
+    margin-right: 4pt; vertical-align: middle;
+  }
+
+  .split { display: flex; align-items: center; gap: 16pt; }
+  .split-main { flex: 1 1 auto; min-width: 0; }
+  .split-side { flex: 0 0 108pt; text-align: center; }
+  .dial-k { font-size: 7.5pt; color: var(--muted); margin-top: 5pt; line-height: 1.35; }
+  .unknown-dial {
+    width: 68pt; height: 68pt; margin: 0 auto; border-radius: 50%;
+    border: 3.5pt solid var(--rule); color: var(--faint);
+    font-size: 24pt; line-height: 61pt; text-align: center;
+    font-family: "SF Mono", Menlo, "Liberation Mono", monospace;
+  }
+
+  /* -- findings ---------------------------------------------------------- */
+  .findings { list-style: none; padding: 0; margin: 0; }
+  .findings li {
+    padding: 6pt 0; border-bottom: .5pt solid var(--rule);
+    page-break-inside: avoid;
+  }
+  .findings li:last-child { border-bottom: 0; }
+  .fh { display: block; font-weight: 700; font-size: 9.5pt; margin-bottom: 1.5pt; }
+  .fd {
+    display: block;
+    font-family: Charter, "Bitstream Charter", Georgia, "Liberation Serif", serif;
+    font-size: 8.5pt; color: var(--muted);
+  }
+
+  .caveat { border-left: 2.5pt solid var(--rule); padding-left: 10pt; }
+  .caveat h2 { border-bottom: 0; padding-bottom: 0; font-size: 10.5pt; }
+</style>
+__BODY__

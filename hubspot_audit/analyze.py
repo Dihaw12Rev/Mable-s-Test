@@ -112,6 +112,11 @@ class Analysis:
         for names in self.known_props.values():
             self.all_prop_names |= names
 
+        self.coverage = _coverage(snapshot)
+        # Every reference source must be readable before absence of a reference
+        # can be reported as absence of use.
+        self.usage_complete = all(self.coverage.values())
+
         self.unknown_action_types: Counter[str] = Counter()
         self.usage: dict[str, dict[str, set[str]]] = defaultdict(
             lambda: {
@@ -386,7 +391,14 @@ class Analysis:
                     "collected_by_forms": forms_,
                     "segmented_by_lists": lists_,
                     "usage_score": score,
-                    "unused": score == 0 and not p.get("hubspotDefined"),
+                    # "Unused" is only knowable when every reference source was readable.
+                    # With workflows or forms missing, a zero score means "unknown".
+                    "unused": (
+                        score == 0
+                        and not p.get("hubspotDefined")
+                        and self.usage_complete
+                    ),
+                    "usage_known": self.usage_complete,
                 })
         out.sort(key=lambda r: (-r["usage_score"], r["object_type"], r["name"]))
         self.property_records = out
@@ -440,6 +452,23 @@ class Analysis:
         return self.clusters
 
 
+# Endpoints whose absence makes the property usage index incomplete. A property can
+# only be called unreferenced if every one of these was read successfully.
+USAGE_SOURCES = {
+    "workflows": "automation/v4/flows",
+    "forms": "marketing/v3/forms",
+    "lists": "crm/v3/lists",
+}
+
+
+def _coverage(snapshot: dict[str, Any]) -> dict[str, bool]:
+    missed = {s.get("endpoint", "") for s in snapshot.get("skipped", [])}
+    return {
+        source: not any(path in endpoint for endpoint in missed)
+        for source, path in USAGE_SOURCES.items()
+    }
+
+
 def _classify(name: str) -> str:
     lowered = (name or "").lower()
     for label, pattern in SYSTEM_RULES:
@@ -490,6 +519,8 @@ def run(snapshot: dict[str, Any]) -> dict[str, Any]:
         "systems": {k: [w["id"] for w in v] for k, v in systems.items()},
         "clusters": clusters,
         "skipped": snapshot.get("skipped", []),
+        "coverage": a.coverage,
+        "usage_complete": a.usage_complete,
         "unknown_action_types": dict(a.unknown_action_types),
     }
 

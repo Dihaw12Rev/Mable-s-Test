@@ -71,6 +71,26 @@ def main() -> int:
     check("properties sorted by usage descending",
           a["properties"][0]["usage_score"] >= a["properties"][-1]["usage_score"])
 
+    print("\nCoverage safety")
+    check("full-coverage fixture reports usage as complete", a["usage_complete"] is True,
+          str(a.get("coverage")))
+    starved = snapshot()
+    starved["workflows"] = []
+    starved["forms"] = []
+    starved["skipped"] = [
+        {"endpoint": "/automation/v4/flows", "status": 403, "reason": "missing scope"},
+        {"endpoint": "/marketing/v3/forms", "status": 403, "reason": "missing scope"},
+    ]
+    b = analyze.run(starved)
+    check("missing sources mark usage incomplete", b["usage_complete"] is False, str(b["coverage"]))
+    check("no property is called unused when sources are missing",
+          not any(p["unused"] for p in b["properties"]),
+          str([p["name"] for p in b["properties"] if p["unused"]][:5]))
+    check("properties are marked usage-unknown instead",
+          all(p["usage_known"] is False for p in b["properties"]))
+    check("a genuinely orphan property is still flagged when coverage is complete",
+          props[("contacts", "temp_import_flag_2023")]["unused"] is True)
+
     print("\nGrouping")
     systems = a["systems"]
     check("lifecycle system found", "Lifecycle & Stage Management" in systems, str(list(systems)))

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 TEMPLATE = Path(__file__).parent / "templates" / "report.html"
+DASHBOARD_SHELL = Path(__file__).parent / "templates" / "dashboard.html"
 
 
 # ------------------------------------------------------------------------- shared
@@ -16,11 +17,8 @@ TEMPLATE = Path(__file__).parent / "templates" / "report.html"
 
 def portal_name(analysis: dict[str, Any]) -> str:
     acct = analysis.get("account") or {}
-    return str(
-        acct.get("companyName")
-        or acct.get("uiDomain")
-        or f"Portal {analysis.get('portal_id', '')}"
-    )
+    # uiDomain is "app.hubspot.com" for every portal — never a usable name.
+    return str(acct.get("companyName") or f"Portal {analysis.get('portal_id', '')}")
 
 
 def _date(value: Any) -> str:
@@ -56,6 +54,32 @@ def _escape(text: str) -> str:
     return (
         text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     )
+
+
+# ---------------------------------------------------------------------------- pdf
+
+
+def render_dashboard_pdf(analysis: dict[str, Any], out_path: Path) -> Path:
+    """The at-a-glance dashboard, rendered to PDF.
+
+    WeasyPrint is used rather than a headless browser so the generator needs no
+    browser install; every chart is server-rendered SVG for the same reason.
+    """
+    from weasyprint import HTML
+
+    from . import dashboard
+
+    name = portal_name(analysis)
+    footer = f"{name} · HubSpot portal audit · {_date(analysis.get('extracted_at'))}"
+    shell = DASHBOARD_SHELL.read_text()
+    html = (
+        shell.replace("__TITLE__", _escape(name))
+        .replace("__FOOTER__", _escape(footer).replace('"', "'"))
+        .replace("__BODY__", dashboard.build_html(analysis, name))
+    )
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    HTML(string=html, base_url=str(DASHBOARD_SHELL.parent)).write_pdf(str(out_path))
+    return out_path
 
 
 # --------------------------------------------------------------------------- docx
