@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from hubspot_audit import analyze, extract, render  # noqa: E402
+from hubspot_audit import analyze, extract, graph, render  # noqa: E402
 from hubspot_audit.client import Client  # noqa: E402
 
 
@@ -31,6 +31,8 @@ def main() -> int:
     parser.add_argument("--snapshot", type=Path, help="re-render from an existing snapshot.json")
     parser.add_argument("--no-pdf", action="store_true", help="skip the PDF dashboard")
     parser.add_argument("--no-docx", action="store_true", help="skip the Word reference")
+    parser.add_argument("--no-explorer", action="store_true",
+                        help="skip the interactive dependency explorer")
     parser.add_argument("--html", action="store_true",
                         help="also write the interactive HTML report")
     args = parser.parse_args()
@@ -53,6 +55,15 @@ def main() -> int:
     args.data.mkdir(parents=True, exist_ok=True)
     (args.data / "analysis.json").write_text(json.dumps(analysis, indent=2, default=str))
 
+    print("Building the dependency graph...")
+    g = graph.build(analysis)
+    stats = graph.summarize(g)
+    analysis["graph"] = g.to_dict()
+    analysis["graph_stats"] = stats
+    (args.data / "graph.json").write_text(json.dumps(analysis["graph"], indent=2, default=str))
+    print(f"  {len(g.nodes)} nodes, {stats['edge_count']} edges, "
+          f"{stats['orphan_count']} unconnected assets")
+
     scored = [p for p in analysis["properties"] if p["usage_score"] > 0]
     print(
         f"  {len(analysis['workflows'])} workflows, "
@@ -69,6 +80,9 @@ def main() -> int:
     if not args.no_docx:
         outputs.append(render.render_docx(
             analysis, args.out / "hubspot-portal-reference.docx"))
+    if not args.no_explorer:
+        outputs.append(render.render_explorer(
+            analysis, args.out / "hubspot-portal-explorer.html"))
     if args.html:
         outputs.append(render.render_html(
             analysis, args.out / "hubspot-portal-reference.html"))

@@ -137,21 +137,30 @@ def _workflows(client: Client) -> list[dict[str, Any]]:
     ids = [str(f["id"]) for f in summaries if f.get("id")]
     full: dict[str, dict[str, Any]] = {}
 
-    # Batch read is far cheaper than per-flow GETs; fall back when it is unavailable.
+    # Batch read is far cheaper than per-flow GETs, but the endpoint is fussy about
+    # payload shape and not enabled on every portal. Try both documented shapes,
+    # then fall back to individual GETs. Any failure here is an optimisation lost,
+    # never a failed run, so the fallback catches transport errors too.
     for chunk in _chunks(ids, 100):
-        try:
-            resp = client.post(
-                "/automation/v4/flows/batch/read",
-                {"inputs": [{"flowId": fid} for fid in chunk]},
-            )
-            for flow in resp.get("results", []):
-                full[str(flow.get("id"))] = flow
-        except (ScopeError, RuntimeError):
-            for fid in chunk:
-                try:
-                    full[fid] = client.get(f"/automation/v4/flows/{fid}")
-                except ScopeError:
-                    continue
+        got = False
+        for payload in ({"inputs": chunk}, {"inputs": [{"flowId": f} for f in chunk]}):
+            try:
+                resp = client.post("/automation/v4/flows/batch/read", payload)
+            except Exception:
+                continue
+            results = resp.get("results") or []
+            if results:
+                for flow in results:
+                    full[str(flow.get("id"))] = flow
+                got = True
+                break
+        if got:
+            continue
+        for fid in chunk:
+            try:
+                full[fid] = client.get(f"/automation/v4/flows/{fid}")
+            except (ScopeError, Exception):
+                continue
 
     merged = []
     for summary in summaries:

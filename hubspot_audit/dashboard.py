@@ -92,6 +92,25 @@ def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
             + ".",
         ))
 
+    empty = [w for w in workflows if not w["action_count"]
+             and not w["properties_written"] and not w["properties_read"]]
+    if empty:
+        out.append((
+            f"{len(empty)} workflow(s) contain no steps at all",
+            "No actions, no enrolment criteria, no property references — empty shells taking up "
+            "space in the workflows list.",
+        ))
+
+    unnamed = [w for w in workflows if w["name"].lower().startswith("unnamed workflow")]
+    if unnamed:
+        pct = round(len(unnamed) / len(workflows) * 100)
+        out.append((
+            f"{len(unnamed)} of {len(workflows)} workflows ({pct}%) were never named",
+            "They carry HubSpot's auto-generated “Unnamed workflow” title plus a timestamp, so "
+            "nothing in the UI says what they are for. Their purpose here is inferred from "
+            "behaviour instead.",
+        ))
+
     test_like = [
         w for w in workflows
         if any(k in w["name"].lower() for k in ("test", "temp", "copy of", "draft", "[old", "delete"))

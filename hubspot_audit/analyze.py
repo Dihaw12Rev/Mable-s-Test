@@ -34,24 +34,53 @@ OWNER_KEYS = {"ownerId", "owner_id", "hubspot_owner_id"}
 
 # Best-effort semantics for v4 action type IDs. Anything unrecognised is reported
 # verbatim in `unknown_action_types` rather than guessed at.
+# Native action type IDs, confirmed against real v4 payloads by their field shapes
+# (e.g. 0-5 carries property_name/value, so it is the set-property action).
 ACTION_TYPE_NAMES = {
     "0-1": "Delay",
-    "0-2": "Set property value",
-    "0-3": "Send in-app / internal notification",
+    "0-2": "Delay until event",
+    "0-3": "Create task",
     "0-4": "Send marketing email",
-    "0-5": "Add to list",
-    "0-6": "Remove from list",
-    "0-7": "Create task",
-    "0-8": "Send internal email notification",
+    "0-5": "Set property value",
+    "0-8": "Send internal notification",
     "0-9": "Webhook",
-    "0-10": "Create record",
-    "0-11": "Enroll in another workflow",
-    "0-13": "Rotate record to owner",
-    "0-14": "Send SMS",
-    "0-26": "Custom code",
+    "0-11": "Rotate record to owner",
+    "0-13": "Add to static list",
+    "0-14": "Create record",
+    "0-29": "Wait for event",
+    "0-35": "Delay until date or time",
+    "0-46510720": "Enrol in sequence",
+    "0-63189541": "Create or associate records",
+    "0-63809083": "Add or remove from list",
 }
 
+# Field keys that identify an action when its type ID is unrecognised. Ordered:
+# the first match wins, so the more specific shapes come first.
+ACTION_FIELD_HINTS = [
+    ({"source_code", "sourceCode"}, "Custom code"),
+    ({"webhook_url", "url"}, "Webhook"),
+    ({"property_name", "propertyName"}, "Set property value"),
+    ({"content_id", "contentId"}, "Send marketing email"),
+    ({"task_type", "taskType"}, "Create task"),
+    ({"listId", "list_id"}, "List membership"),
+    ({"delta", "time_unit"}, "Delay"),
+    ({"subject", "body"}, "Send notification"),
+]
+
 BRANCH_TYPES = {"LIST_BRANCH", "STATIC_BRANCH", "AB_TEST_BRANCH", "BRANCH"}
+
+# HubSpot object type IDs -> CRM object name, used to resolve which object a
+# property reference belongs to. `lifecyclestage` on a contact workflow is
+# contacts.lifecyclestage, not the identically named company property.
+OBJECT_BY_TYPE_ID = {
+    "0-1": "contacts", "0-2": "companies", "0-3": "deals", "0-5": "tickets",
+    "0-7": "products", "0-8": "line_items", "0-14": "quotes", "0-27": "tasks",
+    "0-48": "calls", "0-49": "emails", "0-47": "meetings", "0-4": "notes",
+}
+
+# Names HubSpot generates for a workflow nobody titled. Classifying these by name
+# is meaningless, so behaviour decides instead.
+AUTO_NAME = re.compile(r"^\s*(unnamed workflow|untitled|new workflow)\b", re.I)
 
 SYSTEM_RULES = [
     ("Lifecycle & Stage Management", r"lifecycle|mql|sql|stage|sqo|funnel|handoff|hand-off"),
@@ -59,11 +88,11 @@ SYSTEM_RULES = [
     ("Lead Scoring & Qualification", r"scor|grade|fit|qualif|icp|tier|rating"),
     ("Deliverability & Suppression", r"bounce|unsub|suppress|opt.?out|deliverab|spam|gdpr|ccpa|consent"),
     ("Nurture & Marketing Campaigns", r"nurture|drip|campaign|newsletter|webinar|promo|re.?engag|welcome|onboard.*email"),
-    ("Data Hygiene & Normalization", r"clean|hygien|normal|standard|dedup|format|enrich|backfill|fix|correct"),
-    ("Internal Notifications & Alerts", r"notif|alert|slack|email.*team|internal|escalat"),
+    ("Data Hygiene & Automation", r"clean|hygien|normal|standard|dedup|format|enrich|backfill|fix|correct"),
+    ("Internal Notifications & Tasks", r"notif|alert|slack|email.*team|internal|escalat"),
     ("Sales & Deal Automation", r"deal|pipeline|quote|contract|renewal|churn|upsell|opportunit"),
     ("Customer Onboarding & Success", r"onboard|activation|adoption|csm|success|nps|survey"),
-    ("Integrations & Sync", r"sync|salesforce|sfdc|integrat|zapier|api|webhook|import"),
+    ("Integrations & App Actions", r"sync|salesforce|sfdc|integrat|zapier|api|webhook|import"),
 ]
 
 
@@ -127,6 +156,22 @@ class Analysis:
             }
         )
 
+    def qualify(self, name: str, object_type: str | None) -> str:
+        """Resolve a bare property name to `object.name`.
+
+        Prefers the object the referencing asset operates on; falls back to the
+        only object that defines the name, and finally to the first match.
+        """
+        if object_type and name in self.known_props.get(object_type, set()):
+            return f"{object_type}.{name}"
+        owners = [obj for obj, names in self.known_props.items() if name in names]
+        if len(owners) == 1:
+            return f"{owners[0]}.{name}"
+        for obj in ("contacts", "companies", "deals"):
+            if obj in owners:
+                return f"{obj}.{name}"
+        return f"{owners[0]}.{name}" if owners else f"?.{name}"
+
     # ------------------------------------------------------------------ workflows
 
     def analyze_workflows(self) -> list[dict[str, Any]]:
@@ -164,6 +209,12 @@ class Analysis:
             "actions": action_summary,
             "properties_read": sorted(read),
             "properties_written": sorted(written),
+            "properties_read_q": sorted(
+                {self.qualify(n, OBJECT_BY_TYPE_ID.get(str(flow.get("objectTypeId")))) for n in read}
+            ),
+            "properties_written_q": sorted(
+                {self.qualify(n, OBJECT_BY_TYPE_ID.get(str(flow.get("objectTypeId")))) for n in written}
+            ),
             "lists_referenced": sorted(refs["lists"]),
             "emails_referenced": sorted(refs["emails"]),
             "workflows_triggered": sorted(refs["flows"]),
@@ -240,12 +291,31 @@ class Analysis:
                 label = "Branch"
             elif type_id in ACTION_TYPE_NAMES:
                 label = ACTION_TYPE_NAMES[type_id]
+            elif a_type.upper() == "CUSTOM_CODE":
+                label = "Custom code"
             else:
-                label = f"{a_type or 'Action'} ({type_id})" if type_id else (a_type or "Action")
-                if type_id:
-                    self.unknown_action_types[type_id] += 1
+                label = self._infer_action(action, a_type, type_id)
             summary.append({"id": action.get("actionId"), "label": label, "type_id": type_id})
         return summary, branches
+
+    def _infer_action(self, action: dict[str, Any], a_type: str, type_id: str) -> str:
+        """Name an unrecognised action from its payload rather than guessing.
+
+        A `1-` type ID prefix marks a third-party app extension action; the field
+        keys then say which app. Anything still unidentified is reported by raw ID
+        and collected for the report's caveats.
+        """
+        fields = set(action.get("fields") or {})
+        if type_id.startswith("1-"):
+            self.unknown_action_types[type_id] += 1
+            return f"App action ({_app_hint(fields)})" if fields else "App action"
+        for keys, label in ACTION_FIELD_HINTS:
+            if fields & keys:
+                return label
+        if type_id:
+            self.unknown_action_types[type_id] += 1
+            return f"{a_type or 'Action'} ({type_id})"
+        return a_type or "Action"
 
     def _describe(self, r: dict[str, Any]) -> str:
         """A plain-language sentence or two about what this workflow does."""
@@ -313,6 +383,7 @@ class Analysis:
                 "updated_at": form.get("updatedAt"),
                 "link": links.form(self.portal_id, fid),
                 "fields": sorted(fields),
+                "fields_q": sorted({self.qualify(n, "contacts") for n in fields}),
                 "field_count": len(fields),
                 "description": (
                     f"{form.get('formType') or 'Form'} collecting {len(fields)} field(s)"
@@ -346,6 +417,9 @@ class Analysis:
                 "updated_at": lst.get("updatedAt"),
                 "link": links.hs_list(self.portal_id, lid),
                 "properties": sorted(props),
+                "properties_q": sorted(
+                    {self.qualify(n, OBJECT_BY_TYPE_ID.get(str(lst.get("objectTypeId")))) for n in props}
+                ),
                 "description": (
                     f"{(lst.get('processingType') or 'LIST').title()} list"
                     + (f" segmenting on {', '.join(sorted(props)[:6])}." if props else ".")
@@ -372,6 +446,7 @@ class Analysis:
                 )
                 out.append({
                     "name": name,
+                    "key": f"{obj_type}.{name}",
                     "object_type": obj_type,
                     "label": p.get("label"),
                     "description": p.get("description") or "",
@@ -409,7 +484,7 @@ class Analysis:
     def group_systems(self) -> dict[str, list[dict[str, Any]]]:
         systems: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for wf in self.workflows:
-            systems[_classify(wf["name"])].append(wf)
+            systems[classify_workflow(wf)].append(wf)
         self.systems = dict(sorted(systems.items(), key=lambda kv: -len(kv[1])))
         return self.systems
 
@@ -469,12 +544,90 @@ def _coverage(snapshot: dict[str, Any]) -> dict[str, bool]:
     }
 
 
+APP_HINTS = [
+    ({"slackActions", "slackUserIds", "messageMentions"}, "Slack"),
+    ({"project", "issueType"}, "Jira"),
+    ({"Workspace", "Space", "Folder"}, "ClickUp"),
+    ({"spreadsheet", "sheet"}, "Google Sheets"),
+    ({"Phone_Number"}, "phone lookup"),
+    ({"templateName"}, "template"),
+]
+
+
+def _app_hint(fields: set[str]) -> str:
+    for keys, name in APP_HINTS:
+        if fields & keys:
+            return name
+    return "third-party"
+
+
+# Property names that identify what a workflow is for, checked against the bare
+# name so an object prefix does not matter.
+BEHAVIOUR_RULES = [
+    ("Lifecycle & Stage Management", {"lifecyclestage", "hs_lead_status"}, set()),
+    ("Lead Routing & Assignment", {"hubspot_owner_id"}, {"0-11"}),
+    ("Lead Scoring & Qualification", set(), set()),   # handled by pattern below
+    ("Sales & Deal Automation", {"dealstage", "pipeline", "amount", "closedate"}, set()),
+    ("Nurture & Marketing Campaigns", set(), {"0-4", "0-46510720"}),
+    ("Record Creation & Association", set(), {"0-14", "0-63189541"}),
+    ("Internal Notifications & Tasks", set(), {"0-3", "0-8"}),
+]
+
+SCORE_PATTERN = re.compile(r"score|grade|tier|icp|rating|qualif", re.I)
+
+
 def _classify(name: str) -> str:
+    """Name-based classification, used only when the name carries meaning."""
     lowered = (name or "").lower()
     for label, pattern in SYSTEM_RULES:
         if re.search(pattern, lowered):
             return label
-    return "Uncategorized"
+    return ""
+
+
+def classify_workflow(record: dict[str, Any]) -> str:
+    """Decide which system a workflow belongs to.
+
+    A meaningful name wins, because the admin's own label is the best evidence of
+    intent. Portals routinely carry dozens of auto-named workflows, though, so
+    behaviour — the properties written, the object enrolled, the actions taken —
+    is the fallback rather than a shrug.
+    """
+    name = record.get("name") or ""
+    if not AUTO_NAME.match(name):
+        by_name = _classify(name)
+        if by_name:
+            return by_name
+
+    # A workflow with no steps and no property references is an empty shell, not an
+    # unclassifiable one. Naming it as such makes it show up as the finding it is.
+    if not record.get("action_count") and not record.get("properties_written") \
+            and not record.get("properties_read"):
+        return "Empty — no steps configured"
+
+    written = {p.split(".")[-1] for p in record.get("properties_written", [])}
+    read = {p.split(".")[-1] for p in record.get("properties_read", [])}
+    type_ids = {a.get("type_id") for a in record.get("actions", [])}
+    object_type = str(record.get("object_type") or "")
+
+    if SCORE_PATTERN.search(" ".join(written)):
+        return "Lead Scoring & Qualification"
+    for label, props, actions in BEHAVIOUR_RULES:
+        if props and written & props:
+            return label
+        if actions and type_ids & actions:
+            return label
+    if object_type == "0-5":
+        return "Support & Ticketing"
+    if any(str(t).startswith("1-") for t in type_ids if t):
+        return "Integrations & App Actions"
+    if object_type == "0-3":
+        return "Sales & Deal Automation"
+    if written:
+        return "Data Hygiene & Automation"
+    if read or record.get("action_count"):
+        return "Other Automation"
+    return "Unclassified"
 
 
 def _object_label(object_type_id: Any) -> str:
