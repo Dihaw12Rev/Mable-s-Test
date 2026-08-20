@@ -104,6 +104,17 @@ def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
             "space in the workflows list.",
         ))
 
+    unlabelled = [p for p in props
+                  if not p["hubspot_defined"] and (p.get("label") or "") == p["name"]]
+    if unlabelled:
+        out.append((
+            f"{len(unlabelled)} custom fields have no readable name",
+            "Their label in HubSpot is the raw internal name, so reports, forms and property "
+            "pickers all show something like “mable_order_count” instead of “Mable order "
+            "count”. Renaming the label is safe — it does not change the internal name or "
+            "break any automation.",
+        ))
+
     unnamed = [w for w in workflows if w["name"].lower().startswith("unnamed workflow")]
     if unnamed:
         pct = round(len(unnamed) / len(workflows) * 100)

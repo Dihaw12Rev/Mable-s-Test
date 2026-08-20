@@ -33,6 +33,30 @@ def _age_days(value: Any, now: datetime) -> int | None:
     return max((now - stamp).days, 0)
 
 
+GLOSSARY = [
+    ("Workflow", "HubSpot's automation. “When this happens, do that” — for example, when a "
+                 "contact's lifecycle stage becomes Customer, notify the account manager."),
+    ("Property (or field)", "A single piece of information stored on a record: Email, Deal "
+                            "Stage, Contact owner. Every property has a friendly label and a "
+                            "hidden internal name; this audit shows the label."),
+    ("Enrolment", "A record entering a workflow because it met the starting conditions. "
+                  "“Enrols on Email” means the workflow starts when that field matches."),
+    ("Writes / reads", "A workflow writes a property when it sets its value, and reads one "
+                       "when it checks the value to decide what to do. Writes are the ones "
+                       "that change your data."),
+    ("Footprint", "How many other things a change here could reach, counted by following the "
+                  "connections. A workflow with a footprint of 400 writes fields that 400 "
+                  "other things depend on, directly or further down the chain."),
+    ("Turned off", "The workflow exists and still holds its logic, but is not enrolling "
+                   "anyone right now. It is dormant, not deleted."),
+    ("List", "A saved group of records. Active lists update themselves as records change; "
+             "static lists are a fixed snapshot from when they were made."),
+    ("Suppression list", "A list of people a workflow deliberately skips — usually those who "
+                         "have opted out. Deleting one by mistake can start emailing people "
+                         "who asked you not to."),
+]
+
+
 def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
     """The actual rows of work behind each phase, in the order they should be done."""
     now = datetime.now(timezone.utc)
@@ -42,11 +66,12 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
     def row(w, **extra):
         base = {
             "name": w["name"],
+            "does": w.get("steps_text") or [w.get("description", "")],
             "status": "Active" if w["enabled"] else "Turned off",
             "steps": w["action_count"],
             "updated": str(w["updated_at"] or "")[:10],
             "footprint": reach[w["id"]],
-            "writes": ", ".join(w["properties_written_q"][:6]),
+            "writes": w.get("properties_written_labels") or [],
             "link": w["link"],
         }
         base.update(extra)
@@ -82,16 +107,16 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
         "p4": [row(w, reason=f"Active, last edited {str(w['updated_at'] or '')[:10]}")
                for w in sorted(live_stale, key=lambda w: -reach[w["id"]])],
         "p5": [{
-            "name": p["key"],
-            "label": p.get("label") or "",
-            "writers": ", ".join(wf_name.get(i, i) for i in p["written_by_workflows"]),
+            "name": p.get("display") or p.get("label") or p["key"],
+            "label": p["key"],
+            "writers": [wf_name.get(i, i) for i in p["written_by_workflows"]],
             "writer_count": len(p["written_by_workflows"]),
             "readers": len(p["read_by_workflows"]) + len(p["segmented_by_lists"]),
             "link": p["link"],
         } for p in contended],
         "p6": [{
-            "name": p["key"],
-            "label": p.get("label") or "",
+            "name": p.get("display") or p.get("label") or p["key"],
+            "label": p["key"],
             "object": p["object_type"],
             "type": p.get("field_type") or p.get("type") or "",
             "group": p.get("group") or "",
@@ -111,6 +136,8 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
         {
             "id": "p0", "n": 0, "title": "Protect the account", "risk": NONE,
             "count": "", "effort": "~30 min", "tab": None,
+            "what": "Nothing is broken yet. This phase is the safety net that makes every later phase reversible.",
+            "fix": "Take a full export and agree the rules of engagement. Ten minutes here is what lets you undo a mistake in week three.",
             "why": "HubSpot has no recycle bin for workflows. A deleted workflow is gone, and "
                    "its logic with it. Everything in this plan assumes you can undo a mistake; "
                    "this phase is what makes that true.",
@@ -132,6 +159,8 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
         {
             "id": "p1", "n": 1, "title": "Clear the noise", "risk": SAFE,
             "count": f"{len(work['p1'])} workflows", "effort": "~2 hrs", "tab": "P1 Clear the noise",
+            "what": "Workflows that contain nothing. Some were created and never built; others are copies someone made while testing and left behind. Neither does anything to your data.",
+            "fix": "Delete the empty ones outright — there is no logic inside to lose. Open the copies and test-named ones first to be sure the name is telling the truth.",
             "why": "Workflows that carry no logic at all, plus those named as tests or copies. "
                    "Removing the empty ones is not a judgment call — there is nothing inside "
                    "them to lose.",
@@ -150,6 +179,8 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
             "id": "p2", "n": 2, "title": "The provably dormant", "risk": SAFE,
             "count": f"{len(work['p2'])} workflows", "effort": "~half a day",
             "tab": "P2 Dormant safe",
+            "what": "Workflows that are switched off AND whose output nothing else uses. Both halves matter: off on its own is not enough, because a dormant workflow can still hold the only definition of a field something live depends on.",
+            "fix": "Rename with a prefix so they sort together, leave them a week, then delete. Note what each one did in the Notes column before it goes — that record is the only thing that survives deletion.",
             "why": f"{len(work['p2'])} turned-off workflows have nothing downstream at all — no "
                    "other workflow reads what they write, no list segments on it, no email "
                    "depends on it. That is measured from the dependency graph, not guessed, and "
@@ -169,6 +200,8 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
             "id": "p3", "n": 3, "title": "Dormant clusters", "risk": JUDGE,
             "count": f"{len(work['p3'])} workflows", "effort": "~2 days",
             "tab": "P3 Dormant clusters",
+            "what": "Workflows that are switched off but whose output something else still reads. Usually a retired system that was turned off as a group and still points at itself.",
+            "fix": "Decide per cluster, not per workflow. If everything downstream is also dormant, retire the whole group. If anything downstream is live, find what feeds it now before touching anything.",
             "why": "These turned-off workflows do have something downstream. That usually means "
                    "a group of related workflows was retired together and still points at "
                    "itself. The question is whether the whole cluster is dormant or whether one "
@@ -191,6 +224,8 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
             "id": "p4", "n": 4, "title": "Running but unreviewed", "risk": CARE,
             "count": f"{len(work['p4'])} workflows", "effort": "~1 week",
             "tab": "P4 Active and stale",
+            "what": "Workflows that are running right now, and that nobody has opened in over a year. They are changing your records today using rules written for how the business used to work.",
+            "fix": "You cannot fix these by reading the audit — this phase needs a conversation with whoever owns the process. Take the top twenty by footprint into one meeting and ask, for each: is this still how we do it? Change or switch off what no longer matches.",
             "why": f"{len(work['p4'])} workflows are active and have not been edited in over a "
                    "year. They are touching records today against logic nobody has checked "
                    "against how the business currently works. Everything before this was about "
@@ -214,6 +249,8 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
             "id": "p5", "n": 5, "title": "Competing writes", "risk": JUDGE,
             "count": f"{len(work['p5'])} properties", "effort": "~2 days",
             "tab": "P5 Competing writes",
+            "what": "Fields that more than one workflow sets. When two workflows can fire on the same record, whichever finishes last wins — which is why a value seems to change on its own.",
+            "fix": "For each field, decide which workflow should win. Then either narrow the enrolment conditions so only one can fire, or merge the two into a single workflow with a branch. Write the intended order into the workflow description so nobody undoes it later.",
             "why": "These properties are written by more than one workflow — the usual cause of "
                    "a value that flips back and forth, a report that disagrees with the record, "
                    "and “this contact keeps changing owner”. Multiple writers are not "
@@ -236,6 +273,8 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
             "id": "p6", "n": 6, "title": "Unused fields", "risk": JUDGE,
             "count": f"{len(work['p6'])} of {len(custom)} custom", "effort": "~2 days",
             "tab": "P6 Unused fields",
+            "what": "Custom fields that no workflow, form or list touches. They may still be filled in by hand, feed a report, or be written by an integration — none of which this audit can see.",
+            "fix": "Check fill rate, reports and integrations first. Then archive rather than delete: archiving hides the field but keeps the historical values, and it is reversible.",
             "why": "These custom properties are referenced by no workflow, no form and no list. "
                    "That is a strong signal and it is not permission to delete. The audit can "
                    "only see automation — it cannot see a field a salesperson fills in on every "
@@ -258,6 +297,8 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
             "id": "p7", "n": 7, "title": "Marketing sprawl", "risk": JUDGE,
             "count": f"{len(lists_):,} lists · {len(emails):,} emails", "effort": "ongoing",
             "tab": None,
+            "what": "The marketing library: every list, email and page. Individually low-risk, collectively the reason nobody can find anything.",
+            "fix": "Work in batches by age and state rather than one at a time, and set a retention rule so this does not rebuild itself over the next year.",
             "why": "Marketing holds two thirds of the account. Per item the risk is low; in "
                    "aggregate it is the biggest drag on anyone trying to find anything. Treat "
                    "it as batch housekeeping rather than case-by-case review.",
@@ -277,6 +318,8 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
         {
             "id": "p8", "n": 8, "title": "Hand it over", "risk": NONE,
             "count": "", "effort": "~half a day", "tab": None,
+            "what": "Turning the work into something the next person can use without repeating it.",
+            "fix": "Re-run the audit to show what changed, hand over the guide and workbook together, and teach one person the footprint check before they edit anything.",
             "why": "The point of the audit is not the cleanup — it is that the next person can "
                    "answer “what breaks if I change this” without rediscovering the account.",
             "where": "The guide and the workbook, handed over together.",

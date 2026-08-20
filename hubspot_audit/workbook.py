@@ -72,32 +72,50 @@ def _sheet(wb: Workbook, title: str, headers: list[str], widths: list[int]):
 
 
 def _finish(ws, *, hyperlinks: bool = True) -> None:
-    """Body font, wrapped descriptions, clickable links, and a filter row.
+    """Body font, wrapped multi-line cells, clickable links, and a filter row.
 
-    Each real hyperlink costs a relationship entry in the sheet's XML. On a tab with
-    a couple of thousand rows that alone makes the file slow enough to stall a
-    LibreOffice recalculation, so large tabs keep the URL as plain text — which is
-    what you want for Sheets anyway, since it linkifies a pasted URL itself.
+    Links use the HYPERLINK() formula rather than a real hyperlink object. A stored
+    hyperlink costs a relationship entry per cell, which on a tab of a few thousand
+    rows bloats the file badly; the formula costs nothing, stays clickable in both
+    Excel and Sheets, and survives a copy-paste into a sheet.
     """
     for row in ws.iter_rows(min_row=2):
         for cell in row:
             cell.font = BODY_FONT
-            cell.alignment = Alignment(vertical="top", wrap_text=isinstance(cell.value, str)
-                                       and len(str(cell.value)) > 60)
-            if hyperlinks and isinstance(cell.value, str) and cell.value.startswith("https://"):
-                cell.hyperlink = cell.value
+            text = cell.value if isinstance(cell.value, str) else ""
+            cell.alignment = Alignment(
+                vertical="top",
+                wrap_text="\n" in text or len(text) > 55,
+            )
+            if hyperlinks and text.startswith("https://"):
+                cell.value = f'=HYPERLINK("{text}","Open in HubSpot")'
                 cell.font = LINK_FONT
-                cell.value = "Open in HubSpot"
     if ws.max_row > 1:
         ws.auto_filter.ref = f"A1:{get_column_letter(ws.max_column)}{ws.max_row}"
 
 
-def _names(ids: list[str], g) -> str:
-    return ", ".join(g.nodes[i]["label"] for i in ids if i in g.nodes)
+def _steps(workflow: dict[str, Any]) -> str:
+    """The workflow description as numbered lines, one point per line."""
+    points = workflow.get("steps_text") or [workflow.get("description", "")]
+    return "\n".join(f"{i}. {line}" for i, line in enumerate(points, 1) if line)
+
+
+def _lines(values, limit: int = 12) -> str:
+    """One item per line. Long lists are truncated with an explicit remainder."""
+    items = [str(v) for v in values if v]
+    if not items:
+        return ""
+    if len(items) > limit:
+        return "\n".join(items[:limit]) + f"\n… and {len(items) - limit} more"
+    return "\n".join(items)
+
+
+def _names(ids: list[str], g, limit: int = 12) -> str:
+    return _lines([g.nodes[i]["label"] for i in ids if i in g.nodes], limit)
 
 
 def _worklist(wb: Workbook, title: str, headers: list[str], widths: list[int],
-              rows: list[list[Any]], note: str) -> None:
+              rows: list[list[Any]], note: str) -> dict[str, Any]:
     """A phase work list: the evidence columns, then blank columns to fill in.
 
     The fill-in columns carry a different header colour, and the first data row is a
@@ -115,11 +133,19 @@ def _worklist(wb: Workbook, title: str, headers: list[str], widths: list[int],
 
     for row in rows:
         ws.append(row + [""] * len(TRACK_COLS))
-    _finish(ws, hyperlinks=len(rows) <= 300)
+    _finish(ws)
     ws.insert_rows(1)
     ws["A1"] = note
     ws["A1"].font = NOTE_FONT
     ws.freeze_panes = "A3"
+    # Row 1 note, row 2 headers, row 3 worked example, data from row 4.
+    return {
+        "tab": title,
+        "first": 4,
+        "last": max(ws.max_row, 4),
+        "decision_col": get_column_letter(len(headers) + 1),
+        "key_col": "A",
+    }
 
 
 def build(analysis: dict[str, Any], out_path: Path) -> Path:
@@ -140,23 +166,22 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     # ---------------------------------------------------------- workflows
     ws = _sheet(
         wb, "Workflows",
-        ["Workflow", "Status", "Area", "Steps", "Writes to", "Reads", "Triggers",
-         "Lists used", "Last updated", "What it does", "Link"],
-        [42, 10, 26, 7, 34, 34, 26, 22, 13, 62, 16],
+        ["Workflow", "What it does", "Status", "Area", "Steps", "Writes to", "Reads",
+         "Hands off to", "Last updated", "Link"],
+        [40, 70, 11, 25, 7, 32, 32, 26, 13, 17],
     )
     by_id = {w["id"]: w for w in analysis["workflows"]}
     for w in sorted(analysis["workflows"], key=lambda w: (not w["enabled"], w["name"].lower())):
         ws.append([
             w["name"],
+            _steps(w),
             "Active" if w["enabled"] else "Turned off",
             area_of.get(f"wf:{w['id']}", ""),
             w["action_count"],
-            ", ".join(w["properties_written_q"]),
-            ", ".join(w["properties_read_q"]),
-            ", ".join(by_id[t]["name"] for t in w["workflows_triggered"] if t in by_id),
-            ", ".join(w["lists_referenced"]),
+            _lines(w["properties_written_labels"]),
+            _lines(w["properties_read_labels"]),
+            _lines([by_id[t]["name"] for t in w["workflows_triggered"] if t in by_id]),
             str(w["updated_at"] or "")[:10],
-            w["description"].replace("`", ""),
             w["link"],
         ])
     _finish(ws)
@@ -164,13 +189,15 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     # --------------------------------------------------------- properties
     ws = _sheet(
         wb, "Properties",
-        ["Property", "Label", "Object", "Type", "Group", "Custom?", "Used by",
-         "Workflows writing", "Workflows reading", "Forms", "Lists", "Area", "Link"],
-        [34, 28, 14, 13, 20, 9, 9, 34, 34, 22, 22, 24, 16],
+        ["Property", "Object", "Type", "Group", "Custom?", "Used by",
+         "Written by these workflows", "Read by these workflows", "Collected by these forms",
+         "Used by these lists", "Area", "Internal name", "Link"],
+        [32, 14, 13, 20, 9, 9, 34, 34, 26, 26, 24, 32, 17],
     )
     for p in analysis["properties"]:
         ws.append([
-            p["key"], p.get("label") or "", p["object_type"],
+            p.get("display") or p.get("label") or p["name"],
+            p["object_type"],
             p.get("field_type") or p.get("type") or "",
             p.get("group") or "",
             "no" if p["hubspot_defined"] else "yes",
@@ -180,9 +207,10 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
             _names([f"form:{i}" for i in p["collected_by_forms"]], g),
             _names([f"list:{i}" for i in p["segmented_by_lists"]], g),
             area_of.get(f"prop:{p['key']}", ""),
+            p["key"],
             p["link"],
         ])
-    _finish(ws, hyperlinks=False)
+    _finish(ws)
 
     # -------------------------------------------------- lists, forms, etc.
     ws = _sheet(wb, "Lists", ["List", "Type", "Size", "Segments on", "Used by workflows", "Link"],
@@ -190,7 +218,7 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     for l in analysis["lists"]:
         ws.append([
             l["name"], l.get("processing_type") or "", l.get("size") or "",
-            ", ".join(l.get("properties_q") or []),
+            _lines(l.get("properties_labels") or []),
             _names([t for t, _ in g.out.get(f"list:{l['id']}", [])], g),
             l["link"],
         ])
@@ -201,22 +229,26 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     for f in analysis["forms"]:
         ws.append([
             f["name"], f.get("type") or "", "Archived" if f["archived"] else "Live",
-            f["field_count"], ", ".join(f.get("fields_q") or []), f["link"],
+            f["field_count"], _lines(f.get("fields_labels") or []), f["link"],
         ])
     _finish(ws)
 
-    ws = _sheet(wb, "Marketing emails", ["Email", "Subject", "State", "Last updated", "Link"],
-                [40, 44, 14, 13, 16])
+    ws = _sheet(wb, "Marketing emails",
+                ["Email", "What it is about", "Category", "Sent by workflow", "Subject line",
+                 "State", "Last updated", "Link"],
+                [38, 56, 24, 34, 40, 13, 13, 17])
     for e in analysis["marketing_emails"]:
-        ws.append([e["name"], e.get("subject") or "", e.get("state") or "",
-                   str(e.get("updated_at") or "")[:10], e["link"]])
+        ws.append([e["name"], e.get("about") or "", e.get("purpose") or "",
+                   _lines(e.get("sent_by") or []), e.get("subject") or "",
+                   e.get("state") or "", str(e.get("updated_at") or "")[:10], e["link"]])
     _finish(ws)
 
-    ws = _sheet(wb, "Pages", ["Page", "Kind", "URL", "State", "Last updated", "Link"],
-                [36, 15, 46, 13, 13, 16])
+    ws = _sheet(wb, "Pages",
+                ["Page", "What it is about", "Kind", "Live URL", "State", "Last updated", "Link"],
+                [34, 50, 15, 44, 13, 13, 17])
     for p in analysis["landing_pages"] + analysis["site_pages"]:
-        ws.append([p["name"], p["kind"], p.get("url") or "", p.get("state") or "",
-                   str(p.get("updated_at") or "")[:10], p["link"]])
+        ws.append([p["name"], p.get("about") or "", p["kind"], p.get("url") or "",
+                   p.get("state") or "", str(p.get("updated_at") or "")[:10], p["link"]])
     _finish(ws)
 
     ws = _sheet(wb, "Pipelines & stages", ["Pipeline", "Object", "Stage", "Link"], [36, 14, 36, 16])
@@ -231,15 +263,17 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     _finish(ws)
 
     # ------------------------------------------------------- connections
-    ws = _sheet(wb, "Connections", ["From", "From type", "Relationship", "To", "To type"],
-                [44, 15, 20, 44, 15])
+    ws = _sheet(wb, "Connections",
+                ["From", "From type", "Relationship", "To", "To type", "In plain English"],
+                [40, 15, 20, 40, 15, 66])
     for edge in sorted(g.to_dict()["edges"], key=lambda e: (e["from"], e["to"])):
         src, dst = g.nodes.get(edge["from"]), g.nodes.get(edge["to"])
         if not src or not dst:
             continue
+        verb = graph_mod.RELATIONS.get(edge["rel"], (edge["rel"],))[0]
         ws.append([src["label"], graph_mod.TYPE_LABELS.get(src["type"], src["type"]),
-                   graph_mod.RELATIONS.get(edge["rel"], (edge["rel"],))[0],
-                   dst["label"], graph_mod.TYPE_LABELS.get(dst["type"], dst["type"])])
+                   verb, dst["label"], graph_mod.TYPE_LABELS.get(dst["type"], dst["type"]),
+                   f"“{src['label']}” {verb} “{dst['label']}”"])
     _finish(ws, hyperlinks=False)
 
     # ------------------------------------------------------------- areas
@@ -261,62 +295,109 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
 
 
 def _review_tabs(wb: Workbook, analysis: dict[str, Any], g) -> None:
-    """The review plan as a tab, plus one work list per actionable phase."""
+    """The review plan as a tab, plus one work list per actionable phase.
+
+    Work lists are built first because the plan tab counts them: its To do / Done
+    columns are formulas pointing at each list's data range, so they have to exist
+    before the ranges can be named. The plan sheet is moved back to the front
+    afterwards.
+    """
     work = review_mod.cohorts(analysis, g)
     phases = review_mod.phases(analysis, work)
 
-    ws = _sheet(wb, "Review plan",
-                ["Phase", "What to do", "Risk", "Scope", "Effort", "Work list tab",
-                 "The mistake to avoid"],
-                [8, 26, 12, 28, 12, 22, 66])
-    for phase in phases:
-        ws.append([phase["n"], phase["title"], phase["risk"],
-                   phase["count"] or "—", phase["effort"], phase["tab"] or "—",
-                   phase["guard"] or "—"])
-        ws.cell(row=ws.max_row, column=3).fill = RISK_FILL.get(phase["risk"], RISK_FILL["process"])
-    _finish(ws, hyperlinks=False)
-    ws.insert_rows(1)
-    ws["A1"] = ("Work top to bottom. Phases 1-2 are evidence-backed; phase 4 carries the real "
-                "business risk. Each work list tab has amber columns for you to complete.")
-    ws["A1"].font = NOTE_FONT
-    ws.freeze_panes = "A3"
-
-    wf_head = ["Workflow", "Why it is here", "Status", "Steps", "Last updated",
-               "Footprint", "Writes to", "Link"]
-    wf_width = [46, 30, 11, 7, 13, 11, 40, 16]
+    wf_head = ["Workflow", "Why it is on this list", "What it does", "Status", "Steps",
+               "Last updated", "Footprint", "Writes to", "Link"]
+    wf_width = [38, 30, 62, 11, 7, 13, 11, 32, 17]
 
     def wf_rows(key):
-        return [[r["name"], r["reason"], r["status"], r["steps"], r["updated"],
-                 r["footprint"], r["writes"], r["link"]] for r in work[key]]
+        return [[r["name"], r["reason"],
+                 "\n".join(f"{i}. {t}" for i, t in enumerate(r["does"], 1) if t),
+                 r["status"], r["steps"], r["updated"], r["footprint"],
+                 _lines(r["writes"]), r["link"]] for r in work[key]]
 
-    _worklist(wb, "P1 Clear the noise", wf_head, wf_width, wf_rows("p1"),
+    ranges = {}
+    ranges["p1"] = _worklist(wb, "P1 Clear the noise", wf_head, wf_width, wf_rows("p1"),
               "Phase 1 — no logic inside these. Empty ones are safe to delete; check the "
               "leftover-named ones individually before removing.")
-    _worklist(wb, "P2 Dormant safe", wf_head, wf_width, wf_rows("p2"),
+    ranges["p2"] = _worklist(wb, "P2 Dormant safe", wf_head, wf_width, wf_rows("p2"),
               "Phase 2 — turned off with nothing downstream. Footprint 0 is measured, not "
               "assumed. Re-confirm before each batch.")
-    _worklist(wb, "P3 Dormant clusters", wf_head, wf_width, wf_rows("p3"),
+    ranges["p3"] = _worklist(wb, "P3 Dormant clusters", wf_head, wf_width, wf_rows("p3"),
               "Phase 3 — turned off but something downstream. Retire a whole dormant cluster, "
               "never one workflow out of it. Sorted by footprint.")
-    _worklist(wb, "P4 Active and stale", wf_head, wf_width, wf_rows("p4"),
+    ranges["p4"] = _worklist(wb, "P4 Active and stale", wf_head, wf_width, wf_rows("p4"),
               "Phase 4 — running, and not edited in over a year. Highest risk in the audit. "
               "Sorted by footprint: work down from the top.")
 
-    _worklist(wb, "P5 Competing writes",
-              ["Property", "Label", "Written by", "Writers", "Things reading it", "Link"],
-              [34, 28, 60, 9, 15, 16],
-              [[r["name"], r["label"], r["writers"], r["writer_count"], r["readers"], r["link"]]
-               for r in work["p5"]],
+    ranges["p5"] = _worklist(wb, "P5 Competing writes",
+              ["Property", "Internal name", "Written by these workflows", "How many writers",
+               "Things reading it", "Link"],
+              [32, 34, 46, 12, 15, 17],
+              [[r["name"], r["label"], _lines(r["writers"]), r["writer_count"],
+                r["readers"], r["link"]] for r in work["p5"]],
               "Phase 5 — more than one workflow writes these. Establish which should win and "
               "under what condition. Sorted by how much depends on the value.")
 
-    _worklist(wb, "P6 Unused fields",
-              ["Property", "Label", "Object", "Type", "Group", "Link"],
-              [34, 30, 15, 14, 22, 16],
+    ranges["p6"] = _worklist(wb, "P6 Unused fields",
+              ["Property", "Internal name", "Object", "Type", "Group", "Link"],
+              [32, 34, 15, 14, 22, 17],
               [[r["name"], r["label"], r["object"], r["type"], r["group"], r["link"]]
                for r in work["p6"]],
               "Phase 6 — no workflow, form or list references these. That is NOT permission to "
               "delete: check fill rate, reports and integrations first, then archive.")
+
+    ws = _sheet(wb, "Review plan",
+                ["Phase", "What to do", "Risk", "Scope", "Effort", "Work list tab",
+                 "To do", "Done", "Progress", "What this is", "Why it matters",
+                 "How to fix it", "Step by step", "The mistake to avoid"],
+                [7, 24, 11, 24, 11, 21, 9, 8, 11, 60, 60, 64, 70, 62])
+    for i, phase in enumerate(phases):
+        rng = ranges.get(phase["id"])
+        if rng:
+            total = f"=COUNTA('{rng['tab']}'!{rng['key_col']}{rng['first']}:"\
+                    f"{rng['key_col']}{rng['last']})"
+            done = f"=COUNTA('{rng['tab']}'!{rng['decision_col']}{rng['first']}:"\
+                   f"{rng['decision_col']}{rng['last']})"
+            pct = ""  # written after the note row is inserted, once rows settle
+        else:
+            total = done = pct = "—"
+        ws.append([
+            phase["n"], phase["title"], phase["risk"], phase["count"] or "—",
+            phase["effort"], phase["tab"] or "—", total, done, pct,
+            phase["what"],
+            phase["why"],
+            phase["fix"],
+            "\n".join(f"{j}. {t}" for j, t in enumerate(phase["steps"], 1)),
+            phase["guard"] or "—",
+        ])
+        row = ws.max_row
+        ws.cell(row=row, column=3).fill = RISK_FILL.get(phase["risk"], RISK_FILL["process"])
+        for col in (7, 8):
+            ws.cell(row=row, column=col).font = Font(name=FONT, size=10, bold=True)
+    _finish(ws, hyperlinks=False)
+    ws.insert_rows(1)
+    # Percentages are written now, after the note row has shifted every phase down,
+    # so each formula points at its own row rather than the one above it.
+    for row in range(3, ws.max_row + 1):
+        if isinstance(ws.cell(row=row, column=7).value, str) and \
+                str(ws.cell(row=row, column=7).value).startswith("="):
+            cell = ws.cell(row=row, column=9, value=f"=IFERROR(H{row}/G{row},0)")
+            cell.number_format = "0%"
+            cell.font = Font(name=FONT, size=10, bold=True)
+    ws["A1"] = (
+        "Work top to bottom. Phases 1-2 are evidence-backed; phase 4 carries the real business "
+        "risk. Each work list tab has amber columns for you to complete — fill in Decision and "
+        "the Done count here updates. To do / Done / Progress are live formulas: they "
+        "recalculate when the file opens in Sheets or Excel, and the worked example row on each "
+        "tab is excluded from both counts."
+    )
+    ws["A1"].font = NOTE_FONT
+    ws.freeze_panes = "A3"
+
+    # Plan first, then the phase lists in order.
+    order = ["Review plan"] + [r["tab"] for r in ranges.values()]
+    for name in reversed(order):
+        wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(wb[name])))
 
 
 def _overview(wb: Workbook, analysis: dict[str, Any], scores, portal_areas) -> None:

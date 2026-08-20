@@ -171,7 +171,7 @@ def _plan_body(analysis: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
 
         steps = "".join(f"<li>{_escape(t)}</li>" for t in phase["steps"])
         guard = (
-            f'<div class="guard"><b>Do not</b>{_escape(phase["guard"])}</div>'
+            f'<div class="guard"><b>The mistake to avoid</b>{_escape(phase["guard"])}</div>'
             if phase["guard"] else ""
         )
         blocks.append(
@@ -179,11 +179,28 @@ def _plan_body(analysis: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
             f'<div class="ph-head"><span class="ph-num">Phase {phase["n"]}</span>'
             f'<h2>{_escape(phase["title"])}</h2></div>'
             f'<div class="tagrow">{"".join(tags)}</div>'
-            f'<p class="why">{_escape(phase["why"])}</p>'
-            f'<div class="where"><b>Where:</b> {_escape(phase["where"])}</div>'
+            f'<p class="lead-q"><b>What this is.</b> {_escape(phase["what"])}</p>'
+            f'<p class="why"><b>Why it matters.</b> {_escape(phase["why"])}</p>'
+            f'<p class="why fixline"><b>How to fix it.</b> {_escape(phase["fix"])}</p>'
+            f'<div class="where"><b>Where to work:</b> {_escape(phase["where"])}</div>'
+            f'<div class="steplabel">Step by step</div>'
             f'<ol class="steps">{steps}</ol>{guard}</section>'
         )
-    return "".join(blocks), phases
+
+    from . import review as review_mod
+
+    glossary = (
+        '<section class="phase glossary" id="glossary">'
+        '<div class="ph-head"><span class="ph-num">Reference</span>'
+        "<h2>What the words mean</h2></div>"
+        '<p class="why">Every term this plan uses, in plain language.</p><dl>'
+        + "".join(
+            f"<dt>{_escape(term)}</dt><dd>{_escape(meaning)}</dd>"
+            for term, meaning in review_mod.GLOSSARY
+        )
+        + "</dl></section>"
+    )
+    return "".join(blocks) + glossary, phases
 
 
 def _plan_totals(analysis: dict[str, Any], phases) -> str:

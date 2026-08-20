@@ -37,6 +37,7 @@ OWNER_KEYS = {"ownerId", "owner_id", "hubspot_owner_id"}
 # Native action type IDs, confirmed against real v4 payloads by their field shapes
 # (e.g. 0-5 carries property_name/value, so it is the set-property action).
 ACTION_TYPE_NAMES = {
+    # Native actions, confirmed against real v4 payloads by their field shapes.
     "0-1": "Delay",
     "0-2": "Delay until event",
     "0-3": "Create task",
@@ -47,11 +48,31 @@ ACTION_TYPE_NAMES = {
     "0-11": "Rotate record to owner",
     "0-13": "Add to static list",
     "0-14": "Create record",
+    "0-15": "Enrol in another workflow",
+    "0-23": "Send internal email",
+    "0-25": "Copy property value",
+    "0-28": "Delay",
     "0-29": "Wait for event",
+    "0-31": "Set marketing contact status",
     "0-35": "Delay until date or time",
+    "0-43347357": "Set email subscription status",
     "0-46510720": "Enrol in sequence",
     "0-63189541": "Create or associate records",
     "0-63809083": "Add or remove from list",
+    "0-63863438": "Add or remove from list",
+    "0-169425243": "Create note",
+    "0-261589386": "Increase or decrease a number property",
+    # App extension actions, identified by the app-specific fields they carry.
+    "1-179507819": "Send Slack message",
+    "1-1633220": "Create Jira issue",
+    "1-24662337": "Create ClickUp task",
+    "1-2796901": "Add a Google Sheets row",
+    "1-9488285": "Find or update a Google Sheets row",
+    "1-38840228": "Copy a property (app action)",
+    "1-38840229": "Copy a property (app action)",
+    "1-1567": "Trigger an external app",
+    "1-1612850": "Apply an app template",
+    "1-75176113": "Look up a phone number",
 }
 
 # Field keys that identify an action when its type ID is unrecognised. Ordered:
@@ -141,6 +162,20 @@ class Analysis:
         for names in self.known_props.values():
             self.all_prop_names |= names
 
+        # key -> the label HubSpot shows in its own UI. Where two objects use the
+        # same label, the object is appended so the two stay tellable apart.
+        raw_labels: dict[str, str] = {}
+        label_counts: Counter[str] = Counter()
+        for obj, props in self.properties.items():
+            for prop in props:
+                label = (prop.get("label") or prop["name"]).strip()
+                raw_labels[f"{obj}.{prop['name']}"] = label
+                label_counts[label] += 1
+        self.prop_labels = {
+            key: (label if label_counts[label] == 1 else f"{label} ({key.split('.')[0]})")
+            for key, label in raw_labels.items()
+        }
+
         self.coverage = _coverage(snapshot)
         # Every reference source must be readable before absence of a reference
         # can be reported as absence of use.
@@ -209,6 +244,8 @@ class Analysis:
             "actions": action_summary,
             "properties_read": sorted(read),
             "properties_written": sorted(written),
+            "properties_read_labels": [],
+            "properties_written_labels": [],
             "properties_read_q": sorted(
                 {self.qualify(n, OBJECT_BY_TYPE_ID.get(str(flow.get("objectTypeId")))) for n in read}
             ),
@@ -221,7 +258,10 @@ class Analysis:
             "forms_referenced": sorted(refs["forms"]),
             "suppression_lists": [str(x) for x in (flow.get("suppressionListIds") or [])],
         }
-        record["description"] = self._describe(record)
+        record["properties_written_labels"] = self._labels(record["properties_written_q"])
+        record["properties_read_labels"] = self._labels(record["properties_read_q"])
+        record["steps_text"] = self._describe_steps(record)
+        record["description"] = " ".join(record["steps_text"])
 
         for name in read:
             self.usage[name]["read_by_workflows"].add(fid)
@@ -317,42 +357,52 @@ class Analysis:
             return f"{a_type or 'Action'} ({type_id})"
         return a_type or "Action"
 
-    def _describe(self, r: dict[str, Any]) -> str:
-        """A plain-language sentence or two about what this workflow does."""
+    def label(self, key: str) -> str:
+        """The name a person recognises, falling back to the internal one."""
+        return self.prop_labels.get(key, key)
+
+    def _labels(self, keys: list[str]) -> list[str]:
+        return [self.label(k) for k in keys]
+
+    def _describe_steps(self, r: dict[str, Any]) -> list[str]:
+        """What this workflow does, as short numbered points rather than a paragraph."""
         if not r["definition_available"]:
-            return (
-                "Full definition could not be read from the API (the token or plan tier "
-                "does not expose it). Name, status, and timestamps only."
-            )
+            return ["The full definition could not be read from HubSpot, so only the name, "
+                    "status and dates below are known."]
 
         obj = _object_label(r["object_type"])
         state = "Active" if r["enabled"] else "Turned off"
-        parts = [f"{state} {obj} workflow."]
+        out = [f"{state} {obj} workflow."]
 
-        if r["properties_read"]:
-            shown = ", ".join(f"`{p}`" for p in r["properties_read"][:6])
-            more = f" (+{len(r['properties_read']) - 6} more)" if len(r["properties_read"]) > 6 else ""
-            parts.append(f"Enrolls and branches on {shown}{more}.")
+        reads = self._labels(r["properties_read_q"])
+        if reads:
+            shown = ", ".join(reads[:6])
+            more = f" (+{len(reads) - 6} more)" if len(reads) > 6 else ""
+            out.append(f"Enrols and branches on: {shown}{more}.")
         elif r["enrollment_type"]:
-            parts.append(f"Enrollment type: {r['enrollment_type']}.")
+            out.append(f"Enrolment type: {r['enrollment_type']}.")
 
-        if r["properties_written"]:
-            shown = ", ".join(f"`{p}`" for p in r["properties_written"][:6])
-            more = f" (+{len(r['properties_written']) - 6} more)" if len(r["properties_written"]) > 6 else ""
-            parts.append(f"Writes {shown}{more}.")
+        writes = self._labels(r["properties_written_q"])
+        if writes:
+            shown = ", ".join(writes[:6])
+            more = f" (+{len(writes) - 6} more)" if len(writes) > 6 else ""
+            out.append(f"Writes: {shown}{more}.")
 
         counts = Counter(a["label"] for a in r["actions"])
         if counts:
-            steps = ", ".join(f"{n}× {label}" for label, n in counts.most_common(6))
-            parts.append(f"{r['action_count']} steps: {steps}.")
+            steps = ", ".join(f"{n}x {label}" for label, n in counts.most_common(8))
+            out.append(f"{r['action_count']} steps: {steps}.")
 
+        tail = []
         if r["workflows_triggered"]:
-            parts.append(f"Hands off to {len(r['workflows_triggered'])} other workflow(s).")
+            tail.append(f"hands off to {len(r['workflows_triggered'])} other workflow(s)")
         if r["suppression_lists"]:
-            parts.append(f"{len(r['suppression_lists'])} suppression list(s) applied.")
+            tail.append(f"{len(r['suppression_lists'])} suppression list(s) applied")
         if r["re_enrollment"]:
-            parts.append("Re-enrollment is on.")
-        return " ".join(parts)
+            tail.append("re-enrolment is on")
+        if tail:
+            out.append(_sentence(tail) + ".")
+        return out
 
     # ---------------------------------------------------------------------- forms
 
@@ -384,6 +434,7 @@ class Analysis:
                 "link": links.form(self.portal_id, fid),
                 "fields": sorted(fields),
                 "fields_q": sorted({self.qualify(n, "contacts") for n in fields}),
+                "fields_labels": self._labels(sorted({self.qualify(n, "contacts") for n in fields})),
                 "field_count": len(fields),
                 "description": (
                     f"{form.get('formType') or 'Form'} collecting {len(fields)} field(s)"
@@ -420,6 +471,9 @@ class Analysis:
                 "properties_q": sorted(
                     {self.qualify(n, OBJECT_BY_TYPE_ID.get(str(lst.get("objectTypeId")))) for n in props}
                 ),
+                "properties_labels": self._labels(sorted(
+                    {self.qualify(n, OBJECT_BY_TYPE_ID.get(str(lst.get("objectTypeId")))) for n in props}
+                )),
                 "description": (
                     f"{(lst.get('processingType') or 'LIST').title()} list"
                     + (f" segmenting on {', '.join(sorted(props)[:6])}." if props else ".")
@@ -460,6 +514,7 @@ class Analysis:
                     "option_count": len(p.get("options") or []),
                     "created_at": p.get("createdAt"),
                     "updated_at": p.get("updatedAt"),
+                    "display": self.label(f"{obj_type}.{name}"),
                     "link": links.prop(self.portal_id, obj_type, name),
                     "written_by_workflows": wf_write,
                     "read_by_workflows": wf_read,
@@ -630,6 +685,15 @@ def classify_workflow(record: dict[str, Any]) -> str:
     return "Unclassified"
 
 
+def _sentence(parts: list[str]) -> str:
+    """Join clauses into one readable sentence, capitalised."""
+    if len(parts) == 1:
+        joined = parts[0]
+    else:
+        joined = ", ".join(parts[:-1]) + " and " + parts[-1]
+    return joined[0].upper() + joined[1:]
+
+
 def _object_label(object_type_id: Any) -> str:
     mapping = {
         "0-1": "contact", "0-2": "company", "0-3": "deal",
@@ -655,14 +719,18 @@ def run(snapshot: dict[str, Any]) -> dict[str, Any]:
         "properties": properties,
         "forms": forms,
         "lists": lists_,
-        "marketing_emails": _simple_assets(
-            snapshot.get("marketing_emails", []), a.portal_id, links.marketing_email, "email"
+        "marketing_emails": _describe_assets(
+            _simple_assets(snapshot.get("marketing_emails", []), a.portal_id,
+                           links.marketing_email, "email"),
+            workflows, "email",
         ),
-        "landing_pages": _simple_assets(
-            snapshot.get("landing_pages", []), a.portal_id, links.page, "landing page"
+        "landing_pages": _describe_assets(
+            _simple_assets(snapshot.get("landing_pages", []), a.portal_id, links.page,
+                           "landing page"), workflows, "page",
         ),
-        "site_pages": _simple_assets(
-            snapshot.get("site_pages", []), a.portal_id, links.page, "site page"
+        "site_pages": _describe_assets(
+            _simple_assets(snapshot.get("site_pages", []), a.portal_id, links.page, "site page"),
+            workflows, "page",
         ),
         "blog_posts": _simple_assets(
             snapshot.get("blog_posts", []), a.portal_id, links.blog_post, "blog post"
@@ -672,10 +740,81 @@ def run(snapshot: dict[str, Any]) -> dict[str, Any]:
         "systems": {k: [w["id"] for w in v] for k, v in systems.items()},
         "clusters": clusters,
         "skipped": snapshot.get("skipped", []),
+        "property_labels": a.prop_labels,
         "coverage": a.coverage,
         "usage_complete": a.usage_complete,
         "unknown_action_types": dict(a.unknown_action_types),
     }
+
+
+# Words that appear in campaign names and reliably say what an email is for. Order
+# matters: the first match wins, so the more specific patterns come first.
+PURPOSE_HINTS = [
+    (r"\bwelcome|onboard|getting started|day\s*[01]\b", "Welcome / onboarding"),
+    (r"\babandon|cart|incomplete|unfinished", "Abandoned-action recovery"),
+    (r"\bre.?engage|win.?back|churn|dormant|inactive|we miss", "Re-engagement"),
+    (r"\bnewsletter|digest|round.?up|monthly|weekly|bulletin", "Newsletter / digest"),
+    (r"\bwebinar|event|invite|invitation|rsvp|register", "Event or webinar"),
+    (r"\bpromo|offer|discount|sale|deal of|black friday|cyber", "Promotion / offer"),
+    (r"\breminder|follow.?up|nudge|expiring|expires|renewal", "Reminder / follow-up"),
+    (r"\breceipt|invoice|order|shipping|confirmation|confirmed", "Transactional confirmation"),
+    (r"\bsurvey|feedback|nps|review|rate us", "Survey / feedback"),
+    (r"\bannounce|launch|introducing|new feature|release|update", "Announcement"),
+    (r"\bnurture|drip|sequence|series|part\s*\d", "Nurture sequence"),
+    (r"\bdemo|trial|pricing|quote|proposal|sales", "Sales outreach"),
+    (r"\bthank|thanks", "Thank-you"),
+    (r"\bdemo request|contact us|enquiry|inquiry|lead", "Lead capture"),
+]
+
+
+def _purpose(name: str, subject: str, kind: str) -> str:
+    """A short, honest read of what a marketing asset is for.
+
+    Inferred from the words the team themselves put in the name and subject, so it
+    reflects their own vocabulary rather than an outside guess.
+    """
+    haystack = f"{name} {subject}".lower()
+    for pattern, label in PURPOSE_HINTS:
+        if re.search(pattern, haystack):
+            return label
+    return "Uncategorised " + ("email" if kind == "email" else "page")
+
+
+def _describe_assets(assets: list[dict[str, Any]], workflows: list[dict[str, Any]],
+                     kind: str) -> list[dict[str, Any]]:
+    """Add a purpose line, and name the workflows that actually send each email.
+
+    The sending workflow is a fact read from the account; the category is an
+    inference from wording. The two are kept in separate fields so a reader can see
+    which is which.
+    """
+    senders: dict[str, list[str]] = {}
+    for w in workflows:
+        for email_id in w.get("emails_referenced") or []:
+            senders.setdefault(str(email_id), []).append(w["name"])
+
+    for asset in assets:
+        sent_by = senders.get(asset["id"], [])
+        asset["purpose"] = _purpose(asset.get("name") or "", asset.get("subject") or "", kind)
+        asset["sent_by"] = sent_by
+        state = (asset.get("state") or "").upper()
+        if sent_by:
+            asset["about"] = (
+                f"{asset['purpose']}. Sent automatically by "
+                + ", ".join(f"“{n}”" for n in sent_by[:3])
+                + (f" and {len(sent_by) - 3} more workflow(s)." if len(sent_by) > 3 else ".")
+            )
+        elif kind == "email":
+            asset["about"] = (
+                f"{asset['purpose']}. No workflow sends this — it was a one-off send"
+                + (" and is still a draft." if "DRAFT" in state else " or is sent by hand.")
+            )
+        else:
+            asset["about"] = (
+                f"{asset['purpose']}."
+                + (" Published and live." if "PUBLISH" in state else " Not currently published.")
+            )
+    return assets
 
 
 def _simple_assets(items, portal_id, link_fn, kind) -> list[dict[str, Any]]:
