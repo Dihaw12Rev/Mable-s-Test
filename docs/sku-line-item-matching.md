@@ -95,3 +95,20 @@ a Slack/email module.
 `blueprints/src/*.js` are the readable sources for the two Code modules. They
 are embedded into the blueprint JSON as the `codeEditorJavascript` field. Edit
 the source, then re-embed — keep the two in sync.
+
+## Fix: aggregator source module (module 10)
+
+Module 10's **Source Module** was set to module 9 ("Get a Line Item") instead of
+module 6 (the Iterator). This is pre-existing and unrelated to SKU matching, but
+it caps every run at one line item.
+
+The aggregator groups bundles by the *cycle* of its source module. Module 9 is a
+1-in/1-out action, so each of its bundles closed a group on its own: three line
+items produced three groups of one, rather than one group of three. Everything
+downstream of the aggregator — including **Create a Deal** — then ran once per
+line item.
+
+Source Module must be the module that multiplies bundles, i.e. the Iterator (6).
+
+Any test run made before this fix will have produced one HOM deal per line item;
+the extras need deleting.

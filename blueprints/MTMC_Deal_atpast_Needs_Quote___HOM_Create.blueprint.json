@@ -11865,7 +11865,7 @@
       "module": "builtin:BasicAggregator",
       "version": 1,
       "parameters": {
-        "feeder": 9
+        "feeder": 6
       },
       "mapper": {
         "id": "{{9.id}}",
@@ -11879,7 +11879,7 @@
         "restore": {
           "extra": {
             "feeder": {
-              "label": "Get Line Item's Supplier - Get a Line Item [9]"
+              "label": "Iterator [6]"
             },
             "target": {
               "label": "Custom"
