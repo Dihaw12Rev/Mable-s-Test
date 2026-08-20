@@ -12,6 +12,8 @@ TEMPLATE = Path(__file__).parent / "templates" / "report.html"
 DASHBOARD_SHELL = Path(__file__).parent / "templates" / "dashboard.html"
 EXPLORER = Path(__file__).parent / "templates" / "explorer.html"
 GUIDE = Path(__file__).parent / "templates" / "guide.html"
+PLAN_SCREEN = Path(__file__).parent / "templates" / "plan.html"
+PLAN_PRINT = Path(__file__).parent / "templates" / "plan-print.html"
 
 
 # ------------------------------------------------------------------------- shared
@@ -139,6 +141,94 @@ def render_guide(analysis: dict[str, Any], out_path: Path) -> Path:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html)
     return out_path
+
+
+# ---------------------------------------------------------------------- review plan
+
+RISK_WORD = {"safe": "safe", "judgment": "judgment", "careful": "highest risk",
+             "process": "process"}
+
+
+def _plan_body(analysis: dict[str, Any]) -> tuple[str, list[dict[str, Any]]]:
+    """Render the phase blocks once; both the screen and print pages use them."""
+    from . import graph as graph_mod
+    from . import review
+
+    g = graph_mod.build(analysis)
+    work = review.cohorts(analysis, g)
+    phases = review.phases(analysis, work)
+
+    blocks = []
+    for phase in phases:
+        tags = []
+        if phase["risk"] != "process":
+            tags.append(f'<span class="tag {phase["risk"]}">{RISK_WORD[phase["risk"]]}</span>')
+        if phase["count"]:
+            tags.append(f'<span class="tag count">{_escape(phase["count"])}</span>')
+        tags.append(f'<span class="tag count">{_escape(phase["effort"])}</span>')
+        if phase["tab"]:
+            tags.append(f'<span class="tag count">tab: {_escape(phase["tab"])}</span>')
+
+        steps = "".join(f"<li>{_escape(t)}</li>" for t in phase["steps"])
+        guard = (
+            f'<div class="guard"><b>Do not</b>{_escape(phase["guard"])}</div>'
+            if phase["guard"] else ""
+        )
+        blocks.append(
+            f'<section class="phase {phase["risk"]}" id="{phase["id"]}">'
+            f'<div class="ph-head"><span class="ph-num">Phase {phase["n"]}</span>'
+            f'<h2>{_escape(phase["title"])}</h2></div>'
+            f'<div class="tagrow">{"".join(tags)}</div>'
+            f'<p class="why">{_escape(phase["why"])}</p>'
+            f'<div class="where"><b>Where:</b> {_escape(phase["where"])}</div>'
+            f'<ol class="steps">{steps}</ol>{guard}</section>'
+        )
+    return "".join(blocks), phases
+
+
+def _plan_totals(analysis: dict[str, Any], phases) -> str:
+    from . import review
+
+    tiles = [("Workflows", f"{len(analysis['workflows']):,}")]
+    for phase in phases:
+        if phase["risk"] in (review.SAFE, review.CARE, review.JUDGE) and phase["tab"]:
+            number = phase["count"].split()[0]
+            tiles.append((phase["title"], number))
+    return "".join(
+        f'<div class="tot"><b>{_escape(v)}</b><span>{_escape(k)}</span></div>' for k, v in tiles
+    )
+
+
+def render_review_plan(analysis: dict[str, Any], out_html: Path, out_pdf: Path) -> list[Path]:
+    """The review plan, as a screen page and a printable PDF from one set of phases."""
+    body, phases = _plan_body(analysis)
+    totals = _plan_totals(analysis, phases)
+    nav = "".join(
+        f'<li><a class="s-{p["risk"]}" href="#{p["id"]}">'
+        f'<span class="n">{p["n"]}</span> {_escape(p["title"])}</a></li>'
+        for p in phases
+    )
+    name = portal_name(analysis)
+    written: list[Path] = []
+
+    for template, target in ((PLAN_SCREEN, out_html), (PLAN_PRINT, out_pdf)):
+        html = (
+            template.read_text()
+            .replace("__PORTAL__", _escape(name))
+            .replace("__DATE__", _escape(_date(analysis.get("extracted_at"))))
+            .replace("__TOTALS__", totals)
+            .replace("__NAV__", nav)
+            .replace("__BODY__", body)
+        )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.suffix == ".pdf":
+            from weasyprint import HTML
+
+            HTML(string=html, base_url=str(PLAN_PRINT.parent)).write_pdf(str(target))
+        else:
+            target.write_text(html)
+        written.append(target)
+    return written
 
 
 # ---------------------------------------------------------------------------- pdf

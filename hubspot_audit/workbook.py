@@ -16,6 +16,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
 from . import areas as areas_mod
+from . import review as review_mod
 from . import graph as graph_mod
 
 FONT = "Arial"
@@ -25,6 +26,35 @@ BODY_FONT = Font(name=FONT, size=10)
 TITLE_FONT = Font(name=FONT, size=13, bold=True)
 NOTE_FONT = Font(name=FONT, size=9, italic=True, color="6E6862")
 LINK_FONT = Font(name=FONT, size=10, color="0F5F63", underline="single")
+FILL_HEAD = PatternFill("solid", fgColor="8A5A12")     # columns you complete
+EXAMPLE_FILL = PatternFill("solid", fgColor="FFF6E0")  # the worked example row
+RISK_FILL = {
+    "safe": PatternFill("solid", fgColor="E1EDE4"),
+    "judgment": PatternFill("solid", fgColor="F6EBD8"),
+    "careful": PatternFill("solid", fgColor="F7E2E0"),
+    "process": PatternFill("solid", fgColor="EFEAE4"),
+}
+
+# Columns the reviewer fills in, appended to every work-list tab.
+TRACK_COLS = ["Decision", "Owner", "Date done", "Notes"]
+TRACK_WIDTHS = [18, 16, 13, 44]
+# One worked example per phase: the same wording everywhere would put deletion advice
+# on the tab whose whole point is reviewing live automation.
+EXAMPLES = {
+    "P1 Clear the noise": ["Delete", "R. Ops", "2026-09-01",
+                           "Confirmed zero steps; exported before removing"],
+    "P2 Dormant safe": ["Archive", "R. Ops", "2026-09-03",
+                        "Re-checked footprint still 0; renamed with ZZ_ prefix, delete after 30 days"],
+    "P3 Dormant clusters": ["Retire cluster", "R. Ops", "2026-09-10",
+                            "All 4 downstream workflows also off; retiring the group together"],
+    "P4 Active and stale": ["Keep — reviewed", "Sales ops", "2026-09-15",
+                            "Confirmed with deal desk: stage mapping still correct, no change needed"],
+    "P5 Competing writes": ["Add enrolment condition", "R. Ops", "2026-09-18",
+                            "Routing wins over the import workflow; condition added so only one fires"],
+    "P6 Unused fields": ["Archive", "R. Ops", "2026-09-22",
+                         "Fill rate 0.3%, not in any report, no integration writes it"],
+}
+DEFAULT_EXAMPLE = ["Reviewed", "R. Ops", "2026-09-01", "Decision and reasoning go here"]
 
 
 def _sheet(wb: Workbook, title: str, headers: list[str], widths: list[int]):
@@ -64,6 +94,32 @@ def _finish(ws, *, hyperlinks: bool = True) -> None:
 
 def _names(ids: list[str], g) -> str:
     return ", ".join(g.nodes[i]["label"] for i in ids if i in g.nodes)
+
+
+def _worklist(wb: Workbook, title: str, headers: list[str], widths: list[int],
+              rows: list[list[Any]], note: str) -> None:
+    """A phase work list: the evidence columns, then blank columns to fill in.
+
+    The fill-in columns carry a different header colour, and the first data row is a
+    worked example in the expected format — deleted once real decisions start.
+    """
+    ws = _sheet(wb, title, headers + TRACK_COLS, widths + TRACK_WIDTHS)
+    for i in range(len(headers) + 1, len(headers) + len(TRACK_COLS) + 1):
+        ws.cell(row=1, column=i).fill = FILL_HEAD
+
+    ws.append([""] * len(headers) + EXAMPLES.get(title, DEFAULT_EXAMPLE))
+    for cell in ws[2]:
+        cell.fill = EXAMPLE_FILL
+    ws.cell(row=2, column=1, value="← EXAMPLE ROW — delete me").font = Font(
+        name=FONT, size=10, italic=True, color="8A5A12")
+
+    for row in rows:
+        ws.append(row + [""] * len(TRACK_COLS))
+    _finish(ws, hyperlinks=len(rows) <= 300)
+    ws.insert_rows(1)
+    ws["A1"] = note
+    ws["A1"].font = NOTE_FONT
+    ws.freeze_panes = "A3"
 
 
 def build(analysis: dict[str, Any], out_path: Path) -> Path:
@@ -195,12 +251,72 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
                    area["active_workflows"], others, area["headline"]])
     _finish(ws)
 
+    _review_tabs(wb, analysis, g)
     _overview(wb, analysis, scores, portal_areas)
     wb._sheets.insert(0, wb._sheets.pop(wb._sheets.index(wb["Overview"])))
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     wb.save(str(out_path))
     return out_path
+
+
+def _review_tabs(wb: Workbook, analysis: dict[str, Any], g) -> None:
+    """The review plan as a tab, plus one work list per actionable phase."""
+    work = review_mod.cohorts(analysis, g)
+    phases = review_mod.phases(analysis, work)
+
+    ws = _sheet(wb, "Review plan",
+                ["Phase", "What to do", "Risk", "Scope", "Effort", "Work list tab",
+                 "The mistake to avoid"],
+                [8, 26, 12, 28, 12, 22, 66])
+    for phase in phases:
+        ws.append([phase["n"], phase["title"], phase["risk"],
+                   phase["count"] or "—", phase["effort"], phase["tab"] or "—",
+                   phase["guard"] or "—"])
+        ws.cell(row=ws.max_row, column=3).fill = RISK_FILL.get(phase["risk"], RISK_FILL["process"])
+    _finish(ws, hyperlinks=False)
+    ws.insert_rows(1)
+    ws["A1"] = ("Work top to bottom. Phases 1-2 are evidence-backed; phase 4 carries the real "
+                "business risk. Each work list tab has amber columns for you to complete.")
+    ws["A1"].font = NOTE_FONT
+    ws.freeze_panes = "A3"
+
+    wf_head = ["Workflow", "Why it is here", "Status", "Steps", "Last updated",
+               "Footprint", "Writes to", "Link"]
+    wf_width = [46, 30, 11, 7, 13, 11, 40, 16]
+
+    def wf_rows(key):
+        return [[r["name"], r["reason"], r["status"], r["steps"], r["updated"],
+                 r["footprint"], r["writes"], r["link"]] for r in work[key]]
+
+    _worklist(wb, "P1 Clear the noise", wf_head, wf_width, wf_rows("p1"),
+              "Phase 1 — no logic inside these. Empty ones are safe to delete; check the "
+              "leftover-named ones individually before removing.")
+    _worklist(wb, "P2 Dormant safe", wf_head, wf_width, wf_rows("p2"),
+              "Phase 2 — turned off with nothing downstream. Footprint 0 is measured, not "
+              "assumed. Re-confirm before each batch.")
+    _worklist(wb, "P3 Dormant clusters", wf_head, wf_width, wf_rows("p3"),
+              "Phase 3 — turned off but something downstream. Retire a whole dormant cluster, "
+              "never one workflow out of it. Sorted by footprint.")
+    _worklist(wb, "P4 Active and stale", wf_head, wf_width, wf_rows("p4"),
+              "Phase 4 — running, and not edited in over a year. Highest risk in the audit. "
+              "Sorted by footprint: work down from the top.")
+
+    _worklist(wb, "P5 Competing writes",
+              ["Property", "Label", "Written by", "Writers", "Things reading it", "Link"],
+              [34, 28, 60, 9, 15, 16],
+              [[r["name"], r["label"], r["writers"], r["writer_count"], r["readers"], r["link"]]
+               for r in work["p5"]],
+              "Phase 5 — more than one workflow writes these. Establish which should win and "
+              "under what condition. Sorted by how much depends on the value.")
+
+    _worklist(wb, "P6 Unused fields",
+              ["Property", "Label", "Object", "Type", "Group", "Link"],
+              [34, 30, 15, 14, 22, 16],
+              [[r["name"], r["label"], r["object"], r["type"], r["group"], r["link"]]
+               for r in work["p6"]],
+              "Phase 6 — no workflow, form or list references these. That is NOT permission to "
+              "delete: check fill rate, reports and integrations first, then archive.")
 
 
 def _overview(wb: Workbook, analysis: dict[str, Any], scores, portal_areas) -> None:

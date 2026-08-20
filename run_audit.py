@@ -34,6 +34,8 @@ def main() -> int:
     parser.add_argument("--no-docx", action="store_true", help="skip the Word reference")
     parser.add_argument("--no-guide", action="store_true",
                         help="skip the interactive account guide")
+    parser.add_argument("--no-plan", action="store_true",
+                        help="skip the review plan (screen + PDF)")
     parser.add_argument("--no-xlsx", action="store_true",
                         help="skip the spreadsheet inventory")
     parser.add_argument("--explorer", action="store_true",
@@ -88,6 +90,11 @@ def main() -> int:
     if not args.no_guide:
         outputs.append(render.render_guide(
             analysis, args.out / "hubspot-account-guide.html"))
+    if not args.no_plan:
+        outputs.extend(render.render_review_plan(
+            analysis,
+            args.out / "hubspot-review-plan.html",
+            args.out / "hubspot-review-plan.pdf"))
     if not args.no_xlsx:
         outputs.append(workbook.build(
             analysis, args.out / "hubspot-account-inventory.xlsx"))
