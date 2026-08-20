@@ -22,7 +22,15 @@ _RATE_WINDOW = 10.0
 
 
 class ScopeError(RuntimeError):
-    """The token lacks the scope, or the portal lacks the plan tier, for an endpoint."""
+    """The token lacks the scope, or the portal lacks the plan tier, for an endpoint.
+
+    Carries the scope names HubSpot itself said were missing, when it names them, so
+    the report can tell the reader exactly which boxes to tick rather than guessing.
+    """
+
+    def __init__(self, message: str, scopes: list[str] | None = None) -> None:
+        super().__init__(message)
+        self.scopes = scopes or []
 
 
 class _RateLimiter:
@@ -51,6 +59,7 @@ class Skipped:
     endpoint: str
     status: int | None
     reason: str
+    required_scopes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -100,7 +109,10 @@ class Client:
                 time.sleep(min(wait, 30))
                 continue
             if resp.status_code in (401, 403):
-                raise ScopeError(f"{resp.status_code} on {path}: {resp.text[:300]}")
+                raise ScopeError(
+                    f"{resp.status_code} on {path}: {resp.text[:300]}",
+                    scopes=_required_scopes(resp),
+                )
             if resp.status_code == 404:
                 raise ScopeError(f"404 on {path} (endpoint not available for this portal)")
             if resp.status_code >= 500:
@@ -142,9 +154,31 @@ class Client:
         try:
             return list(self.paginate(path, params, limit))
         except ScopeError as exc:
-            self.skipped.append(Skipped(endpoint=path, status=_status_of(exc), reason=str(exc)))
+            self.skipped.append(Skipped(
+                endpoint=path, status=_status_of(exc), reason=str(exc),
+                required_scopes=exc.scopes,
+            ))
             print(f"  ! {label}: unavailable ({exc})")
             return []
+
+
+def _required_scopes(resp: requests.Response) -> list[str]:
+    """Pull the scope names out of a HubSpot 403 body.
+
+    HubSpot returns them under errors[].context.requiredGranularScopes. Reading them
+    is far more reliable than mapping endpoints to scopes by hand, because HubSpot
+    renames and splits scopes over time.
+    """
+    try:
+        payload = resp.json()
+    except ValueError:
+        return []
+    found: list[str] = []
+    for error in payload.get("errors", []) or []:
+        for name in (error.get("context") or {}).get("requiredGranularScopes", []) or []:
+            if name not in found:
+                found.append(name)
+    return found
 
 
 def _status_of(exc: ScopeError) -> int | None:

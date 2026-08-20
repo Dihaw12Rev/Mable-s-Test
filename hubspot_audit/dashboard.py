@@ -321,6 +321,12 @@ def build_html(a: dict[str, Any], portal_name: str) -> str:
         caveat += " Not reachable with the token used: " + ", ".join(
             sorted({s["endpoint"] for s in skipped})
         ) + "."
+        wanted = sorted({name for s in skipped for name in (s.get("required_scopes") or [])})
+        if wanted:
+            caveat += (
+                " HubSpot named these missing scopes: " + ", ".join(wanted)
+                + ". Granting them and re-running fills the gaps above."
+            )
     body += [
         '<section class="block caveat"><h2>How to read this</h2>',
         f'<p class="note">{escape(caveat)}</p>',

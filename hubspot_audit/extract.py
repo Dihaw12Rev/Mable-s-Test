@@ -283,3 +283,6 @@ def _summarize(snapshot: dict[str, Any]) -> None:
     )
     if snapshot.get("skipped"):
         print(f"  {len(snapshot['skipped'])} endpoint(s) unavailable - see report appendix")
+        wanted = sorted({n for s in snapshot["skipped"] for n in (s.get("required_scopes") or [])})
+        if wanted:
+            print("  add these scopes to the private app and re-run: " + ", ".join(wanted))

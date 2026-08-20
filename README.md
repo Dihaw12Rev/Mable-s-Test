@@ -25,16 +25,32 @@ present.
 ## Setup
 
 1. **Create a private app** in the portal: Settings → Integrations → Private Apps →
-   Create. Grant these read scopes:
+   Create private app → Scopes tab. Tick these, all read-only:
 
-   | Area | Scopes |
+   | Scope | Unlocks |
    |---|---|
-   | CRM schema | `crm.schemas.contacts.read`, `crm.schemas.companies.read`, `crm.schemas.deals.read`, `crm.schemas.custom.read` |
-   | CRM objects | `crm.objects.owners.read`, `crm.lists.read` |
-   | Automation | `automation` |
-   | Marketing | `forms`, `marketing-email` (Marketing Hub) |
-   | CMS | `content` |
-   | Account | `account-info.security.read` (optional, for API usage) |
+   | `automation` | Workflows (the v4 Automation API) |
+   | `crm.schemas.contacts.read` | Contact properties |
+   | `crm.schemas.companies.read` | Company properties |
+   | `crm.schemas.deals.read` | Deal properties |
+   | `crm.schemas.custom.read` | Custom object properties and schemas |
+   | `crm.schemas.line_items.read` | Line item properties |
+   | `crm.schemas.quotes.read` | Quote properties |
+   | `crm.lists.read` | Lists and their filter criteria |
+   | `crm.objects.owners.read` | Owners, including deactivated ones |
+   | `forms` | Forms and their field mappings |
+   | `marketing-email` | Marketing emails |
+   | `content` | Landing pages, site pages, blog posts |
+   | `account-info.security.read` | Portal name, time zone, API usage (optional) |
+
+   Every scope above is read-only; the tool never writes. Copy the access token from
+   the token tab **after** saving the scopes — HubSpot issues a new token whenever an
+   app's scopes change, so a token copied beforehand keeps the old permissions.
+
+   Missing one is not fatal. Any endpoint that 403s is recorded, named in the report's
+   coverage section together with the scope names HubSpot itself asked for, and the
+   run continues. The console prints the same list, so the usual loop is: run it, read
+   what it asks for, tick those, run again.
 
 2. **Store the token.** Copy `.env.example` to `.env` and fill in
    `HUBSPOT_ACCESS_TOKEN`. `.env` is gitignored; the token never appears in any output.
