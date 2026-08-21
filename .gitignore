@@ -7,3 +7,6 @@ reports/
 node_modules/
 package.json
 package-lock.json
+
+# Seeded design canvases are build output; the .dc.html sources are the originals.
+design/**/*-roadmap.html

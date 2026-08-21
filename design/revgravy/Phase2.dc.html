@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #E5A03C; } a:hover { color: #F2B75C; }
+  </style>
+</helmet>
+<div style="width: 580px; min-height: 760px; background: #14161A; color: #F0EDE8; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; padding: 34px 32px 30px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+  <div style="display: flex; flex-direction: column; gap: 9px; border-bottom: 2px solid #E5A03C; padding-bottom: 16px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 40px; font-weight: 600; color: #E5A03C; letter-spacing: -.05em; line-height: 1">02</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8E8880; letter-spacing: .08em">~2 weeks</span>
+    </div>
+    <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -.03em; line-height: 1.02">Write-back</h1>
+    <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 17px; line-height: 1.45; color: #C9C3BA">Stop shipping documents. Put the documentation inside the tool they already use.</p>
+  </div>
+
+  <div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #6E6860; margin-bottom: 9px">What the client gets</div>
+    <div style="background: #1C1F25; padding: 16px 18px; border-left: 2px solid #E5A03C">
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 15.5px; line-height: 1.5; color: #E4DFD7">Every workflow in the client's account carries a written description of what it does, what it reads and what it writes — visible to anyone who opens it, for as long as the account exists.</p>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+    <div>
+      <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 9px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#46B39D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: #46B39D">Already built</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 5px"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Per-workflow summaries</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Object-qualified references</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Action labelling</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Full admin access</div></div>
+    </div>
+    <div>
+      <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 9px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#E5A03C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: #E5A03C">To build</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 5px"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Description writer</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Dry-run mode</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Change log</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">One-click revert</div></div>
+    </div>
+  </div>
+
+  <div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #6E6860; margin-bottom: 10px">How it runs</div>
+    <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 7px"><li style="font-family: Newsreader, Georgia, serif; font-size: 15px; line-height: 1.45; color: #C9C3BA">Generate the description — already done by the audit.</li><li style="font-family: Newsreader, Georgia, serif; font-size: 15px; line-height: 1.45; color: #C9C3BA">Dry run: show exactly what will be written, to what, before anything moves.</li><li style="font-family: Newsreader, Georgia, serif; font-size: 15px; line-height: 1.45; color: #C9C3BA">Write, recording the previous value for every field touched.</li><li style="font-family: Newsreader, Georgia, serif; font-size: 15px; line-height: 1.45; color: #C9C3BA">Keep the log. Revert is one command, not an archaeology project.</li></ol>
+  </div>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px">
+    <div style="border-top: 1px solid #2A2E36; padding-top: 14px">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #6E6860; margin-bottom: 6px">What it is worth</div>
+      <p style="margin: 0; font-size: 15.5px; line-height: 1.42; font-weight: 500; color: #F0EDE8">Renewal insurance. Every admin who opens a workflow for the next three years sees your work.</p>
+    </div>
+    <div style="background: #221A18; border: 1px solid #4A2E27; padding: 13px 15px">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: #C4553F; margin-bottom: 5px">Watch out for</div>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 14.5px; line-height: 1.45; color: #C9C3BA">This writes to a live client account. It needs consent in writing, a dry run every time, and a revert path you have actually tested — not one you assume works.</p>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
