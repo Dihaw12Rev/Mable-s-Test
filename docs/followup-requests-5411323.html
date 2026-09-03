@@ -1,0 +1,272 @@
+<title>Enrollment, Fill Rate & History</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #F6F3F0; --surface: #FFFFFF; --sunken: #EFEAE4;
+    --ink: #12171A; --muted: #5F5952; --faint: #918980;
+    --rule: #E0D9D1; --rule-strong: #CBC1B6;
+    --accent: #0F5F63; --accent-soft: #DDEBEA;
+    --yes: #2E6B3F; --yes-soft: #E1EDE4;
+    --part: #8A5A12; --part-soft: #F6EBD8;
+    --no: #A03028; --no-soft: #F7E2E0;
+    --sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131418; --surface: #1B1D22; --sunken: #24262C;
+      --ink: #ECE8E3; --muted: #A9A199; --faint: #77706A;
+      --rule: #2C2F36; --rule-strong: #3D414A;
+      --accent: #5CC3BC; --accent-soft: #17383A;
+      --yes: #7FC796; --yes-soft: #1C3325;
+      --part: #DCA95F; --part-soft: #382E1B;
+      --no: #E8867C; --no-soft: #3A211F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131418; --surface: #1B1D22; --sunken: #24262C;
+    --ink: #ECE8E3; --muted: #A9A199; --faint: #77706A;
+    --rule: #2C2F36; --rule-strong: #3D414A;
+    --accent: #5CC3BC; --accent-soft: #17383A;
+    --yes: #7FC796; --yes-soft: #1C3325;
+    --part: #DCA95F; --part-soft: #382E1B;
+    --no: #E8867C; --no-soft: #3A211F;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 40px clamp(18px, 4vw, 40px) 80px; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+  code, .mono { font-family: var(--mono); font-size: .87em; }
+
+  header.top { border-bottom: 2px solid var(--ink); padding-bottom: 20px; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: clamp(28px, 4.4vw, 37px); line-height: 1.08; margin: 9px 0 11px; letter-spacing: -.026em; text-wrap: balance; }
+  .lede { font-family: var(--serif); font-size: 17px; color: var(--muted); max-width: 64ch; margin: 0; }
+  .stamp { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin-top: 12px; }
+
+  .verdicts { margin: 26px 0 0; border: 1px solid var(--rule); background: var(--surface); }
+  .vrow { display: grid; grid-template-columns: 30px minmax(0, 1fr) 132px; gap: 14px; padding: 13px 16px; align-items: baseline; border-bottom: 1px solid var(--rule); }
+  .vrow:last-child { border-bottom: 0; }
+  .vrow .n { font-family: var(--mono); font-size: 12px; color: var(--faint); font-weight: 600; }
+  .vrow .t { font-size: 14.5px; }
+  .vrow .t b { font-weight: 600; }
+  .vrow .t span { color: var(--muted); display: block; font-size: 13px; margin-top: 2px; }
+  .chip { display: inline-flex; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 3px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  .chip.yes { background: var(--yes-soft); color: var(--yes); }
+  .chip.part { background: var(--part-soft); color: var(--part); }
+  .chip.no { background: var(--no-soft); color: var(--no); }
+
+  section.item { margin-top: 40px; padding-top: 4px; }
+  .ihead { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; }
+  .ihead .num { font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--faint); }
+  section.item h2 { font-size: 22px; margin: 0; letter-spacing: -.018em; flex: 1 1 auto; }
+  .asked { font-family: var(--serif); font-size: 16px; color: var(--muted); font-style: italic; margin: 11px 0 0; padding-left: 14px; border-left: 2px solid var(--rule-strong); max-width: 66ch; }
+  section.item h3 { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 22px 0 7px; }
+  section.item p { margin: 0 0 10px; max-width: 68ch; }
+  section.item p:last-child { margin-bottom: 0; }
+
+  .finding { background: var(--surface); border: 1px solid var(--rule); padding: 15px 17px; margin: 10px 0 0; }
+  .finding p { font-family: var(--serif); font-size: 15.5px; color: var(--ink); }
+  ul.tight { margin: 8px 0 0; padding-left: 19px; max-width: 68ch; }
+  ul.tight li { margin-bottom: 6px; color: var(--muted); }
+  ul.tight li b { color: var(--ink); font-weight: 600; }
+
+  .flag { border: 1px solid var(--part); background: var(--part-soft); padding: 12px 15px; margin-top: 16px; max-width: 70ch; font-size: 14px; }
+  .flag b { display: block; color: var(--part); text-transform: uppercase; font-size: 10.5px; letter-spacing: .1em; margin-bottom: 4px; }
+
+  .scoper { margin-top: 44px; border-top: 2px solid var(--ink); padding-top: 22px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-top: 10px; }
+  .scroller { overflow-x: auto; }
+  th, td { text-align: left; padding: 8px 11px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700; white-space: nowrap; }
+  td.mono { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--faint); font-size: 12.5px; max-width: 72ch; }
+
+  @media print {
+    @page { size: A4; margin: 15mm 15mm 14mm; }
+    body { background: #fff; font-size: 10pt; }
+    .wrap { max-width: none; padding: 0; }
+    section.item, .finding, .flag { page-break-inside: avoid; }
+    h1 { font-size: 24pt; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">HubSpot account 5411323 · follow-up scoping</div>
+    <h1>Three new requests, checked against the live account</h1>
+    <p class="lede">Rather than estimate from the documentation, each request was tested against
+    the real portal. Two are straightforward once one setting changes. One runs into a hard limit
+    in HubSpot itself, and needs a different approach than the one asked for.</p>
+    <div class="stamp">Tested 2026-09-03 · portal 5411323 · read-only</div>
+  </header>
+
+  <div class="verdicts">
+    <div class="vrow">
+      <span class="n">1</span>
+      <span class="t"><b>Stale = no enrolments in a year</b><span>HubSpot has no enrolment API. A different signal gets you the same answer.</span></span>
+      <span><span class="chip no">Not as asked</span></span>
+    </div>
+    <div class="vrow">
+      <span class="n">2</span>
+      <span class="t"><b>Fill rate on unused fields</b><span>Straightforward. Roughly a minute of API calls for all 332.</span></span>
+      <span><span class="chip yes">Yes</span></span>
+    </div>
+    <div class="vrow">
+      <span class="n">3</span>
+      <span class="t"><b>Property history export</b><span>Per record, yes. Across every record, no — and you don't need it.</span></span>
+      <span><span class="chip part">In part</span></span>
+    </div>
+  </div>
+
+  <section class="item">
+    <div class="ihead"><span class="num">Request 1</span><h2>Stale should mean unused, not unedited</h2></div>
+    <p class="asked">"P4 uses the last edit time as the reason to be considered stale. Can we
+    consider stale the ones that have had no enrolments in a year?"</p>
+
+    <h3>The premise is right</h3>
+    <p>Last-edited answers <em>"has anyone reviewed this?"</em> Enrolments answer <em>"is this
+    doing anything?"</em> The second is the better test for whether a workflow still earns its
+    place, and the customer is correct that it is the more useful cut.</p>
+
+    <h3>What we found</h3>
+    <div class="finding">
+      <p>HubSpot does not expose workflow enrolment data to its API at all. Nine candidate
+      endpoints were tested against a live active workflow — v2, v3 and v4 performance, metrics
+      and enrolment routes. Every one returned 404. The enrolment counts visible in the
+      Automation screen are not available programmatically.</p>
+    </div>
+
+    <h3>What gets you the same answer</h3>
+    <p>Every value on a record carries a history entry recording when it changed and what
+    changed it. If a workflow's writes appear in that history, we can compute the last date it
+    actually did something to a record — which is the question underneath the request, and
+    arguably a stronger signal than enrolment. A workflow can enrol thousands of records and
+    change nothing.</p>
+    <ul class="tight">
+      <li><b>Last write by this workflow</b> — the closest available equivalent to "last active".</li>
+      <li><b>Written by automation or by a person</b> — the history distinguishes them.</li>
+      <li><b>Sampled, not exhaustive</b> — read enough records to be confident, not all of them.</li>
+    </ul>
+
+    <div class="flag">
+      <b>One thing still to confirm</b>
+      Whether the history entry names the specific workflow, or only says "automation", could not
+      be verified — reading record history needs access this token does not have. It is a
+      ten-minute check once that access is granted, and it decides whether this lands per
+      workflow or only as "automation touched it". Worth confirming before it is committed to.
+    </div>
+
+    <h3>Recommendation</h3>
+    <p>Keep both signals rather than swapping one for the other. A workflow that is busy but
+    unreviewed is a different problem from one that is dormant, and P4 currently finds the first.
+    Adding last-write splits those 179 into "running and doing something" versus "running and
+    touching nothing" — the second group being the genuinely safe deletions.</p>
+  </section>
+
+  <section class="item">
+    <div class="ihead"><span class="num">Request 2</span><h2>Fill rate on the unused fields</h2></div>
+    <p class="asked">"Can we get for P6 a fill rate on those properties?"</p>
+
+    <h3>Yes, and it closes the biggest gap in the audit</h3>
+    <p>P6 currently lists 332 custom fields that no workflow, form or list references, with an
+    explicit warning that this is not permission to delete — because a field filled in by hand on
+    every record looks identical to a dead one. Fill rate removes that ambiguity.</p>
+
+    <h3>How it works</h3>
+    <p>One search per field, asking how many records have any value, against the total for that
+    object. About 340 calls for all of P6, comfortably inside a minute at HubSpot's rate limits.
+    It extends to all 2,249 fields for roughly four minutes if the fuller picture is wanted.</p>
+
+    <div class="flag">
+      <b>Fill rate alone still misleads</b>
+      A field written once during a 2021 import sits at 90% filled and is completely dead. Fill
+      rate tells you how many records carry a value; it says nothing about when. Pair it with
+      request 3 and the pair actually decides the question.
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="ihead"><span class="num">Request 3</span><h2>When a field was last written</h2></div>
+    <p class="asked">"Can Claude export the property history to see when it was the last time
+    those properties were updated on a record?"</p>
+
+    <h3>Per record yes, across every record no</h3>
+    <p>HubSpot returns history one record at a time. There is no endpoint that answers "when was
+    this field last written anywhere". Asking it of every record means one call per record —
+    across this account's contact base that is a migration, not a report, and it would take days.</p>
+
+    <h3>What is worth doing instead</h3>
+    <p>Sample. For each field, read the history of a few hundred records that carry a value and
+    take the most recent write. That answers the real question — <em>is anyone still filling this
+    in?</em> — without pretending to a precision nobody needs.</p>
+    <ul class="tight">
+      <li><b>Last observed write</b> — a date, from the sample rather than the whole population.</li>
+      <li><b>Who writes it</b> — automation, an import, an integration, or a person typing. This is
+      the more useful half, and it is what tells you whether archiving is safe.</li>
+      <li><b>Honest about its limits</b> — a sampled date is a floor. A field may have been written
+      more recently on a record outside the sample.</li>
+    </ul>
+
+    <h3>What the three together give you</h3>
+    <p>Each field in P6 would carry: how many records hold a value, when it was last written, and
+    what wrote it. That turns the phase from a list requiring three manual checks per field into
+    one that can actually be decided from the spreadsheet — which was the weakest point in the
+    audit as delivered.</p>
+  </section>
+
+  <div class="scoper">
+    <h2 style="font-size: 20px; margin: 0 0 6px; letter-spacing: -.015em">What is needed to build it</h2>
+    <p style="color: var(--muted); margin: 0; max-width: 66ch">All three need permission to read
+    records, not just field definitions. The audit deliberately asked for the narrower set, since
+    it only ever needed the shape of the account, never its contents.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Add this scope</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">crm.objects.contacts.read</td><td>Fill rate and history on contact fields</td></tr>
+          <tr><td class="mono">crm.objects.companies.read</td><td>The same for company fields</td></tr>
+          <tr><td class="mono">crm.objects.deals.read</td><td>The same for deal fields</td></tr>
+          <tr><td class="mono">crm.objects.custom.read</td><td>The four custom objects in this account</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flag">
+      <b>The trap that already cost us a round</b>
+      HubSpot issues a <em>new</em> access token whenever a private app's scopes change. Save the
+      scopes first, then copy the token — a token copied beforehand keeps the old permissions and
+      fails silently in exactly the same way as before.
+    </div>
+
+    <h3 style="font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 26px 0 8px">Rough shape of the work</h3>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Item</th><th>Effort</th><th>Depends on</th></tr></thead>
+        <tbody>
+          <tr><td>Fill rate across all fields</td><td class="mono">half a day</td><td>Scopes above</td></tr>
+          <tr><td>Sampled last-write and source</td><td class="mono">1–2 days</td><td>Scopes above</td></tr>
+          <tr><td>Workflow last-write signal for P4</td><td class="mono">1–2 days</td><td>The ten-minute check first</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top: 14px; color: var(--muted); max-width: 68ch">Sequenced, fill rate is worth
+    doing on its own — it is quick and it improves P6 immediately. The two history-based items
+    share the same groundwork, so they are better built together than a month apart.</p>
+  </div>
+
+  <footer>Findings come from live calls against portal 5411323 on 3 September 2026, using
+  read-only access. Endpoint availability is HubSpot's to change; the 404s recorded here reflect
+  the API as it behaves today, not a permanent guarantee.</footer>
+</div>
