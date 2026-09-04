@@ -175,18 +175,20 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     # ---------------------------------------------------------- workflows
     ws = _sheet(
         wb, "Workflows",
-        ["Workflow", "What it does", "Status", "Area", "Steps", "Writes to", "Reads",
-         "Hands off to", "Last updated", "Link"],
-        [40, 70, 11, 25, 7, 32, 32, 26, 13, 17],
+        ["Workflow", "Your description in HubSpot", "What it does", "Status", "Area", "Steps",
+         "Only runs", "Writes to", "Reads", "Hands off to", "Last updated", "Link"],
+        [38, 50, 62, 11, 24, 7, 24, 30, 30, 24, 13, 17],
     )
     by_id = {w["id"]: w for w in analysis["workflows"]}
     for w in sorted(analysis["workflows"], key=lambda w: (not w["enabled"], w["name"].lower())):
         ws.append([
             w["name"],
+            w.get("hubspot_description") or "",
             _steps(w),
             "Active" if w["enabled"] else "Turned off",
             area_of.get(f"wf:{w['id']}", ""),
             w["action_count"],
+            w.get("time_windows") or "",
             _lines(w["properties_written_labels"]),
             _lines(w["properties_read_labels"]),
             _lines([by_id[t]["name"] for t in w["workflows_triggered"] if t in by_id]),
@@ -320,12 +322,12 @@ def _review_tabs(wb: Workbook, analysis: dict[str, Any], g) -> None:
     work = review_mod.cohorts(analysis, g)
     phases = review_mod.phases(analysis, work)
 
-    wf_head = ["Workflow", "Why it is on this list", "What it does", "Status", "Steps",
-               "Last updated", "Footprint", "Writes to", "Link"]
-    wf_width = [38, 30, 62, 11, 7, 13, 11, 32, 17]
+    wf_head = ["Workflow", "Your description in HubSpot", "Why it is on this list",
+               "What it does", "Status", "Steps", "Last updated", "Footprint", "Writes to", "Link"]
+    wf_width = [36, 46, 28, 58, 11, 7, 13, 11, 30, 17]
 
     def wf_rows(key):
-        return [[r["name"], r["reason"],
+        return [[r["name"], r.get("their_note") or "", r["reason"],
                  "\n".join(f"{i}. {t}" for i, t in enumerate(r["does"], 1) if t),
                  r["status"], r["steps"], r["updated"], r["footprint"],
                  _lines(r["writes"]), r["link"]] for r in work[key]]

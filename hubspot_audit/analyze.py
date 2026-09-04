@@ -234,6 +234,13 @@ class Analysis:
             "created_at": flow.get("createdAt"),
             "updated_at": flow.get("updatedAt"),
             "revision_id": flow.get("revisionId"),
+            # The team's own words, written in HubSpot. Authoritative where present:
+            # a generated summary says what a workflow does, never why it exists.
+            "hubspot_description": (flow.get("description") or "").strip(),
+            "time_windows": _time_windows(flow.get("timeWindows") or []),
+            "blocked_dates": len(flow.get("blockedDates") or []),
+            "associations_used": len([d for d in (flow.get("dataSources") or [])
+                                      if d.get("type", "").startswith("ASSOCIATION")]),
             "definition_available": flow.get("_definition_available", False),
             "link": links.workflow(self.portal_id, fid),
             "enrollment_type": enrollment.get("type"),
@@ -373,6 +380,8 @@ class Analysis:
         obj = _object_label(r["object_type"])
         state = "Active" if r["enabled"] else "Turned off"
         out = [f"{state} {obj} workflow."]
+        if r.get("hubspot_description"):
+            out.append(f"Your own note in HubSpot: “{r['hubspot_description']}”")
 
         reads = self._labels(r["properties_read_q"])
         if reads:
@@ -392,6 +401,10 @@ class Analysis:
         if counts:
             steps = ", ".join(f"{n}x {label}" for label, n in counts.most_common(8))
             out.append(f"{r['action_count']} steps: {steps}.")
+
+        if r.get("time_windows"):
+            out.append(f"Only runs {r['time_windows']}."
+                       + (f" {r['blocked_dates']} blocked dates." if r.get("blocked_dates") else ""))
 
         tail = []
         if r["workflows_triggered"]:
@@ -683,6 +696,28 @@ def classify_workflow(record: dict[str, Any]) -> str:
     if read or record.get("action_count"):
         return "Other Automation"
     return "Unclassified"
+
+
+DAY_SHORT = {"MONDAY": "Mon", "TUESDAY": "Tue", "WEDNESDAY": "Wed", "THURSDAY": "Thu",
+             "FRIDAY": "Fri", "SATURDAY": "Sat", "SUNDAY": "Sun"}
+
+
+def _time_windows(windows: list[dict[str, Any]]) -> str:
+    """Execution windows, as a person would say them.
+
+    A workflow restricted to weekday mornings behaves very differently from one
+    that runs continuously, and nothing else in the definition reveals it.
+    """
+    if not windows:
+        return ""
+    spans: dict[tuple[str, str], list[str]] = {}
+    for window in windows:
+        start = window.get("startTime") or {}
+        end = window.get("endTime") or {}
+        span = (f"{start.get('hour', 0):02d}:{start.get('minute', 0):02d}",
+                f"{end.get('hour', 0):02d}:{end.get('minute', 0):02d}")
+        spans.setdefault(span, []).append(DAY_SHORT.get(window.get("day", ""), window.get("day", "")))
+    return "; ".join(f"{', '.join(days)} {a}–{b}" for (a, b), days in spans.items())
 
 
 def _sentence(parts: list[str]) -> str:

@@ -68,6 +68,7 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
         base = {
             "name": w["name"],
             "does": w.get("steps_text") or [w.get("description", "")],
+            "their_note": w.get("hubspot_description") or "",
             "status": "Active" if w["enabled"] else "Turned off",
             "steps": w["action_count"],
             "updated": str(w["updated_at"] or "")[:10],
