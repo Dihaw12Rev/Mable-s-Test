@@ -105,27 +105,27 @@
   <header class="top">
     <div class="eyebrow">HubSpot account 5411323 · follow-up scoping</div>
     <h1>Three new requests, checked against the live account</h1>
-    <p class="lede">Rather than estimate from the documentation, each request was tested against
-    the real portal. Two are straightforward once one setting changes. One runs into a hard limit
-    in HubSpot itself, and needs a different approach than the one asked for.</p>
-    <div class="stamp">Tested 2026-09-03 · portal 5411323 · read-only</div>
+    <p class="lede">All three were tested against the live portal, and two are now built and
+    measured across all 2,249 fields. The third runs into a hard limit in HubSpot itself: the
+    data needed to answer it as asked does not exist in the API.</p>
+    <div class="stamp">Measured 2026-09-04 · portal 5411323 · read-only · 2,249 fields, 200 records sampled per object</div>
   </header>
 
   <div class="verdicts">
     <div class="vrow">
       <span class="n">1</span>
-      <span class="t"><b>Stale = no enrolments in a year</b><span>HubSpot has no enrolment API. A different signal gets you the same answer.</span></span>
-      <span><span class="chip no">Not as asked</span></span>
+      <span class="t"><b>Stale = no enrolments in a year</b><span>Confirmed impossible per workflow. HubSpot records the enrolment, never which workflow caused it.</span></span>
+      <span><span class="chip no">Cannot be built</span></span>
     </div>
     <div class="vrow">
       <span class="n">2</span>
-      <span class="t"><b>Fill rate on unused fields</b><span>Straightforward. Roughly a minute of API calls for all 332.</span></span>
-      <span><span class="chip yes">Yes</span></span>
+      <span class="t"><b>Fill rate on unused fields</b><span>Built and measured. Every field now carries an exact percentage.</span></span>
+      <span><span class="chip yes">Done</span></span>
     </div>
     <div class="vrow">
       <span class="n">3</span>
-      <span class="t"><b>Property history export</b><span>Per record, yes. Across every record, no — and you don't need it.</span></span>
-      <span><span class="chip part">In part</span></span>
+      <span class="t"><b>Property history export</b><span>Built as a sample. Every field carries a last-written date and what wrote it.</span></span>
+      <span><span class="chip yes">Done</span></span>
     </div>
   </div>
 
@@ -134,139 +134,148 @@
     <p class="asked">"P4 uses the last edit time as the reason to be considered stale. Can we
     consider stale the ones that have had no enrolments in a year?"</p>
 
-    <h3>The premise is right</h3>
-    <p>Last-edited answers <em>"has anyone reviewed this?"</em> Enrolments answer <em>"is this
-    doing anything?"</em> The second is the better test for whether a workflow still earns its
-    place, and the customer is correct that it is the more useful cut.</p>
+    <h3>The thinking is right, and the data does not exist</h3>
+    <p>Last-edited answers <em>"has anyone reviewed this?"</em> Enrolments would answer <em>"is
+    this doing anything?"</em>, which is the better test. HubSpot does not make the second one
+    available, and this has now been confirmed three separate ways rather than assumed.</p>
 
-    <h3>What we found</h3>
     <div class="finding">
-      <p>HubSpot does not expose workflow enrolment data to its API at all. Nine candidate
-      endpoints were tested against a live active workflow — v2, v3 and v4 performance, metrics
-      and enrolment routes. Every one returned 404. The enrolment counts visible in the
-      Automation screen are not available programmatically.</p>
+      <p><b>No enrolment API.</b> Nine candidate endpoints were tested against a live active
+      workflow — v2, v3 and v4 performance, metrics and enrolment routes. Every one returned 404.
+      The enrolment counts on the Automation screen are not available programmatically.</p>
+      <p style="margin-top:10px"><b>History names the enrolment, not the workflow.</b> When
+      automation changes a value, HubSpot records the source as
+      <code>enrollmentId:180682574505;actionExecutionIndex:0</code>. That identifies the
+      enrolment; no endpoint turns it back into a workflow. Every automation write in the sample
+      looked like this, and none carried a workflow id.</p>
+      <p style="margin-top:10px"><b>The two remaining shortcuts are closed.</b> The property that
+      lists a contact's active workflows does not exist in this portal, and
+      <code>currentlyinworkflow</code> is labelled <em>"(discontinued)"</em> by HubSpot, so it is
+      not maintained.</p>
     </div>
 
-    <h3>What gets you the same answer</h3>
-    <p>Every value on a record carries a history entry recording when it changed and what
-    changed it. If a workflow's writes appear in that history, we can compute the last date it
-    actually did something to a record — which is the question underneath the request, and
-    arguably a stronger signal than enrolment. A workflow can enrol thousands of records and
-    change nothing.</p>
-    <ul class="tight">
-      <li><b>Last write by this workflow</b> — the closest available equivalent to "last active".</li>
-      <li><b>Written by automation or by a person</b> — the history distinguishes them.</li>
-      <li><b>Sampled, not exhaustive</b> — read enough records to be confident, not all of them.</li>
-    </ul>
-
-    <div class="flag">
-      <b>One thing still to confirm</b>
-      Whether the history entry names the specific workflow, or only says "automation", could not
-      be verified — reading record history needs access this token does not have. It is a
-      ten-minute check once that access is granted, and it decides whether this lands per
-      workflow or only as "automation touched it". Worth confirming before it is committed to.
-    </div>
+    <h3>What can be had instead</h3>
+    <p>Activity can be reported at field level rather than workflow level: <em>"automation last
+    changed Lead Status on 11 August 2026."</em> That is genuinely useful, and it is now built —
+    it is what request 3 delivers. What cannot be said is <em>which</em> automation did it.</p>
 
     <h3>Recommendation</h3>
-    <p>Keep both signals rather than swapping one for the other. A workflow that is busy but
-    unreviewed is a different problem from one that is dormant, and P4 currently finds the first.
-    Adding last-write splits those 179 into "running and doing something" versus "running and
-    touching nothing" — the second group being the genuinely safe deletions.</p>
+    <p>Keep P4 as it is. Last-edited is not a perfect proxy for "unused", but it answers a real
+    question — 179 workflows are running against rules nobody has reviewed in over a year — and
+    it is the only workflow-level signal HubSpot exposes. Reaching for enrolment counts means
+    reading them by hand from the Automation screen, which is worth doing for the twenty highest
+    footprint workflows and not worth doing for all 646.</p>
   </section>
 
   <section class="item">
     <div class="ihead"><span class="num">Request 2</span><h2>Fill rate on the unused fields</h2></div>
     <p class="asked">"Can we get for P6 a fill rate on those properties?"</p>
 
-    <h3>Yes, and it closes the biggest gap in the audit</h3>
-    <p>P6 currently lists 332 custom fields that no workflow, form or list references, with an
-    explicit warning that this is not permission to delete — because a field filled in by hand on
-    every record looks identical to a dead one. Fill rate removes that ambiguity.</p>
+    <h3>Built, and it splits the list into four very different groups</h3>
+    <p>Every one of the 2,249 fields now carries an exact count of how many records hold a value,
+    against the object's total. Combined with request 3, the 332 the audit flagged as
+    unreferenced turn out not to be one population at all.</p>
 
-    <h3>How it works</h3>
-    <p>One search per field, asking how many records have any value, against the total for that
-    object. About 340 calls for all of P6, comfortably inside a minute at HubSpot's rate limits.
-    It extends to all 2,249 fields for roughly four minutes if the fuller picture is wanted.</p>
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Of the 332 flagged</th><th style="text-align:right">Fields</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr><td><b>Empty — no record holds a value</b></td><td class="mono" style="text-align:right">154</td><td>Archive. Nothing references them and nothing has ever filled them.</td></tr>
+          <tr><td><b>Nearly empty, no write seen</b></td><td class="mono" style="text-align:right">50</td><td>Archive after a glance. A residue of values, no recent activity.</td></tr>
+          <tr><td><b>Written in the last 12 months</b></td><td class="mono" style="text-align:right">54</td><td><b>Leave alone.</b> Something is actively filling these today.</td></tr>
+          <tr><td><b>Written, but longer ago</b></td><td class="mono" style="text-align:right">73</td><td>Judgement. The date and the source say whether it retired or went quiet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:14px">The first row is the win: <b>154 fields can be archived with no
+    further checking</b>. The third is the save — those 54 would have been archived under the
+    original guidance, and something would have broken.</p>
 
     <div class="flag">
-      <b>Fill rate alone still misleads</b>
-      A field written once during a 2021 import sits at 90% filled and is completely dead. Fill
-      rate tells you how many records carry a value; it says nothing about when. Pair it with
-      request 3 and the pair actually decides the question.
+      <b>Fields with no records behind them</b>
+      The quote object holds 195 properties and zero records. Fill rate is undefined there rather
+      than zero, and the workbook leaves those cells blank rather than reporting 0% — an empty
+      object is a different finding from an unused field.
     </div>
   </section>
 
   <section class="item">
-    <div class="ihead"><span class="num">Request 3</span><h2>When a field was last written</h2></div>
+    <div class="ihead"><span class="num">Request 3</span><h2>When a field was last written, and by what</h2></div>
     <p class="asked">"Can Claude export the property history to see when it was the last time
     those properties were updated on a record?"</p>
 
-    <h3>Per record yes, across every record no</h3>
-    <p>HubSpot returns history one record at a time. There is no endpoint that answers "when was
-    this field last written anywhere". Asking it of every record means one call per record —
-    across this account's contact base that is a migration, not a report, and it would take days.</p>
+    <h3>Built as a sample, and the "by what" matters more than the "when"</h3>
+    <p>HubSpot returns history one record at a time, so asking every record is not a report but a
+    migration. Instead, the 200 most recently modified records per object are read — the right
+    bias, because a field still in use shows up there first. 1,037 of the 2,249 fields had a write
+    in that window.</p>
 
-    <h3>What is worth doing instead</h3>
-    <p>Sample. For each field, read the history of a few hundred records that carry a value and
-    take the most recent write. That answers the real question — <em>is anyone still filling this
-    in?</em> — without pretending to a precision nobody needs.</p>
-    <ul class="tight">
-      <li><b>Last observed write</b> — a date, from the sample rather than the whole population.</li>
-      <li><b>Who writes it</b> — automation, an import, an integration, or a person typing. This is
-      the more useful half, and it is what tells you whether archiving is safe.</li>
-      <li><b>Honest about its limits</b> — a sampled date is a floor. A field may have been written
-      more recently on a record outside the sample.</li>
-    </ul>
+    <p>Each field now reports its most recent write and what caused it, in plain terms:
+    <em>Automation</em>, <em>Integration sync</em>, <em>Form submission</em>, <em>Import</em>,
+    <em>Someone typing</em>. That last one is what the audit could never see before — a field
+    maintained by hand looks identical to a dead one until you know who writes it.</p>
 
-    <h3>What the three together give you</h3>
-    <p>Each field in P6 would carry: how many records hold a value, when it was last written, and
-    what wrote it. That turns the phase from a list requiring three manual checks per field into
-    one that can actually be decided from the spreadsheet — which was the weakest point in the
-    audit as delivered.</p>
+    <h3>What it found here</h3>
+    <p>Of the 332 flagged fields, <b>54 were written within the last 12 months</b> — 35 by an
+    integration, eight by record merges, four calculated by HubSpot, four by form submissions and
+    three by automation. Those are live fields that happen to sit outside any workflow, list or
+    active form.</p>
+    <p>The riskiest single case: <em>"Which distribution channels are you interested in?"</em> is
+    filled on well under 1% of contacts and was last written by a form submission
+    <b>the day before this was measured</b>. On fill rate alone it looks abandoned. It is a
+    working form field, and a low fill rate is exactly what a form field should look like — only
+    the fraction of people who submitted that form will ever carry a value.</p>
+    <p>That case forced a change to how the verdict is calculated. Recency and source now outrank
+    fill rate: a field written last month is in use at 0.1% fill, while a field at 40% fill last
+    written in 2021 is a fossil. Ordering it the other way round marked live form fields as empty,
+    which is the precise mistake this measurement exists to prevent.</p>
+
+    <div class="flag">
+      <b>A sampled date is a floor, not a ceiling</b>
+      A field may have been written more recently on a record outside the 200 sampled. Treat a
+      recent date as proof of life; treat the absence of one as "no evidence found", never as
+      proof the field is dead. The fill rate is exact — only the dates are sampled.
+    </div>
   </section>
 
   <div class="scoper">
-    <h2 style="font-size: 20px; margin: 0 0 6px; letter-spacing: -.015em">What is needed to build it</h2>
-    <p style="color: var(--muted); margin: 0; max-width: 66ch">All three need permission to read
-    records, not just field definitions. The audit deliberately asked for the narrower set, since
-    it only ever needed the shape of the account, never its contents.</p>
+    <h2 style="font-size: 20px; margin: 0 0 6px; letter-spacing: -.015em">Where this leaves P6</h2>
+    <p style="color: var(--muted); margin: 0 0 4px; max-width: 66ch">The phase that previously
+    said "check three things yourself for each of 332 fields" now sorts itself, and the tab opens
+    on the fields that need a decision rather than the ones that do not.</p>
 
     <div class="scroller">
       <table>
-        <thead><tr><th>Add this scope</th><th>Why</th></tr></thead>
+        <thead><tr><th>Group</th><th style="text-align:right">Fields</th><th>Action</th></tr></thead>
         <tbody>
-          <tr><td class="mono">crm.objects.contacts.read</td><td>Fill rate and history on contact fields</td></tr>
-          <tr><td class="mono">crm.objects.companies.read</td><td>The same for company fields</td></tr>
-          <tr><td class="mono">crm.objects.deals.read</td><td>The same for deal fields</td></tr>
-          <tr><td class="mono">crm.objects.custom.read</td><td>The four custom objects in this account</td></tr>
+          <tr><td>Empty, unreferenced</td><td class="mono" style="text-align:right">154</td><td>Archive. No further checking.</td></tr>
+          <tr><td>Nearly empty, no write seen</td><td class="mono" style="text-align:right">50</td><td>Archive after a glance at the source.</td></tr>
+          <tr><td>Written by an integration, recently</td><td class="mono" style="text-align:right">35</td><td>Leave alone. Deleting these breaks the integration, silently.</td></tr>
+          <tr><td>Merged, calculated or automated, recently</td><td class="mono" style="text-align:right">15</td><td>Leave alone. Cheap to keep, and something depends on them.</td></tr>
+          <tr><td>Live form fields</td><td class="mono" style="text-align:right">4</td><td>Leave alone. Low fill rate is normal for a form field.</td></tr>
+          <tr><td>Written, but longer ago</td><td class="mono" style="text-align:right">73</td><td>Judgement, with the date and source in front of you.</td></tr>
         </tbody>
       </table>
     </div>
+
+    <h3 style="font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 26px 0 8px">What is in the workbook now</h3>
+    <p style="margin: 0 0 10px; max-width: 68ch">The <b>P6</b> tab leads with a plain-language
+    verdict per field, then fill rate, record count, last written, what wrote it, and everything
+    seen writing it — sorted so the most recently written are at the top, because those are the
+    ones a decision could get wrong. The full <b>Properties</b> tab carries the same three
+    measurements for all 2,249 fields.</p>
 
     <div class="flag">
-      <b>The trap that already cost us a round</b>
-      HubSpot issues a <em>new</em> access token whenever a private app's scopes change. Save the
-      scopes first, then copy the token — a token copied beforehand keeps the old permissions and
-      fails silently in exactly the same way as before.
+      <b>These numbers age</b>
+      Fill rate and last-written are a snapshot of 4 September 2026. Re-run before acting if more
+      than a few weeks have passed — a field that looked safe in September may be in use by
+      November, and the archive decision would then be the wrong one.
     </div>
-
-    <h3 style="font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 26px 0 8px">Rough shape of the work</h3>
-    <div class="scroller">
-      <table>
-        <thead><tr><th>Item</th><th>Effort</th><th>Depends on</th></tr></thead>
-        <tbody>
-          <tr><td>Fill rate across all fields</td><td class="mono">half a day</td><td>Scopes above</td></tr>
-          <tr><td>Sampled last-write and source</td><td class="mono">1–2 days</td><td>Scopes above</td></tr>
-          <tr><td>Workflow last-write signal for P4</td><td class="mono">1–2 days</td><td>The ten-minute check first</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p style="margin-top: 14px; color: var(--muted); max-width: 68ch">Sequenced, fill rate is worth
-    doing on its own — it is quick and it improves P6 immediately. The two history-based items
-    share the same groundwork, so they are better built together than a month apart.</p>
   </div>
 
-  <footer>Findings come from live calls against portal 5411323 on 3 September 2026, using
-  read-only access. Endpoint availability is HubSpot's to change; the 404s recorded here reflect
-  the API as it behaves today, not a permanent guarantee.</footer>
+  <footer>Measured against portal 5411323 on 4 September 2026 with read-only access: fill rate
+  is exact from search totals; last-written is sampled from the 200 most recently modified records
+  per object. Endpoint availability is HubSpot's to change — the 404s recorded here describe the
+  API as it behaves today, not a permanent guarantee.</footer>
 </div>

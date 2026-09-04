@@ -354,12 +354,20 @@ def _review_tabs(wb: Workbook, analysis: dict[str, Any], g) -> None:
               "under what condition. Sorted by how much depends on the value.")
 
     ranges["p6"] = _worklist(wb, "P6 Unused fields",
-              ["Property", "Internal name", "Object", "Type", "Group", "Link"],
-              [32, 34, 15, 14, 22, 17],
-              [[r["name"], r["label"], r["object"], r["type"], r["group"], r["link"]]
+              ["Property", "Read this first", "Fill rate", "Records with a value",
+               "Last written", "Last written by", "Everything that writes it",
+               "Internal name", "Object", "Type", "Group", "Link"],
+              [30, 26, 10, 16, 13, 20, 30, 32, 14, 13, 20, 17],
+              [[r["name"], r["verdict"],
+                (r["fill_pct"] / 100) if r.get("fill_pct") is not None else "",
+                r["filled"] if r.get("filled") is not None else "",
+                r.get("last_written") or "", r.get("last_written_by") or "",
+                _lines(r.get("written_by") or []), r["label"], r["object"], r["type"],
+                r["group"], r["link"]]
                for r in work["p6"]],
-              "Phase 6 — no workflow, form or list references these. That is NOT permission to "
-              "delete: check fill rate, reports and integrations first, then archive.")
+              "Phase 6 — no workflow, form or list references these. Read the verdict column "
+              "first: empty fields are safe to archive; anything an integration writes is not. "
+              "Fill rate is exact; the last-written date is sampled, so treat it as a floor.")
 
     ws = _sheet(wb, "Review plan",
                 ["Phase", "What to do", "Risk", "Scope", "Effort", "Work list tab",

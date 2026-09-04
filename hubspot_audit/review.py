@@ -123,37 +123,57 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
             "group": p.get("group") or "",
             "link": p["link"],
             **_usage_fields(measured.get(p["key"])),
-        } for p in sorted(unused, key=lambda p: -( (measured.get(p["key"]) or {}).get("fill_pct") or 0))],
+        } for p in sorted(unused, key=lambda p: (
+            (measured.get(p["key"]) or {}).get("last_written") or "",
+            (measured.get(p["key"]) or {}).get("fill_pct") or 0,
+        ), reverse=True)],
     }
 
 
 def _usage_fields(measured: dict[str, Any] | None) -> dict[str, Any]:
-    """Fill rate and last-written, shaped for a spreadsheet row.
+    """Fill rate and last-written, shaped for a spreadsheet row, with a verdict.
 
-    Absent measurements read as "not measured" rather than as zero — an unmeasured
-    field and an empty one must never look the same in a column someone deletes from.
+    Recency and source outrank fill rate, deliberately. A form field is only ever
+    filled on the fraction of records that submitted that form, so judging it on
+    fill rate alone marks live fields as empty — which is the exact mistake this
+    measurement exists to prevent. A field written last month is in use at 0.1%
+    fill; a field at 40% fill written last in 2021 is a fossil.
+
+    Absent measurements read as "not measured" rather than as zero: an unmeasured
+    field and an empty one must never look the same in a column someone acts on.
     """
     if not measured:
         return {"fill_pct": None, "filled": None, "last_written": "",
                 "last_written_by": "", "written_by": [], "verdict": "Not measured"}
+
     pct = measured.get("fill_pct")
     last = measured.get("last_written") or ""
-    if pct is not None and pct < 0.5 and not last:
-        verdict = "Safe to archive"
+    source = measured.get("last_written_by") or ""
+    fresh = bool(last and last >= _twelve_months_ago())
+
+    if fresh:
+        verdict = f"In use — {source.lower()} wrote it recently" if source else "In use — written recently"
+    elif last:
+        verdict = f"Last written {last[:7]} by {source.lower()}" if source else f"Last written {last[:7]}"
+    elif pct == 0:
+        verdict = "Safe to archive — no record holds a value"
     elif pct is not None and pct < 0.5:
-        verdict = "Nearly empty"
-    elif last and measured.get("last_written_by") in ("Someone typing", "Bulk edit in HubSpot",
-                                                      "Form submission"):
-        verdict = "A person maintains this"
-    elif last and measured.get("last_written_by"):
-        verdict = f"Written by {measured['last_written_by'].lower()}"
+        verdict = "Nearly empty, no write seen"
+    elif pct is None:
+        verdict = "No records on this object"
     else:
         verdict = "Filled, but no recent write seen"
+
     return {
         "fill_pct": pct, "filled": measured.get("filled"), "last_written": last,
-        "last_written_by": measured.get("last_written_by") or "",
-        "written_by": measured.get("written_by") or [], "verdict": verdict,
+        "last_written_by": source, "written_by": measured.get("written_by") or [],
+        "verdict": verdict,
     }
+
+
+def _twelve_months_ago() -> str:
+    now = datetime.now(timezone.utc)
+    return f"{now.year - 1:04d}-{now.month:02d}-{now.day:02d}"
 
 
 def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, Any]]:
