@@ -237,6 +237,8 @@ class Analysis:
             # The team's own words, written in HubSpot. Authoritative where present:
             # a generated summary says what a workflow does, never why it exists.
             "hubspot_description": (flow.get("description") or "").strip(),
+            "enrolled_total": flow.get("_enrolled_total"),
+            "enrolled_active": flow.get("_enrolled_active"),
             "time_windows": _time_windows(flow.get("timeWindows") or []),
             "blocked_dates": len(flow.get("blockedDates") or []),
             "associations_used": len([d for d in (flow.get("dataSources") or [])
@@ -401,6 +403,13 @@ class Analysis:
         if counts:
             steps = ", ".join(f"{n}x {label}" for label, n in counts.most_common(8))
             out.append(f"{r['action_count']} steps: {steps}.")
+
+        total, active = r.get("enrolled_total"), r.get("enrolled_active")
+        if total == 0:
+            out.append("Has never enrolled a single record since it was created.")
+        elif total:
+            out.append(f"Has enrolled {total:,} records in its lifetime"
+                       + (f", {active:,} currently in it." if active else ", none in it now."))
 
         if r.get("time_windows"):
             out.append(f"Only runs {r['time_windows']}."

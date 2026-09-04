@@ -73,6 +73,8 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
             "steps": w["action_count"],
             "updated": str(w["updated_at"] or "")[:10],
             "footprint": reach[w["id"]],
+            "enrolled_total": w.get("enrolled_total"),
+            "enrolled_active": w.get("enrolled_active"),
             "writes": w.get("properties_written_labels") or [],
             "link": w["link"],
         }
@@ -88,6 +90,8 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
     dormant_linked = [w for w in off if reach[w["id"]] > 0]
     live_stale = [w for w in workflows
                   if w["enabled"] and (d := _age_days(w["updated_at"], now)) is not None and d >= 365]
+    # Measured, not inferred: enrolment counts say a workflow has never acted at all.
+    never_enrolled = [w for w in workflows if w["enabled"] and w.get("enrolled_total") == 0]
 
     contended = sorted(
         (p for p in analysis["properties"] if len(p["written_by_workflows"]) > 1),
@@ -106,8 +110,9 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
                for w in sorted(dormant_safe, key=lambda w: w["name"].lower())],
         "p3": [row(w, reason=f"Turned off, {reach[w['id']]} downstream")
                for w in sorted(dormant_linked, key=lambda w: -reach[w["id"]])],
-        "p4": [row(w, reason=f"Active, last edited {str(w['updated_at'] or '')[:10]}")
-               for w in sorted(live_stale, key=lambda w: -reach[w["id"]])],
+        "p4": [row(w, reason=_p4_reason(w))
+               for w in sorted(live_stale + [w for w in never_enrolled if w not in live_stale],
+                               key=lambda w: (w.get("enrolled_total") != 0, -reach[w["id"]]))],
         "p5": [{
             "name": p.get("display") or p.get("label") or p["key"],
             "label": p["key"],
@@ -129,6 +134,17 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
             (measured.get(p["key"]) or {}).get("fill_pct") or 0,
         ), reverse=True)],
     }
+
+
+def _p4_reason(w: dict[str, Any]) -> str:
+    """Why this workflow is on the list. Enrolment evidence wins over edit dates."""
+    if w.get("enrolled_total") == 0:
+        return "Switched on, but has never enrolled a record"
+    edited = str(w.get("updated_at") or "")[:10]
+    total = w.get("enrolled_total")
+    if total:
+        return f"Active, last edited {edited}, {total:,} enrolled lifetime"
+    return f"Active, last edited {edited}"
 
 
 def _usage_fields(measured: dict[str, Any] | None) -> dict[str, Any]:

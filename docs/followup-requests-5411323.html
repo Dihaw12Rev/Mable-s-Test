@@ -114,8 +114,8 @@
   <div class="verdicts">
     <div class="vrow">
       <span class="n">1</span>
-      <span class="t"><b>Stale = no enrolments in a year</b><span>Confirmed impossible per workflow. HubSpot records the enrolment, never which workflow caused it.</span></span>
-      <span><span class="chip no">Cannot be built</span></span>
+      <span class="t"><b>Stale = no enrolments in a year</b><span>Counts are available after all, on a legacy endpoint. Dates are not — but "never enrolled anyone" is now measurable.</span></span>
+      <span><span class="chip part">Mostly</span></span>
     </div>
     <div class="vrow">
       <span class="n">2</span>
@@ -134,37 +134,49 @@
     <p class="asked">"P4 uses the last edit time as the reason to be considered stale. Can we
     consider stale the ones that have had no enrolments in a year?"</p>
 
-    <h3>The thinking is right, and the data does not exist</h3>
-    <p>Last-edited answers <em>"has anyone reviewed this?"</em> Enrolments would answer <em>"is
-    this doing anything?"</em>, which is the better test. HubSpot does not make the second one
-    available, and this has now been confirmed three separate ways rather than assumed.</p>
-
     <div class="finding">
-      <p><b>No enrolment API.</b> Nine candidate endpoints were tested against a live active
-      workflow — v2, v3 and v4 performance, metrics and enrolment routes. Every one returned 404.
-      The enrolment counts on the Automation screen are not available programmatically.</p>
-      <p style="margin-top:10px"><b>History names the enrolment, not the workflow.</b> When
-      automation changes a value, HubSpot records the source as
-      <code>enrollmentId:180682574505;actionExecutionIndex:0</code>. That identifies the
-      enrolment; no endpoint turns it back into a workflow. Every automation write in the sample
-      looked like this, and none carried a workflow id.</p>
-      <p style="margin-top:10px"><b>The two remaining shortcuts are closed.</b> The property that
-      lists a contact's active workflows does not exist in this portal, and
-      <code>currentlyinworkflow</code> is labelled <em>"(discontinued)"</em> by HubSpot, so it is
-      not maintained.</p>
+      <p><b>An earlier version of this note said enrolment data was unavailable. That was
+      wrong.</b> The first round tested nine per-workflow routes and concluded the data did not
+      exist. It never tested the list endpoint, and it passed the wrong identifiers: the modern
+      API calls this workflow 7870191 while the legacy API calls it 7023659, so every
+      per-workflow probe was asking about a workflow that does not exist under that name.</p>
     </div>
 
-    <h3>What can be had instead</h3>
-    <p>Activity can be reported at field level rather than workflow level: <em>"automation last
-    changed Lead Status on 11 August 2026."</em> That is genuinely useful, and it is now built —
-    it is what request 3 delivers. What cannot be said is <em>which</em> automation did it.</p>
+    <h3>What is actually available</h3>
+    <p><code>GET /automation/v3/workflows</code> returns, for each workflow,
+    <code>contactCounts</code> — how many records it has enrolled in its lifetime, and how many
+    are inside it right now. That is real enrolment data and it is now part of the audit.</p>
+    <ul class="tight">
+      <li><b>Lifetime enrolled</b> — the total ever put through it. Zero means it has never acted
+      on a single record, whatever its edit date says.</li>
+      <li><b>Currently enrolled</b> — records sitting inside it today, mid-sequence.</li>
+    </ul>
 
-    <h3>Recommendation</h3>
-    <p>Keep P4 as it is. Last-edited is not a perfect proxy for "unused", but it answers a real
-    question — 179 workflows are running against rules nobody has reviewed in over a year — and
-    it is the only workflow-level signal HubSpot exposes. Reaching for enrolment counts means
-    reading them by hand from the Automation screen, which is worth doing for the twenty highest
-    footprint workflows and not worth doing for all 646.</p>
+    <h3>What is still missing</h3>
+    <p>A date. Nothing returns "last enrolled on". Per-workflow performance and enrolment routes
+    do not exist under either identifier — that part of the original finding holds. Property
+    history records automation writes as
+    <code>enrollmentId:…;actionExecutionIndex:N</code>, naming the enrolment rather than the
+    workflow, and no endpoint resolves one to the other.</p>
+
+    <h3>How to get the year window anyway</h3>
+    <p>The count is a running total, so the difference between two runs is enrolment during that
+    period. From the second monthly run onward the audit can report "enrolled 0 records since
+    last month" per workflow, which is the question originally asked, answered continuously
+    rather than looked up once. Nothing to build beyond storing the previous run.</p>
+
+    <h3>What it changes today</h3>
+    <p>P4 no longer rests on edit dates alone. A workflow that is switched on and has
+    <b>never enrolled anyone</b> is now flagged on measured evidence rather than inferred from
+    when someone last touched it, and those rows sort to the top of the tab.</p>
+
+    <div class="flag">
+      <b>Coverage is partial</b>
+      The legacy endpoint returns 581 of the 646 workflows, and matching them to the modern list
+      by identifier and name reaches most but not all. Anything unmatched reads
+      "not measured" rather than zero — an unmeasured workflow and an unused one must never look
+      the same in a column someone acts on.
+    </div>
   </section>
 
   <section class="item">

@@ -176,8 +176,9 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     ws = _sheet(
         wb, "Workflows",
         ["Workflow", "Your description in HubSpot", "What it does", "Status", "Area", "Steps",
-         "Only runs", "Writes to", "Reads", "Hands off to", "Last updated", "Link"],
-        [38, 50, 62, 11, 24, 7, 24, 30, 30, 24, 13, 17],
+         "Enrolled (lifetime)", "In it now", "Only runs", "Writes to", "Reads",
+         "Hands off to", "Last updated", "Link"],
+        [38, 50, 62, 11, 24, 7, 16, 11, 22, 28, 28, 22, 13, 17],
     )
     by_id = {w["id"]: w for w in analysis["workflows"]}
     for w in sorted(analysis["workflows"], key=lambda w: (not w["enabled"], w["name"].lower())):
@@ -188,6 +189,8 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
             "Active" if w["enabled"] else "Turned off",
             area_of.get(f"wf:{w['id']}", ""),
             w["action_count"],
+            w.get("enrolled_total") if w.get("enrolled_total") is not None else "not measured",
+            w.get("enrolled_active") if w.get("enrolled_active") is not None else "",
             w.get("time_windows") or "",
             _lines(w["properties_written_labels"]),
             _lines(w["properties_read_labels"]),
@@ -323,13 +326,17 @@ def _review_tabs(wb: Workbook, analysis: dict[str, Any], g) -> None:
     phases = review_mod.phases(analysis, work)
 
     wf_head = ["Workflow", "Your description in HubSpot", "Why it is on this list",
-               "What it does", "Status", "Steps", "Last updated", "Footprint", "Writes to", "Link"]
-    wf_width = [36, 46, 28, 58, 11, 7, 13, 11, 30, 17]
+               "What it does", "Status", "Enrolled (lifetime)", "In it now", "Steps",
+               "Last updated", "Footprint", "Writes to", "Link"]
+    wf_width = [34, 42, 30, 54, 11, 16, 11, 7, 13, 11, 28, 17]
 
     def wf_rows(key):
         return [[r["name"], r.get("their_note") or "", r["reason"],
                  "\n".join(f"{i}. {t}" for i, t in enumerate(r["does"], 1) if t),
-                 r["status"], r["steps"], r["updated"], r["footprint"],
+                 r["status"],
+                 r.get("enrolled_total") if r.get("enrolled_total") is not None else "not measured",
+                 r.get("enrolled_active") if r.get("enrolled_active") is not None else "",
+                 r["steps"], r["updated"], r["footprint"],
                  _lines(r["writes"]), r["link"]] for r in work[key]]
 
     ranges = {}

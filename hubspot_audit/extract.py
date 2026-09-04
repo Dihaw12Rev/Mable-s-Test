@@ -8,6 +8,7 @@ unreachable endpoints recorded so the report can state what was not covered.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -170,8 +171,57 @@ def _workflows(client: Client) -> list[dict[str, Any]]:
         record["_definition_available"] = fid in full
         merged.append(record)
 
+    _attach_enrollment(client, merged)
     print(f"  · {len(merged)} workflows ({sum(1 for m in merged if m['_definition_available'])} with full definitions)")
     return merged
+
+
+# Legacy IDs are embedded in the v4 uuid, e.g. hybrid-execution-wf-7023659.
+_LEGACY_ID = re.compile(r"(\d+)$")
+
+
+def _attach_enrollment(client: Client, flows: list[dict[str, Any]]) -> None:
+    """Add lifetime and current enrolment counts from the legacy workflows API.
+
+    The v4 Automation API returns a workflow's logic but no measure of whether it
+    has ever run. The legacy list endpoint still reports contactCounts, which is
+    the only place enrolment is exposed at all — there is no per-workflow
+    performance route, and no endpoint dates an enrolment. Counts are matched to v4
+    flows by the legacy id inside the uuid, falling back to an unambiguous name
+    match; anything still unmatched is left unmeasured rather than guessed at.
+    """
+    try:
+        legacy = client.get("/automation/v3/workflows").get("workflows", [])
+    except (ScopeError, Exception) as exc:
+        print(f"  ! enrolment counts unavailable ({str(exc)[:90]})")
+        return
+    if not legacy:
+        return
+
+    by_id = {str(w["id"]): w for w in legacy}
+    by_name: dict[str, list[dict[str, Any]]] = {}
+    for w in legacy:
+        by_name.setdefault((w.get("name") or "").strip().lower(), []).append(w)
+
+    matched = 0
+    for flow in flows:
+        found = None
+        hit = _LEGACY_ID.search(str(flow.get("uuid") or ""))
+        if hit and hit.group(1) in by_id:
+            found = by_id[hit.group(1)]
+        else:
+            same_name = by_name.get((flow.get("name") or "").strip().lower(), [])
+            if len(same_name) == 1:
+                found = same_name[0]
+        if not found:
+            continue
+        counts = found.get("contactCounts") or {}
+        flow["_enrolled_total"] = counts.get("enrolled")
+        flow["_enrolled_active"] = counts.get("active")
+        flow["_legacy_id"] = str(found.get("id"))
+        matched += 1
+    never = sum(1 for f in flows if f.get("_enrolled_total") == 0)
+    print(f"  · enrolment counts for {matched} of {len(flows)} ({never} never enrolled anyone)")
 
 
 # ----------------------------------------------------------------------------- lists
