@@ -21,7 +21,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from hubspot_audit import analyze, extract, graph, render, usage, workbook  # noqa: E402
+from hubspot_audit import (analyze, extract, followup_workbook, graph, render,  # noqa: E402
+                           usage, workbook)
 from hubspot_audit.client import Client  # noqa: E402
 
 
@@ -119,6 +120,9 @@ def main() -> int:
     if not args.no_xlsx:
         outputs.append(workbook.build(
             analysis, args.out / "hubspot-account-inventory.xlsx"))
+        if analysis.get("usage"):
+            outputs.append(followup_workbook.build(
+                analysis, args.out / "followup-requests.xlsx"))
     if args.explorer:
         outputs.append(render.render_explorer(
             analysis, args.out / "hubspot-portal-explorer.html"))
