@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from hubspot_audit import analyze, extract, graph, render, workbook  # noqa: E402
+from hubspot_audit import analyze, extract, graph, render, usage, workbook  # noqa: E402
 from hubspot_audit.client import Client  # noqa: E402
 
 
@@ -34,6 +34,10 @@ def main() -> int:
     parser.add_argument("--no-docx", action="store_true", help="skip the Word reference")
     parser.add_argument("--no-guide", action="store_true",
                         help="skip the interactive account guide")
+    parser.add_argument("--usage", action="store_true",
+                        help="measure property fill rate and last-written (needs record read scopes)")
+    parser.add_argument("--sample", type=int, default=usage.SAMPLE_SIZE,
+                        help="records sampled per object for last-written (default 200)")
     parser.add_argument("--no-plan", action="store_true",
                         help="skip the review plan (screen + PDF)")
     parser.add_argument("--no-xlsx", action="store_true",
@@ -61,6 +65,23 @@ def main() -> int:
     analysis = analyze.run(snapshot)
     args.data.mkdir(parents=True, exist_ok=True)
     (args.data / "analysis.json").write_text(json.dumps(analysis, indent=2, default=str))
+
+    if args.usage:
+        print("\nMeasuring how properties are used on records...")
+        try:
+            measured = usage.measure(Client.from_env(), analysis, sample=args.sample)
+            analysis["usage"] = measured
+            (args.data / "usage.json").write_text(json.dumps(measured, indent=2, default=str))
+            seen = sum(1 for v in measured["properties"].values() if v.get("history_seen"))
+            print(f"  {len(measured['properties'])} properties measured, "
+                  f"{seen} with a write seen in the sample")
+        except SystemExit:
+            raise
+        except Exception as exc:
+            print(f"  ! usage measurement failed ({exc}); continuing without it")
+    elif (args.data / "usage.json").exists():
+        analysis["usage"] = json.loads((args.data / "usage.json").read_text())
+        print("  reusing data/usage.json (pass --usage to re-measure)")
 
     print("Building the dependency graph...")
     g = graph.build(analysis)

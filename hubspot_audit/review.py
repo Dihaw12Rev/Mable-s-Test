@@ -59,6 +59,7 @@ GLOSSARY = [
 
 def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
     """The actual rows of work behind each phase, in the order they should be done."""
+    measured = (analysis.get("usage") or {}).get("properties") or {}
     now = datetime.now(timezone.utc)
     workflows = analysis["workflows"]
     reach = {w["id"]: len(g.downstream(f"wf:{w['id']}", 4)) for w in workflows}
@@ -121,7 +122,37 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
             "type": p.get("field_type") or p.get("type") or "",
             "group": p.get("group") or "",
             "link": p["link"],
-        } for p in unused],
+            **_usage_fields(measured.get(p["key"])),
+        } for p in sorted(unused, key=lambda p: -( (measured.get(p["key"]) or {}).get("fill_pct") or 0))],
+    }
+
+
+def _usage_fields(measured: dict[str, Any] | None) -> dict[str, Any]:
+    """Fill rate and last-written, shaped for a spreadsheet row.
+
+    Absent measurements read as "not measured" rather than as zero — an unmeasured
+    field and an empty one must never look the same in a column someone deletes from.
+    """
+    if not measured:
+        return {"fill_pct": None, "filled": None, "last_written": "",
+                "last_written_by": "", "written_by": [], "verdict": "Not measured"}
+    pct = measured.get("fill_pct")
+    last = measured.get("last_written") or ""
+    if pct is not None and pct < 0.5 and not last:
+        verdict = "Safe to archive"
+    elif pct is not None and pct < 0.5:
+        verdict = "Nearly empty"
+    elif last and measured.get("last_written_by") in ("Someone typing", "Bulk edit in HubSpot",
+                                                      "Form submission"):
+        verdict = "A person maintains this"
+    elif last and measured.get("last_written_by"):
+        verdict = f"Written by {measured['last_written_by'].lower()}"
+    else:
+        verdict = "Filled, but no recent write seen"
+    return {
+        "fill_pct": pct, "filled": measured.get("filled"), "last_written": last,
+        "last_written_by": measured.get("last_written_by") or "",
+        "written_by": measured.get("written_by") or [], "verdict": verdict,
     }
 
 
@@ -279,7 +310,7 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
                    "That is a strong signal and it is not permission to delete. The audit can "
                    "only see automation — it cannot see a field a salesperson fills in on every "
                    "record, one feeding a report, or one an integration writes.",
-            "where": "Workbook → P6 tab, grouped by object.",
+            "where": "Workbook → P6 tab, sorted by fill rate, highest first.",
             "steps": [
                 "Split by object. Contact and deal fields are far likelier to be filled by hand.",
                 "For each candidate check the three things this audit cannot see: fill rate on "

@@ -71,6 +71,9 @@ def _sheet(wb: Workbook, title: str, headers: list[str], widths: list[int]):
     return ws
 
 
+PERCENT_HEADERS = {"Fill rate"}
+
+
 def _finish(ws, *, hyperlinks: bool = True) -> None:
     """Body font, wrapped multi-line cells, clickable links, and a filter row.
 
@@ -90,6 +93,12 @@ def _finish(ws, *, hyperlinks: bool = True) -> None:
             if hyperlinks and text.startswith("https://"):
                 cell.value = f'=HYPERLINK("{text}","Open in HubSpot")'
                 cell.font = LINK_FONT
+    # A column of fractions has to say it is a percentage or it reads as 0.
+    header_row = 1
+    for col in range(1, ws.max_column + 1):
+        if ws.cell(row=header_row, column=col).value in PERCENT_HEADERS:
+            for row in range(header_row + 1, ws.max_row + 1):
+                ws.cell(row=row, column=col).number_format = "0.0%"
     if ws.max_row > 1:
         ws.auto_filter.ref = f"A1:{get_column_letter(ws.max_column)}{ws.max_row}"
 
@@ -189,12 +198,15 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     # --------------------------------------------------------- properties
     ws = _sheet(
         wb, "Properties",
-        ["Property", "Object", "Type", "Group", "Custom?", "Used by",
+        ["Property", "Object", "Type", "Group", "Custom?", "Used by", "Fill rate",
+         "Last written", "Last written by",
          "Written by these workflows", "Read by these workflows", "Collected by these forms",
          "Used by these lists", "Area", "Internal name", "Link"],
-        [32, 14, 13, 20, 9, 9, 34, 34, 26, 26, 24, 32, 17],
+        [32, 14, 13, 20, 9, 9, 10, 13, 20, 34, 34, 26, 26, 24, 32, 17],
     )
+    measured = (analysis.get("usage") or {}).get("properties") or {}
     for p in analysis["properties"]:
+        u = measured.get(p["key"]) or {}
         ws.append([
             p.get("display") or p.get("label") or p["name"],
             p["object_type"],
@@ -202,6 +214,9 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
             p.get("group") or "",
             "no" if p["hubspot_defined"] else "yes",
             p["usage_score"],
+            (u["fill_pct"] / 100) if u.get("fill_pct") is not None else "",
+            u.get("last_written") or "",
+            u.get("last_written_by") or "",
             _names([f"wf:{i}" for i in p["written_by_workflows"]], g),
             _names([f"wf:{i}" for i in p["read_by_workflows"]], g),
             _names([f"form:{i}" for i in p["collected_by_forms"]], g),
