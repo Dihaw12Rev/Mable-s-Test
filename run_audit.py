@@ -1,0 +1,155 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["requests>=2.31", "python-dotenv>=1.0", "python-docx>=1.1",
+#                 "weasyprint>=62", "openpyxl>=3.1"]
+# ///
+"""Document a HubSpot portal: extract, cross-reference, and report.
+
+    uv run run_audit.py                     # full run against the live portal
+    uv run run_audit.py --snapshot data/snapshot.json   # re-render without re-fetching
+
+Every API call is read-only. Nothing here modifies the portal.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent))
+
+from hubspot_audit import (analyze, extract, followup_workbook, graph, render,  # noqa: E402
+                           usage, workbook, workflow_export)
+from hubspot_audit.client import Client  # noqa: E402
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--out", type=Path, default=Path("reports"), help="report output directory")
+    parser.add_argument("--data", type=Path, default=Path("data"), help="raw snapshot directory")
+    parser.add_argument("--snapshot", type=Path, help="re-render from an existing snapshot.json")
+    parser.add_argument("--workflow-export", type=Path,
+                        help="HubSpot workflow listing export (.xlsx) — adds last-run dates, "
+                             "seven-day enrolment and open issues. Defaults to "
+                             "data/workflow-export.xlsx when that file exists.")
+    parser.add_argument("--no-pdf", action="store_true", help="skip the PDF dashboard")
+    parser.add_argument("--no-docx", action="store_true", help="skip the Word reference")
+    parser.add_argument("--no-guide", action="store_true",
+                        help="skip the interactive account guide")
+    parser.add_argument("--usage", action="store_true",
+                        help="measure property fill rate and last-written (needs record read scopes)")
+    parser.add_argument("--sample", type=int, default=usage.SAMPLE_SIZE,
+                        help="records sampled per object for last-written (default 200)")
+    parser.add_argument("--no-plan", action="store_true",
+                        help="skip the review plan (screen + PDF)")
+    parser.add_argument("--no-xlsx", action="store_true",
+                        help="skip the spreadsheet inventory")
+    parser.add_argument("--explorer", action="store_true",
+                        help="also write the flat dependency explorer")
+    parser.add_argument("--html", action="store_true",
+                        help="also write the interactive HTML report")
+    args = parser.parse_args()
+
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv()
+    except ImportError:
+        pass
+
+    if args.snapshot:
+        snapshot = json.loads(args.snapshot.read_text())
+        print(f"Re-rendering from {args.snapshot}")
+    else:
+        snapshot = extract.extract_all(Client.from_env(), args.data)
+
+    export_path = args.workflow_export or (args.data / "workflow-export.xlsx")
+    if export_path.exists():
+        report = workflow_export.merge(snapshot, export_path)
+        print(f"\nMerging workflow export {export_path.name} "
+              f"(exported {report['exported_at'] or 'date unknown'})")
+        print(f"  {report['rows']} rows: {report['matched']} matched, "
+              f"{report['added']} created since the snapshot, "
+              f"{report['missing_from_export']} in the snapshot but not the export")
+    elif args.workflow_export:
+        print(f"! workflow export not found at {export_path}")
+
+    print("\nCross-referencing...")
+    analysis = analyze.run(snapshot)
+    args.data.mkdir(parents=True, exist_ok=True)
+    (args.data / "analysis.json").write_text(json.dumps(analysis, indent=2, default=str))
+
+    if args.usage:
+        print("\nMeasuring how properties are used on records...")
+        try:
+            measured = usage.measure(Client.from_env(), analysis, sample=args.sample)
+            analysis["usage"] = measured
+            (args.data / "usage.json").write_text(json.dumps(measured, indent=2, default=str))
+            seen = sum(1 for v in measured["properties"].values() if v.get("history_seen"))
+            print(f"  {len(measured['properties'])} properties measured, "
+                  f"{seen} with a write seen in the sample")
+        except SystemExit:
+            raise
+        except Exception as exc:
+            print(f"  ! usage measurement failed ({exc}); continuing without it")
+    elif (args.data / "usage.json").exists():
+        analysis["usage"] = json.loads((args.data / "usage.json").read_text())
+        print("  reusing data/usage.json (pass --usage to re-measure)")
+
+    print("Building the dependency graph...")
+    g = graph.build(analysis)
+    stats = graph.summarize(g)
+    analysis["graph"] = g.to_dict()
+    analysis["graph_stats"] = stats
+    (args.data / "graph.json").write_text(json.dumps(analysis["graph"], indent=2, default=str))
+    print(f"  {len(g.nodes)} nodes, {stats['edge_count']} edges, "
+          f"{stats['orphan_count']} unconnected assets")
+
+    scored = [p for p in analysis["properties"] if p["usage_score"] > 0]
+    print(
+        f"  {len(analysis['workflows'])} workflows, "
+        f"{len(analysis['properties'])} properties "
+        f"({len(scored)} referenced by automation), "
+        f"{len(analysis['systems'])} systems, "
+        f"{len(analysis['clusters'])} dependency clusters"
+    )
+
+    outputs = []
+    if not args.no_pdf:
+        outputs.append(render.render_dashboard_pdf(
+            analysis, args.out / "hubspot-portal-dashboard.pdf"))
+    if not args.no_docx:
+        outputs.append(render.render_docx(
+            analysis, args.out / "hubspot-portal-reference.docx"))
+    if not args.no_guide:
+        outputs.append(render.render_guide(
+            analysis, args.out / "hubspot-account-guide.html"))
+    if not args.no_plan:
+        outputs.extend(render.render_review_plan(
+            analysis,
+            args.out / "hubspot-review-plan.html",
+            args.out / "hubspot-review-plan.pdf"))
+    if not args.no_xlsx:
+        outputs.append(workbook.build(
+            analysis, args.out / "hubspot-account-inventory.xlsx"))
+        if analysis.get("usage"):
+            outputs.append(followup_workbook.build(
+                analysis, args.out / "followup-requests.xlsx"))
+    if args.explorer:
+        outputs.append(render.render_explorer(
+            analysis, args.out / "hubspot-portal-explorer.html"))
+    if args.html:
+        outputs.append(render.render_html(
+            analysis, args.out / "hubspot-portal-reference.html"))
+
+    print("\nReports:")
+    for path in outputs:
+        print(f"  {path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

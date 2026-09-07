@@ -1,0 +1,103 @@
+<meta charset="utf-8">
+<title>__PORTAL__ Review Plan</title>
+<style>
+  @page {
+    size: A4; margin: 15mm 15mm 14mm;
+    @bottom-left { content: "__PORTAL__ · audit review plan"; font-family: "Helvetica Neue", Helvetica, "Liberation Sans", Arial, sans-serif; font-size: 7.5pt; color: #918980; }
+    @bottom-right { content: counter(page) " / " counter(pages); font-family: "SF Mono", Menlo, "Liberation Mono", monospace; font-size: 7.5pt; color: #918980; }
+  }
+  :root {
+    --ink: #12171A; --muted: #5F5952; --faint: #918980;
+    --rule: #E0D9D1; --rule-strong: #CBC1B6; --sunken: #F1ECE6;
+    --accent: #0F5F63; --safe: #2E6B3F; --judge: #8A5A12; --care: #A03028;
+  }
+  * { box-sizing: border-box; }
+  html { font-size: 10pt; }
+  body {
+    margin: 0; color: var(--ink); background: #fff; line-height: 1.45;
+    font-family: "Helvetica Neue", Helvetica, "Liberation Sans", Arial, sans-serif;
+  }
+  .rail, nav { display: none; }
+
+  header.top { border-bottom: 2pt solid var(--ink); padding-bottom: 9pt; margin-bottom: 11pt; }
+  .eyebrow { font-size: 7.5pt; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: 23pt; line-height: 1.06; margin: 5pt 0 6pt; letter-spacing: -.025em; }
+  .lede {
+    font-family: Charter, "Bitstream Charter", Georgia, "Liberation Serif", serif;
+    font-size: 10.5pt; color: var(--muted); max-width: 66ch; margin: 0;
+  }
+
+  .totals { display: flex; flex-wrap: wrap; border-top: .75pt solid var(--rule); border-left: .75pt solid var(--rule); margin: 12pt 0 0; }
+  .tot { flex: 0 0 calc(25% - 0.2pt); padding: 6pt 9pt; border-right: .75pt solid var(--rule); border-bottom: .75pt solid var(--rule); }
+  .tot b { display: block; font-family: "SF Mono", Menlo, "Liberation Mono", monospace; font-size: 15pt; font-weight: 600; letter-spacing: -.02em; }
+  .tot span { font-size: 7pt; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); font-weight: 700; }
+
+  .why {
+    font-family: Charter, "Bitstream Charter", Georgia, "Liberation Serif", serif;
+    font-size: 9.5pt; color: var(--muted); margin: 8pt 0 0; max-width: 70ch;
+  }
+  .why b { color: var(--ink); font-weight: 700; }
+
+  .phase {
+    border-top: .75pt solid var(--rule); border-left: 2.5pt solid var(--rule-strong);
+    padding: 11pt 0 4pt 11pt; margin-top: 13pt; page-break-inside: avoid;
+  }
+  .phase.safe { border-left-color: var(--safe); }
+  .phase.judgment { border-left-color: var(--judge); }
+  .phase.careful { border-left-color: var(--care); }
+
+  .ph-head { display: flex; align-items: baseline; gap: 8pt; }
+  .ph-num { font-family: "SF Mono", Menlo, "Liberation Mono", monospace; font-size: 8.5pt; font-weight: 600; color: var(--faint); }
+  .phase h2 { font-size: 14pt; margin: 0; letter-spacing: -.015em; flex: 1 1 auto; }
+
+  .tagrow { display: flex; flex-wrap: wrap; gap: 4pt; margin-top: 5pt; }
+  .tag { font-size: 7pt; font-weight: 700; padding: 1.5pt 6pt; border-radius: 2pt; letter-spacing: .04em; text-transform: uppercase; background: var(--sunken); color: var(--muted); }
+  .tag.safe { background: #E1EDE4; color: var(--safe); }
+  .tag.judgment { background: #F6EBD8; color: var(--judge); }
+  .tag.careful { background: #F7E2E0; color: var(--care); }
+  .tag.count { text-transform: none; font-family: "SF Mono", Menlo, "Liberation Mono", monospace; }
+
+  .where {
+    font-family: "SF Mono", Menlo, "Liberation Mono", monospace; font-size: 8pt;
+    background: var(--sunken); color: var(--muted); padding: 5pt 8pt; border-radius: 3pt;
+    margin-top: 8pt; max-width: 74ch;
+  }
+  .where b { color: var(--ink); }
+
+  ol.steps { margin: 8pt 0 0; padding-left: 15pt; max-width: 72ch; font-size: 9.5pt; }
+  ol.steps li { margin-bottom: 4pt; }
+
+  .guard {
+    border: .75pt solid var(--care); background: #F7E2E0; color: var(--ink);
+    padding: 6pt 9pt; border-radius: 3pt; margin-top: 9pt; max-width: 74ch; font-size: 9pt;
+  }
+  .guard b { display: block; color: var(--care); text-transform: uppercase; font-size: 7pt; letter-spacing: .09em; margin-bottom: 2pt; }
+
+  footer { margin-top: 16pt; padding-top: 8pt; border-top: .75pt solid var(--rule); color: var(--faint); font-size: 8pt; max-width: 74ch; }
+
+  .lead-q { font-size: 9.5pt; margin: 7pt 0 0; max-width: 72ch; }
+  .lead-q b, .why b { color: var(--ink); font-weight: 700; }
+  .fixline { border-left: 1.5pt solid var(--accent); padding-left: 8pt; }
+  .steplabel { font-size: 7pt; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 9pt 0 0; }
+  .glossary dl { margin: 7pt 0 0; max-width: 74ch; }
+  .glossary dt { font-weight: 700; font-size: 9.5pt; margin-top: 6pt; }
+  .glossary dd { margin: 1pt 0 0; color: var(--muted); font-size: 9pt; font-family: Charter, Georgia, serif; }
+</style>
+
+<header class="top">
+  <div class="eyebrow">__PORTAL__ · audit review plan</div>
+  <h1>How to review this audit</h1>
+  <p class="lede">Nine phases, ordered so the risk-free work happens first and nothing
+  irreversible happens before there is a backup. Each phase names the exact cohort, where to
+  find it, the rule for deciding, and the mistake to avoid.</p>
+</header>
+<div class="totals">__TOTALS__</div>
+<p class="why">Work top to bottom. The first two phases are evidence-backed and need no debate —
+clearing them makes everything after easier to read. <b>Phase 4 carries the real business
+risk</b>, and it is the only phase where doing nothing is also a risk. Each phase names the
+workbook tab holding its work list.</p>
+__BODY__
+<footer>Counts are as of __DATE__ and drift as the account changes — re-run the audit before
+acting on a figure that looks stale. Every number comes from the account's own settings;
+anything driven by an outside integration or custom code is invisible to the audit, so treat
+each footprint as a floor rather than a ceiling.</footer>

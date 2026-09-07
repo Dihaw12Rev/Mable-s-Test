@@ -1,0 +1,334 @@
+<title>Enrollment, Fill Rate & History</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #F6F3F0; --surface: #FFFFFF; --sunken: #EFEAE4;
+    --ink: #12171A; --muted: #5F5952; --faint: #918980;
+    --rule: #E0D9D1; --rule-strong: #CBC1B6;
+    --accent: #0F5F63; --accent-soft: #DDEBEA;
+    --yes: #2E6B3F; --yes-soft: #E1EDE4;
+    --part: #8A5A12; --part-soft: #F6EBD8;
+    --no: #A03028; --no-soft: #F7E2E0;
+    --sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131418; --surface: #1B1D22; --sunken: #24262C;
+      --ink: #ECE8E3; --muted: #A9A199; --faint: #77706A;
+      --rule: #2C2F36; --rule-strong: #3D414A;
+      --accent: #5CC3BC; --accent-soft: #17383A;
+      --yes: #7FC796; --yes-soft: #1C3325;
+      --part: #DCA95F; --part-soft: #382E1B;
+      --no: #E8867C; --no-soft: #3A211F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131418; --surface: #1B1D22; --sunken: #24262C;
+    --ink: #ECE8E3; --muted: #A9A199; --faint: #77706A;
+    --rule: #2C2F36; --rule-strong: #3D414A;
+    --accent: #5CC3BC; --accent-soft: #17383A;
+    --yes: #7FC796; --yes-soft: #1C3325;
+    --part: #DCA95F; --part-soft: #382E1B;
+    --no: #E8867C; --no-soft: #3A211F;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 40px clamp(18px, 4vw, 40px) 80px; }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+  code, .mono { font-family: var(--mono); font-size: .87em; }
+
+  header.top { border-bottom: 2px solid var(--ink); padding-bottom: 20px; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: clamp(28px, 4.4vw, 37px); line-height: 1.08; margin: 9px 0 11px; letter-spacing: -.026em; text-wrap: balance; }
+  .lede { font-family: var(--serif); font-size: 17px; color: var(--muted); max-width: 64ch; margin: 0; }
+  .stamp { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin-top: 12px; }
+
+  .verdicts { margin: 26px 0 0; border: 1px solid var(--rule); background: var(--surface); }
+  .vrow { display: grid; grid-template-columns: 30px minmax(0, 1fr) 132px; gap: 14px; padding: 13px 16px; align-items: baseline; border-bottom: 1px solid var(--rule); }
+  .vrow:last-child { border-bottom: 0; }
+  .vrow .n { font-family: var(--mono); font-size: 12px; color: var(--faint); font-weight: 600; }
+  .vrow .t { font-size: 14.5px; }
+  .vrow .t b { font-weight: 600; }
+  .vrow .t span { color: var(--muted); display: block; font-size: 13px; margin-top: 2px; }
+  .chip { display: inline-flex; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 3px; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+  .chip.yes { background: var(--yes-soft); color: var(--yes); }
+  .chip.part { background: var(--part-soft); color: var(--part); }
+  .chip.no { background: var(--no-soft); color: var(--no); }
+
+  section.item { margin-top: 40px; padding-top: 4px; }
+  .ihead { display: flex; align-items: baseline; gap: 11px; flex-wrap: wrap; }
+  .ihead .num { font-family: var(--mono); font-size: 12.5px; font-weight: 600; color: var(--faint); }
+  section.item h2 { font-size: 22px; margin: 0; letter-spacing: -.018em; flex: 1 1 auto; }
+  .asked { font-family: var(--serif); font-size: 16px; color: var(--muted); font-style: italic; margin: 11px 0 0; padding-left: 14px; border-left: 2px solid var(--rule-strong); max-width: 66ch; }
+  section.item h3 { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 22px 0 7px; }
+  section.item p { margin: 0 0 10px; max-width: 68ch; }
+  section.item p:last-child { margin-bottom: 0; }
+
+  .finding { background: var(--surface); border: 1px solid var(--rule); padding: 15px 17px; margin: 10px 0 0; }
+  .finding p { font-family: var(--serif); font-size: 15.5px; color: var(--ink); }
+  ul.tight { margin: 8px 0 0; padding-left: 19px; max-width: 68ch; }
+  ul.tight li { margin-bottom: 6px; color: var(--muted); }
+  ul.tight li b { color: var(--ink); font-weight: 600; }
+
+  .flag { border: 1px solid var(--part); background: var(--part-soft); padding: 12px 15px; margin-top: 16px; max-width: 70ch; font-size: 14px; }
+  .flag b { display: block; color: var(--part); text-transform: uppercase; font-size: 10.5px; letter-spacing: .1em; margin-bottom: 4px; }
+
+  .scoper { margin-top: 44px; border-top: 2px solid var(--ink); padding-top: 22px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-top: 10px; }
+  .scroller { overflow-x: auto; }
+  th, td { text-align: left; padding: 8px 11px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700; white-space: nowrap; }
+  td.mono { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--rule); color: var(--faint); font-size: 12.5px; max-width: 72ch; }
+
+  @media print {
+    @page { size: A4; margin: 15mm 15mm 14mm; }
+    body { background: #fff; font-size: 10pt; }
+    .wrap { max-width: none; padding: 0; }
+    section.item, .finding, .flag { page-break-inside: avoid; }
+    h1 { font-size: 24pt; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">HubSpot account 5411323 · follow-up scoping</div>
+    <h1>Three new requests, checked against the live account</h1>
+    <p class="lede">All three are built and measured against the live account. The first took
+    three attempts and two corrections to get right — the data it needs is real, but it is not
+    in the API, and finding that out changed the answer twice.</p>
+    <div class="stamp">Measured 2026-09-04 · portal 5411323 · read-only · 2,249 fields, 200 records sampled per object · 714 workflows, run dates from the 4 Sept workflow export</div>
+  </header>
+
+  <div class="verdicts">
+    <div class="vrow">
+      <span class="n">1</span>
+      <span class="t"><b>Stale = no enrolments in a year</b><span>Built. Real run dates, from HubSpot's workflow export. P4 went from 198 workflows to 135, and 59 of those are new to the list.</span></span>
+      <span><span class="chip yes">Done</span></span>
+    </div>
+    <div class="vrow">
+      <span class="n">2</span>
+      <span class="t"><b>Fill rate on unused fields</b><span>Built and measured. Every field now carries an exact percentage.</span></span>
+      <span><span class="chip yes">Done</span></span>
+    </div>
+    <div class="vrow">
+      <span class="n">3</span>
+      <span class="t"><b>Property history export</b><span>Built as a sample. Every field carries a last-written date and what wrote it.</span></span>
+      <span><span class="chip yes">Done</span></span>
+    </div>
+  </div>
+
+  <section class="item">
+    <div class="ihead"><span class="num">Request 1</span><h2>Stale should mean unused, not unedited</h2></div>
+    <p class="asked">"P4 uses the last edit time as the reason to be considered stale. Can we
+    consider stale the ones that have had no enrolments in a year?"</p>
+
+    <div class="finding">
+      <p><b>Two earlier versions of this note were wrong, in opposite directions.</b> The first
+      said enrolment data did not exist — it tested nine per-workflow routes and passed the
+      wrong identifiers, since the modern API calls a workflow 7870191 while the legacy API
+      calls the same one 7023659. The second found the counts but concluded the dates were
+      unreachable. They are reachable. They are just not in the API.</p>
+    </div>
+
+    <h3>The dates live in HubSpot's own workflow export</h3>
+    <p>The workflow listing in HubSpot is a CRM object, and exporting that listing produces a
+    spreadsheet the API has no equivalent for. Four of its columns are the whole answer:</p>
+    <ul class="tight">
+      <li><b>Last action on</b> — the last time this workflow did anything to a record. This is
+      the field the request was really asking for.</li>
+      <li><b>Enrolled last 7-days</b> — how many records went through it this week, so a
+      workflow can be checked as live rather than merely recently edited.</li>
+      <li><b>Currently Enrolled</b> — records sitting inside it today, mid-sequence.</li>
+      <li><b>Current Issue Count</b> — actions HubSpot is currently reporting as failing.
+      78 workflows here have at least one, 251 problems in total.</li>
+    </ul>
+    <p>The audit now reads that file. Drop the export in as
+    <code>data/workflow-export.xlsx</code> and every run picks it up. The one merged here was
+    taken 4 September: 710 rows, 642 matched to the snapshot by workflow id, 68 built after the
+    snapshot and carried in from the export alone, 4 in the snapshot and no longer in HubSpot.</p>
+
+    <h3>What changed in P4, and it is not a small change</h3>
+    <p>Stale now means <b>no record has gone through it in a year</b>. The list went from 198
+    workflows to 135, but the overlap is the interesting part:</p>
+    <ul class="tight">
+      <li><b>122 came off the list.</b> They were flagged only because nobody had opened them in
+      a year. They run every day — several last acted on 3 September. A correct workflow nobody
+      needs to touch is not a problem, and asking the business to review 122 of them was going
+      to burn the credibility of the whole exercise.</li>
+      <li><b>59 went on to the list.</b> These look maintained — edited in August 2026 — and have
+      not moved a record since 2020, 2021 or 2022. The edit-date rule was hiding exactly the
+      workflows that most deserve the question.</li>
+      <li><b>16 have never enrolled a single record</b>, and are switched on. Those sort to the
+      top of the tab: in most cases the starting conditions can never be true, which is a bug
+      rather than a retired process.</li>
+    </ul>
+    <p>The oldest switched-on workflow last acted on 2 December 2019.</p>
+
+    <h3>What is still not available</h3>
+    <p>A per-record enrolment history, and a run date for the 119 workflows the export shows no
+    activity for at all. Those read "never" where the export is certain and "not measured" where
+    it is not — an unmeasured workflow and an unused one must never look the same in a column
+    someone acts on. The API side of the finding also still holds: no endpoint returns a
+    per-workflow run date, and property history records automation writes as
+    <code>enrollmentId:…;actionExecutionIndex:N</code>, naming the enrolment rather than the
+    workflow.</p>
+
+    <div class="flag">
+      <b>The export is a manual step, and it expires</b>
+      Automation → Workflows → export, with the four columns above added. It takes a minute and
+      HubSpot emails the file. Everything in this section is as of the export date, not the
+      audit date; re-export before the next review round or the run dates will quietly age.
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="ihead"><span class="num">Request 2</span><h2>Fill rate on the unused fields</h2></div>
+    <p class="asked">"Can we get for P6 a fill rate on those properties?"</p>
+
+    <h3>Built, and it splits the list into four very different groups</h3>
+    <p>Every one of the 2,249 fields now carries an exact count of how many records hold a value,
+    against the object's total. Combined with request 3, the 332 the audit flagged as
+    unreferenced turn out not to be one population at all.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Of the 332 flagged</th><th style="text-align:right">Fields</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr><td><b>Empty — no record holds a value</b></td><td class="mono" style="text-align:right">154</td><td>Archive. Nothing references them and nothing has ever filled them.</td></tr>
+          <tr><td><b>Nearly empty, no write seen</b></td><td class="mono" style="text-align:right">50</td><td>Archive after a glance. A residue of values, no recent activity.</td></tr>
+          <tr><td><b>Written in the last 12 months</b></td><td class="mono" style="text-align:right">54</td><td><b>Leave alone.</b> Something is actively filling these today.</td></tr>
+          <tr><td><b>Written, but longer ago</b></td><td class="mono" style="text-align:right">73</td><td>Judgement. The date and the source say whether it retired or went quiet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top:14px">The first row is the win: <b>154 fields can be archived with no
+    further checking</b>. The third is the save — those 54 would have been archived under the
+    original guidance, and something would have broken.</p>
+
+    <div class="flag">
+      <b>Fields with no records behind them</b>
+      The quote object holds 195 properties and zero records. Fill rate is undefined there rather
+      than zero, and the workbook leaves those cells blank rather than reporting 0% — an empty
+      object is a different finding from an unused field.
+    </div>
+  </section>
+
+  <section class="item">
+    <div class="ihead"><span class="num">Request 3</span><h2>When a field was last written, and by what</h2></div>
+    <p class="asked">"Can Claude export the property history to see when it was the last time
+    those properties were updated on a record?"</p>
+
+    <h3>Built as a sample, and the "by what" matters more than the "when"</h3>
+    <p>HubSpot returns history one record at a time, so asking every record is not a report but a
+    migration. Instead, the 200 most recently modified records per object are read — the right
+    bias, because a field still in use shows up there first. 1,037 of the 2,249 fields had a write
+    in that window.</p>
+
+    <p>Each field now reports its most recent write and what caused it, in plain terms:
+    <em>Automation</em>, <em>Integration sync</em>, <em>Form submission</em>, <em>Import</em>,
+    <em>Someone typing</em>. That last one is what the audit could never see before — a field
+    maintained by hand looks identical to a dead one until you know who writes it.</p>
+
+    <h3>What it found here</h3>
+    <p>Of the 332 flagged fields, <b>54 were written within the last 12 months</b> — 35 by an
+    integration, eight by record merges, four calculated by HubSpot, four by form submissions and
+    three by automation. Those are live fields that happen to sit outside any workflow, list or
+    active form.</p>
+    <p>The riskiest single case: <em>"Which distribution channels are you interested in?"</em> is
+    filled on well under 1% of contacts and was last written by a form submission
+    <b>the day before this was measured</b>. On fill rate alone it looks abandoned. It is a
+    working form field, and a low fill rate is exactly what a form field should look like — only
+    the fraction of people who submitted that form will ever carry a value.</p>
+    <p>That case forced a change to how the verdict is calculated. Recency and source now outrank
+    fill rate: a field written last month is in use at 0.1% fill, while a field at 40% fill last
+    written in 2021 is a fossil. Ordering it the other way round marked live form fields as empty,
+    which is the precise mistake this measurement exists to prevent.</p>
+
+    <div class="flag">
+      <b>A sampled date is a floor, not a ceiling</b>
+      A field may have been written more recently on a record outside the 200 sampled. Treat a
+      recent date as proof of life; treat the absence of one as "no evidence found", never as
+      proof the field is dead. The fill rate is exact — only the dates are sampled.
+    </div>
+  </section>
+
+  <div class="scoper">
+    <h2 style="font-size: 20px; margin: 0 0 6px; letter-spacing: -.015em">Where this leaves P4</h2>
+    <p style="color: var(--muted); margin: 0 0 4px; max-width: 66ch">The phase that previously
+    said "nobody has edited these in a year" now says "nothing has gone through these in a
+    year", which is a different list of workflows and a much better use of the review meeting.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Group</th><th style="text-align:right">Workflows</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Switched on, never enrolled anyone</td><td class="mono" style="text-align:right">16</td><td>Open the starting conditions first. Usually a bug, not a retired process.</td></tr>
+          <tr><td>Ran once, stopped over a year ago</td><td class="mono" style="text-align:right">119</td><td>Ask the process owner: did the process change, or did the workflow break?</td></tr>
+          <tr><td>Came off the list — edited long ago, still running daily</td><td class="mono" style="text-align:right">122</td><td>Nothing. These were never the problem.</td></tr>
+          <tr><td>New to the list — recently edited, dead for years</td><td class="mono" style="text-align:right">59</td><td>The edit-date rule was hiding these. Start here.</td></tr>
+          <tr><td>Switched on with actions currently failing</td><td class="mono" style="text-align:right">78</td><td>251 open problems in total. Separate from staleness, and more urgent.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 26px 0 8px">What is in the workbook now</h3>
+    <p style="margin: 0 0 10px; max-width: 68ch">The <b>P4</b> tab and the full <b>Workflows</b>
+    tab both carry Last time it ran, Enrolled last 7 days, In it now and Open issues, plus who
+    built each workflow and who last edited it. The 68 workflows created after the snapshot are
+    in there too, with their steps column reading "not read" — HubSpot's export names them and
+    their activity, but only a fresh audit run can read their logic.</p>
+  </div>
+
+  <div class="scoper">
+    <h2 style="font-size: 20px; margin: 0 0 6px; letter-spacing: -.015em">Where this leaves P6</h2>
+    <p style="color: var(--muted); margin: 0 0 4px; max-width: 66ch">The phase that previously
+    said "check three things yourself for each of 332 fields" now sorts itself, and the tab opens
+    on the fields that need a decision rather than the ones that do not.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Group</th><th style="text-align:right">Fields</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Empty, unreferenced</td><td class="mono" style="text-align:right">154</td><td>Archive. No further checking.</td></tr>
+          <tr><td>Nearly empty, no write seen</td><td class="mono" style="text-align:right">50</td><td>Archive after a glance at the source.</td></tr>
+          <tr><td>Written by an integration, recently</td><td class="mono" style="text-align:right">35</td><td>Leave alone. Deleting these breaks the integration, silently.</td></tr>
+          <tr><td>Merged, calculated or automated, recently</td><td class="mono" style="text-align:right">15</td><td>Leave alone. Cheap to keep, and something depends on them.</td></tr>
+          <tr><td>Live form fields</td><td class="mono" style="text-align:right">4</td><td>Leave alone. Low fill rate is normal for a form field.</td></tr>
+          <tr><td>Written, but longer ago</td><td class="mono" style="text-align:right">73</td><td>Judgement, with the date and source in front of you.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 26px 0 8px">What is in the workbook now</h3>
+    <p style="margin: 0 0 10px; max-width: 68ch">The <b>P6</b> tab leads with a plain-language
+    verdict per field, then fill rate, record count, last written, what wrote it, and everything
+    seen writing it — sorted so the most recently written are at the top, because those are the
+    ones a decision could get wrong. The full <b>Properties</b> tab carries the same three
+    measurements for all 2,249 fields.</p>
+
+    <div class="flag">
+      <b>These numbers age</b>
+      Fill rate and last-written are a snapshot of 4 September 2026. Re-run before acting if more
+      than a few weeks have passed — a field that looked safe in September may be in use by
+      November, and the archive decision would then be the wrong one.
+    </div>
+  </div>
+
+  <footer>Measured against portal 5411323 on 4 September 2026 with read-only access: fill rate
+  is exact from search totals; last-written is sampled from the 200 most recently modified records
+  per object. Endpoint availability is HubSpot's to change — the 404s recorded here describe the
+  API as it behaves today, not a permanent guarantee.</footer>
+</div>

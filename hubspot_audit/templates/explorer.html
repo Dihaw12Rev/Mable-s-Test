@@ -1,0 +1,427 @@
+<title>__PORTAL_TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #FBF9F7;
+    --surface: #FFFFFF;
+    --sunken: #F3EFEB;
+    --ink: #12171A;
+    --muted: #6E6862;
+    --faint: #9A938B;
+    --rule: #E2DCD5;
+    --rule-strong: #CFC6BC;
+    --accent: #0F5F63;
+    --accent-soft: #DCEBEA;
+    --ok: #2E6B3F;
+    --ok-soft: #E2EEE5;
+    --warn: #8A5A12;
+    --warn-soft: #F6EBD9;
+    --crit: #A03028;
+    --crit-soft: #F7E3E1;
+    --sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #15161A; --surface: #1C1E23; --sunken: #23252B;
+      --ink: #ECE8E3; --muted: #A29A92; --faint: #766F68;
+      --rule: #2E3138; --rule-strong: #3D414A;
+      --accent: #5CC3BC; --accent-soft: #17383A;
+      --ok: #7FC796; --ok-soft: #1C3325;
+      --warn: #DCA95F; --warn-soft: #382E1B;
+      --crit: #E8867C; --crit-soft: #3A211F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #15161A; --surface: #1C1E23; --sunken: #23252B;
+    --ink: #ECE8E3; --muted: #A29A92; --faint: #766F68;
+    --rule: #2E3138; --rule-strong: #3D414A;
+    --accent: #5CC3BC; --accent-soft: #17383A;
+    --ok: #7FC796; --ok-soft: #1C3325;
+    --warn: #DCA95F; --warn-soft: #382E1B;
+    --crit: #E8867C; --crit-soft: #3A211F;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  .mono { font-family: var(--mono); }
+
+  /* ---- header --------------------------------------------------------- */
+  header {
+    position: sticky; top: 0; z-index: 10; background: var(--surface);
+    border-bottom: 1px solid var(--rule); padding: 14px clamp(14px, 3vw, 28px) 0;
+  }
+  .brandrow { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .brand { font-weight: 700; font-size: 16px; letter-spacing: -.015em; }
+  .pid { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .statstrip { display: flex; gap: 18px; flex-wrap: wrap; margin: 9px 0 12px; }
+  .st { display: flex; align-items: baseline; gap: 5px; }
+  .st b { font-family: var(--mono); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .st span { font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+
+  .searchrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding-bottom: 12px; }
+  #q {
+    flex: 1 1 280px; min-width: 0; font: inherit; font-size: 14px; padding: 8px 11px;
+    border: 1px solid var(--rule-strong); border-radius: 5px;
+    background: var(--ground); color: var(--ink);
+  }
+  #q::placeholder { color: var(--faint); }
+  .types { display: flex; gap: 5px; flex-wrap: wrap; }
+  .tf {
+    font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 4px; cursor: pointer;
+    border: 1px solid var(--rule); background: var(--surface); color: var(--muted);
+    font-family: var(--mono); letter-spacing: .02em;
+  }
+  .tf[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+
+  /* ---- body ----------------------------------------------------------- */
+  .shell {
+    display: grid; grid-template-columns: minmax(240px, 330px) minmax(0, 1fr);
+    gap: 0; align-items: start;
+  }
+  @media (max-width: 800px) { .shell { grid-template-columns: minmax(0, 1fr); } .results { max-height: 320px; } }
+
+  .results {
+    border-right: 1px solid var(--rule); max-height: calc(100vh - 132px);
+    overflow-y: auto; background: var(--surface);
+  }
+  .rescount {
+    padding: 8px clamp(12px, 2vw, 18px); font-size: 11px; color: var(--faint);
+    font-family: var(--mono); border-bottom: 1px solid var(--rule);
+    position: sticky; top: 0; background: var(--surface);
+  }
+  .row {
+    display: block; width: 100%; text-align: left; padding: 9px clamp(12px, 2vw, 18px);
+    border: 0; border-bottom: 1px solid var(--rule); background: none; cursor: pointer;
+  }
+  .row:hover { background: var(--sunken); }
+  .row[aria-current="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+  .row .rl { font-weight: 500; font-size: 13px; display: block; }
+  .row .rm { font-size: 10.5px; color: var(--faint); font-family: var(--mono); margin-top: 2px; display: block; }
+
+  main { padding: 18px clamp(14px, 3vw, 30px) 70px; min-width: 0; }
+
+  .kind {
+    display: inline-block; font-family: var(--mono); font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--muted);
+    border: 1px solid var(--rule-strong); border-radius: 3px; padding: 1px 5px;
+  }
+  .chip {
+    display: inline-flex; align-items: center; font-size: 11px; font-weight: 600;
+    padding: 2px 7px; border-radius: 3px;
+  }
+  .chip.on { background: var(--ok-soft); color: var(--ok); }
+  .chip.off { background: var(--sunken); color: var(--muted); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.crit { background: var(--crit-soft); color: var(--crit); }
+
+  h1 { font-size: 22px; line-height: 1.2; margin: 7px 0 6px; letter-spacing: -.02em; text-wrap: balance; }
+  .subtle { color: var(--muted); font-size: 13px; max-width: 74ch; margin: 0 0 4px; }
+  .idline { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 6px; }
+
+  .blast {
+    border: 1px solid var(--rule); border-radius: 6px; background: var(--surface);
+    padding: 14px 16px; margin: 18px 0;
+  }
+  .blast-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .blast h2 { font-size: 13px; margin: 0; letter-spacing: .02em; text-transform: uppercase; color: var(--muted); }
+  .verdict { font-size: 15px; font-weight: 600; margin: 8px 0 2px; }
+  .verdict.none { color: var(--muted); }
+  .verdict.low { color: var(--ok); }
+  .verdict.moderate { color: var(--warn); }
+  .verdict.high { color: var(--crit); }
+  .depthctl { display: flex; align-items: center; gap: 7px; font-size: 11px; color: var(--faint); }
+  .depthctl input { width: 110px; }
+
+  .breakdown { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+  .bd {
+    font-family: var(--mono); font-size: 11px; padding: 3px 8px;
+    border: 1px solid var(--rule); border-radius: 4px; background: var(--ground);
+  }
+  .bd b { font-weight: 600; }
+
+  section.rel { margin-top: 20px; }
+  section.rel > h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); margin: 0 0 3px; padding-bottom: 6px; border-bottom: 1px solid var(--rule);
+  }
+  .relnote { font-size: 12px; color: var(--faint); margin: 6px 0 8px; }
+  .link {
+    display: flex; gap: 9px; align-items: baseline; width: 100%; text-align: left;
+    padding: 7px 2px; border: 0; border-bottom: 1px solid var(--rule);
+    background: none; cursor: pointer;
+  }
+  .link:hover { background: var(--sunken); }
+  .link .verb {
+    font-family: var(--mono); font-size: 10px; color: var(--faint);
+    min-width: 116px; text-transform: uppercase; letter-spacing: .05em;
+  }
+  .link .nm { font-size: 13px; flex: 1 1 auto; min-width: 0; }
+  .link .dp { font-family: var(--mono); font-size: 10px; color: var(--faint); }
+
+  .empty { color: var(--faint); font-size: 13px; padding: 12px 0; }
+  .hint { max-width: 62ch; }
+  .hint h2 { font-size: 15px; margin: 20px 0 6px; }
+  .hint li { margin-bottom: 6px; color: var(--muted); font-size: 13px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header>
+  <div class="brandrow">
+    <span class="brand" id="brand"></span>
+    <span class="pid" id="pid"></span>
+  </div>
+  <div class="statstrip" id="stats"></div>
+  <div class="searchrow">
+    <input id="q" type="search" placeholder="Search any workflow, property, list, form, email or page…" aria-label="Search assets" autocomplete="off">
+    <div class="types" id="types"></div>
+  </div>
+</header>
+
+<div class="shell">
+  <div class="results" id="results"></div>
+  <main id="detail"></main>
+</div>
+
+<script id="payload" type="application/json">__PAYLOAD_JSON__</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("payload").textContent);
+  var NODES = D.graph.nodes;
+  var EDGES = D.graph.edges;
+  var VERBS = D.verbs;
+  var LABELS = D.type_labels;
+
+  var out = {}, inc = {};
+  EDGES.forEach(function (e) {
+    (out[e.from] = out[e.from] || []).push([e.to, e.rel]);
+    (inc[e.to] = inc[e.to] || []).push([e.from, e.rel]);
+  });
+
+  var IDS = Object.keys(NODES);
+  var esc = function (s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  };
+
+  /* ---------------------------------------------------------- traversal */
+  function walk(start, adj, maxDepth) {
+    var seen = {}, queue = [[start, 0]];
+    while (queue.length) {
+      var cur = queue.shift(), node = cur[0], depth = cur[1];
+      if (depth >= maxDepth) continue;
+      (adj[node] || []).forEach(function (pair) {
+        var next = pair[0];
+        if (next === start || seen[next] !== undefined) return;
+        seen[next] = depth + 1;
+        queue.push([next, depth + 1]);
+      });
+    }
+    return seen;
+  }
+
+  function severity(n) {
+    if (!n) return ["none", "Nothing else depends on this"];
+    if (n <= 5) return ["low", "Contained — " + n + " asset" + (n === 1 ? "" : "s") + " downstream"];
+    if (n <= 20) return ["moderate", "Moderate reach — " + n + " assets downstream"];
+    return ["high", "Wide reach — " + n + " assets downstream"];
+  }
+
+  /* ------------------------------------------------------------ header */
+  document.getElementById("brand").textContent = D.portal_name;
+  document.getElementById("pid").textContent = "Portal " + D.portal_id + " · " + D.extracted_at;
+  document.getElementById("stats").innerHTML = D.stats.map(function (s) {
+    return '<span class="st"><b>' + s[1] + "</b><span>" + esc(s[0]) + "</span></span>";
+  }).join("");
+
+  var TYPES = [];
+  IDS.forEach(function (id) { if (TYPES.indexOf(NODES[id].type) < 0) TYPES.push(NODES[id].type); });
+  TYPES.sort();
+  var activeType = "";
+  document.getElementById("types").innerHTML = TYPES.map(function (t) {
+    return '<button class="tf" data-t="' + t + '" aria-pressed="false">' + esc(t) + "</button>";
+  }).join("");
+  document.getElementById("types").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".tf");
+    if (!b) return;
+    activeType = activeType === b.dataset.t ? "" : b.dataset.t;
+    Array.prototype.forEach.call(this.querySelectorAll(".tf"), function (x) {
+      x.setAttribute("aria-pressed", String(x.dataset.t === activeType));
+    });
+    renderResults();
+  });
+
+  /* ----------------------------------------------------------- results */
+  var qEl = document.getElementById("q"), current = null, depth = 3;
+
+  function score(id, q) {
+    var n = NODES[id], label = (n.label || "").toLowerCase();
+    if (label === q) return 0;
+    if (label.indexOf(q) === 0) return 1;
+    if (label.indexOf(q) > -1) return 2;
+    if ((n.note || "").toLowerCase().indexOf(q) > -1) return 3;
+    return -1;
+  }
+
+  function renderResults() {
+    var q = qEl.value.trim().toLowerCase();
+    var list = IDS.filter(function (id) {
+      if (activeType && NODES[id].type !== activeType) return false;
+      return !q || score(id, q) >= 0;
+    });
+    if (q) list.sort(function (a, b) { return score(a, q) - score(b, q); });
+    else list.sort(function (a, b) {
+      var da = (out[a] || []).length + (inc[a] || []).length;
+      var db = (out[b] || []).length + (inc[b] || []).length;
+      return db - da;
+    });
+
+    var shown = list.slice(0, 300);
+    var html = '<div class="rescount">' + list.length + " asset" + (list.length === 1 ? "" : "s") +
+      (list.length > shown.length ? " · showing " + shown.length : "") + "</div>";
+    html += shown.map(function (id) {
+      var n = NODES[id];
+      var links = (out[id] || []).length + (inc[id] || []).length;
+      return '<button class="row" data-id="' + esc(id) + '"' +
+        (id === current ? ' aria-current="true"' : "") + ">" +
+        '<span class="rl">' + esc(n.label) + "</span>" +
+        '<span class="rm">' + esc(LABELS[n.type] || n.type) + " · " + links + " connection" +
+        (links === 1 ? "" : "s") + "</span></button>";
+    }).join("");
+    document.getElementById("results").innerHTML = html || '<div class="empty" style="padding:16px">No match.</div>';
+  }
+
+  document.getElementById("results").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".row");
+    if (b) select(b.dataset.id);
+  });
+  qEl.addEventListener("input", renderResults);
+
+  /* ------------------------------------------------------------ detail */
+  function relRow(id, rel, dir, dp) {
+    var n = NODES[id];
+    if (!n) return "";
+    var verb = (VERBS[rel] || [rel, rel])[dir === "down" ? 0 : 1];
+    return '<button class="link" data-id="' + esc(id) + '">' +
+      '<span class="verb">' + esc(verb) + "</span>" +
+      '<span class="nm">' + esc(n.label) + ' <span class="kind">' + esc(n.type) + "</span></span>" +
+      (dp ? '<span class="dp">' + dp + "</span>" : "") + "</button>";
+  }
+
+  function select(id) {
+    current = id;
+    var n = NODES[id];
+    if (!n) return;
+    var down = walk(id, out, depth), up = walk(id, inc, depth);
+    var downN = Object.keys(down).length;
+    var sev = severity(downN);
+
+    var byType = {};
+    Object.keys(down).forEach(function (t) {
+      var k = NODES[t].type;
+      byType[k] = (byType[k] || 0) + 1;
+    });
+
+    var h = "";
+    h += '<span class="kind">' + esc(LABELS[n.type] || n.type) + "</span> ";
+    if (n.type === "workflow") {
+      h += '<span class="chip ' + (n.enabled ? "on" : "off") + '">' + (n.enabled ? "Active" : "Turned off") + "</span>";
+    }
+    if (n.custom) h += ' <span class="chip warn">custom</span>';
+    h += "<h1>" + esc(n.label) + "</h1>";
+    if (n.note) h += '<p class="subtle">' + esc(n.note) + "</p>";
+    if (n.link) h += '<p class="idline"><a href="' + esc(n.link) + '" target="_blank" rel="noopener">Open in HubSpot ↗</a> · ' + esc(id) + "</p>";
+    else h += '<p class="idline">' + esc(id) + "</p>";
+
+    h += '<div class="blast"><div class="blast-head">' +
+      "<h2>If you change this</h2>" +
+      '<label class="depthctl">hops <input id="depth" type="range" min="1" max="6" value="' + depth + '">' +
+      '<span class="mono" id="depthv">' + depth + "</span></label></div>";
+    h += '<div class="verdict ' + sev[0] + '">' + esc(sev[1]) + "</div>";
+    if (downN) {
+      h += '<div class="breakdown">' + Object.keys(byType).sort().map(function (t) {
+        return '<span class="bd"><b>' + byType[t] + "</b> " + esc(LABELS[t] || t) + "</span>";
+      }).join("") + "</div>";
+    } else {
+      h += '<p class="relnote" style="margin-bottom:0">No other asset reads what this writes, so an edit here stays local.</p>';
+    }
+    h += "</div>";
+
+    var direct = out[id] || [];
+    h += '<section class="rel"><h2>Directly affects</h2>';
+    h += direct.length
+      ? direct.map(function (p) { return relRow(p[0], p[1], "down", ""); }).join("")
+      : '<p class="empty">Nothing directly.</p>';
+    h += "</section>";
+
+    var indirect = Object.keys(down).filter(function (t) {
+      return !direct.some(function (p) { return p[0] === t; });
+    }).sort(function (a, b) { return down[a] - down[b]; });
+    if (indirect.length) {
+      h += '<section class="rel"><h2>Reached indirectly</h2>' +
+        '<p class="relnote">Further along the chain — a change here can still surface in these.</p>' +
+        indirect.slice(0, 120).map(function (t) {
+          return relRow(t, "", "down", down[t] + " hops");
+        }).join("") +
+        (indirect.length > 120 ? '<p class="empty">+' + (indirect.length - 120) + " more</p>" : "") +
+        "</section>";
+    }
+
+    var upDirect = inc[id] || [];
+    h += '<section class="rel"><h2>Depends on</h2>';
+    h += upDirect.length
+      ? upDirect.map(function (p) { return relRow(p[0], p[1], "up", ""); }).join("")
+      : '<p class="empty">Nothing feeds into this.</p>';
+    h += "</section>";
+
+    document.getElementById("detail").innerHTML = h;
+    document.getElementById("detail").scrollTop = 0;
+    var slider = document.getElementById("depth");
+    if (slider) {
+      slider.addEventListener("input", function () {
+        depth = +this.value;
+        document.getElementById("depthv").textContent = depth;
+        select(id);
+      });
+    }
+    renderResults();
+  }
+
+  document.getElementById("detail").addEventListener("click", function (ev) {
+    var b = ev.target.closest(".link");
+    if (b) { select(b.dataset.id); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  });
+
+  /* -------------------------------------------------------- first paint */
+  renderResults();
+  document.getElementById("detail").innerHTML =
+    '<div class="hint"><h1>What connects to what</h1>' +
+    '<p class="subtle">Every workflow, property, list, form, email and page in this portal, ' +
+    "wired together by what reads and writes what. Pick anything on the left, or search above.</p>" +
+    "<h2>The question this answers</h2>" +
+    '<p class="subtle">“If I edit this workflow, what else changes?” Selecting an asset shows what ' +
+    "it directly affects, what it reaches further down the chain, and what it depends on — so you " +
+    "can see the blast radius before you touch anything.</p>" +
+    "<h2>Where the edges come from</h2><ul>" +
+    "<li>A workflow <b>writes</b> the properties its set-property actions target.</li>" +
+    "<li>A property is <b>read by</b> workflows that branch or enrol on it, and <b>segments</b> the lists built on it.</li>" +
+    "<li>A list <b>enrols</b> the workflows that pull from it.</li>" +
+    "<li>A form <b>collects into</b> the properties its fields map to.</li>" +
+    "<li>Pipelines <b>provide the stages</b> a stage property can hold.</li>" +
+    "</ul>" +
+    '<p class="subtle">Edges are read from the portal\'s own definitions. Anything set by an ' +
+    "integration or a custom-coded action is invisible to this, so treat the blast radius as a " +
+    "floor rather than a ceiling.</p></div>";
+})();
+</script>
