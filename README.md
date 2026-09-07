@@ -83,6 +83,25 @@ uv run run_audit.py --snapshot data/snapshot.json
 
 Other flags: `--no-docx`, `--no-html`, `--out DIR`, `--data DIR`.
 
+## Workflow activity (the one manual step)
+
+The API says what a workflow is made of. It says nothing about what the workflow has been
+doing — there is no route that returns a run date, and property history names the
+enrolment rather than the workflow. That half of the picture lives on the workflow CRM
+object, and the only way out of HubSpot is a listing export:
+
+1. **Automation → Workflows**, set the view to *All workflows*.
+2. Export, adding these columns: *Last action on*, *Enrolled last 7-days*,
+   *Enrolled unique*, *Currently Enrolled*, *Current Issue Count*.
+3. Save the file HubSpot emails you as `data/workflow-export.xlsx`.
+
+Any run then picks it up automatically (or pass `--workflow-export PATH`). The merge is
+additive and keyed on flow id: it attaches activity to workflows the API already
+described, adds any workflow created after the snapshot — flagged, with its steps column
+reading *not read* — and marks the ones the export no longer lists as possibly deleted.
+Without the file the audit still runs; the staleness phase then falls back to edit dates
+and says so in every row.
+
 ## What the report contains
 
 | Section | Contents |
@@ -109,8 +128,10 @@ rather than guessing wrong.
 
 ## Known limits
 
-- **Enrollment history is not in the API.** The v4 endpoint returns logic, not counts. How
-  many records a workflow has touched lives only in the HubSpot UI, so the report never
+- **Enrollment history is not in the API.** `/automation/v3/workflows` returns lifetime
+  and current enrolment counts for the whole list; nothing returns a per-workflow run
+  date, and every per-workflow performance route 404s under both the v4 and the legacy id.
+  Run dates come from the workflow export above, so without that file the report never
   claims a workflow is unused — only that it is turned off.
 - **Integration and custom-coded references are invisible.** A property set by a custom
   code action or an external integration will not appear in the usage index.
@@ -126,6 +147,7 @@ hubspot_audit/
   client.py                   auth, pagination, rate limiting, scope degradation
   extract.py                  read-only portal snapshot
   analyze.py                  cross-reference model and property usage index
+  workflow_export.py          merges HubSpot's workflow listing export into the snapshot
   links.py                    HubSpot UI deep links
   render.py                   HTML and DOCX renderers
   templates/report.html       the interactive report

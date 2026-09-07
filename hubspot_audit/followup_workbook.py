@@ -35,7 +35,8 @@ VERDICT_FILL = {
 }
 
 # What was tested for request 1, and what HubSpot returned. Recorded so the
-# conclusion can be re-checked rather than taken on trust.
+# conclusion can be re-checked rather than taken on trust. The API routes all fail;
+# the last row is the one that works, and it is not an API route at all.
 ENDPOINT_EVIDENCE = [
     ("GET", "/automation/v4/flows/{id}/performance", "404", "No such endpoint"),
     ("GET", "/automation/v3/workflows/{id}/performance", "404", "No such endpoint"),
@@ -53,6 +54,23 @@ ENDPOINT_EVIDENCE = [
     ("GET", "record property history", "200",
      "Automation writes read as enrollmentId:…;actionExecutionIndex:N — the enrolment, "
      "never the workflow"),
+    ("GET", "/automation/v3/workflows (the whole list, not one workflow)", "200",
+     "Works. Returns contactCounts.enrolled and .active for every workflow — lifetime "
+     "and current enrolment, but no dates"),
+    ("—", "Workflow listing export (.xlsx) from the HubSpot UI", "—",
+     "Works, and carries the dates. Last action on, Enrolled last 7-days, Currently "
+     "Enrolled and Current Issue Count per workflow. This is what the answer is built on"),
+]
+
+EXPORT_STEPS = [
+    "In HubSpot, open Automation → Workflows.",
+    "Set the view to All workflows so nothing is filtered out, then click the "
+    "Actions / export control above the table.",
+    "Add these columns before exporting: Last action on, Enrolled last 7-days, "
+    "Enrolled unique, Currently Enrolled, Current Issue Count.",
+    "Export as .xlsx. HubSpot emails the file.",
+    "Drop it in as data/workflow-export.xlsx and re-run the audit — it is picked up "
+    "automatically, and every date below refreshes.",
 ]
 
 
@@ -110,7 +128,7 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     wb.remove(wb.active)
 
     _readme(wb, analysis, work, measured, usage_meta)
-    _request1(wb, work)
+    _request1(wb, work, analysis)
     _request23(wb, work)
     _all_fields(wb, analysis, measured)
 
@@ -134,10 +152,11 @@ def _readme(wb, analysis, work, measured, usage_meta) -> None:
     rows = [
         ("", "", "", ""),
         ("Request", "Verdict", "What was found", "Where to look"),
-        ("1. Stale = no enrolments in a year", "Cannot be built",
-         "HubSpot exposes no enrolment data to the API. Automation writes name the enrolment, "
-         "not the workflow, and nothing resolves one to the other.",
-         "Tab: 1. Why enrolment fails"),
+        ("1. Stale = no enrolments in a year", "Done",
+         f"{len(work['p4'])} switched-on workflows have not moved a record in a year, "
+         f"{sum(1 for r in work['p4'] if not r.get('last_action'))} of them never. Run dates "
+         "come from a HubSpot workflow export — the API has no route that returns them.",
+         "Tabs: 1. Stale by enrolment · 1. How it was measured"),
         ("2. Fill rate on unused fields", "Done",
          f"All {len(analysis['properties'])} fields carry an exact count of how many records "
          "hold a value.", "Tabs: 2+3 Flagged fields · All fields"),
@@ -194,27 +213,70 @@ def _readme(wb, analysis, work, measured, usage_meta) -> None:
     ws.cell(row=ws.max_row, column=1).font = NOTE
 
 
-def _request1(wb, work) -> None:
+def _request1(wb, work, analysis) -> None:
+    """The answer, then the working. The list comes first because it is the deliverable."""
+    rows = work["p4"]
+    never = [r for r in rows if not r.get("last_action")]
+    export = analysis.get("workflow_export") or {}
+
     ws = _sheet(
-        wb, "1. Why enrolment fails",
+        wb, "1. Stale by enrolment",
+        ["Workflow", "Why it is on this list", "Last time it ran", "Enrolled (lifetime)",
+         "In it now", "Enrolled last 7 days", "Open issues", "Status", "Footprint",
+         "What it does", "Link"],
+        [40, 44, 13, 16, 11, 13, 10, 11, 11, 54, 17],
+        f"Request 1 — stale now means “no records have gone through it in a year”, not "
+        f"“nobody has edited it in a year”. {len(rows)} switched-on workflows qualify, "
+        f"{len(never)} of which have never enrolled a single record. Run dates come from the "
+        f"workflow export taken {export.get('exported_at') or 'separately'}. Never-ran first, "
+        f"then by footprint.",
+    )
+    for r in rows:
+        ws.append([
+            r["name"], r["reason"], r.get("last_action") or "never",
+            r.get("enrolled_total") if r.get("enrolled_total") is not None else "not measured",
+            r.get("enrolled_active") if r.get("enrolled_active") is not None else "",
+            r.get("enrolled_7d") if r.get("enrolled_7d") is not None else "",
+            r.get("open_issues") or "", r["status"], r["footprint"],
+            "\n".join(f"{i}. {t}" for i, t in enumerate(r["does"], 1) if t),
+            r["link"],
+        ])
+        ws.cell(row=ws.max_row, column=2).fill = VERDICT_FILL[
+            "safe" if not r.get("last_action") else "judge"]
+    _finish(ws)
+
+    ws = _sheet(
+        wb, "1. How it was measured",
         ["Method", "Endpoint tested", "HubSpot returned", "What it means"],
         [10, 52, 17, 62],
-        "Request 1 — every route to workflow enrolment data, and what each returned. "
-        "Recorded so the conclusion can be re-checked rather than taken on trust.",
+        "Every route to workflow enrolment data and what each returned. Recorded so the "
+        "conclusion can be re-checked rather than taken on trust.",
     )
     for method, path, status, meaning in ENDPOINT_EVIDENCE:
         ws.append([method, path, status, meaning])
+        if method == "—":
+            ws.cell(row=ws.max_row, column=3).fill = VERDICT_FILL["safe"]
     _finish(ws)
 
     ws.append([])
     ws.append(["", "Conclusion", "",
-               "Workflow-level activity cannot be measured through the API. Field-level activity "
-               "can, and is on the next two tabs. Keep P4 on last-edited: imperfect, but the only "
-               "workflow-level signal HubSpot exposes."])
+               "The API cannot answer this: no route returns a per-workflow run date, and "
+               "property history names the enrolment rather than the workflow. HubSpot's own "
+               "workflow export can, and does. P4 is now built on real run dates, with the "
+               "edit date used only for the handful of workflows the export does not cover."])
     row = ws.max_row
     ws.cell(row=row, column=2).font = SECTION
     ws.cell(row=row, column=4).font = BODY
     ws.cell(row=row, column=4).alignment = Alignment(vertical="top", wrap_text=True)
+
+    ws.append([])
+    ws.append(["", "To refresh it", "", ""])
+    ws.cell(row=ws.max_row, column=2).font = SECTION
+    for i, step in enumerate(EXPORT_STEPS, 1):
+        ws.append(["", "", "", f"{i}. {step}"])
+        cell = ws.cell(row=ws.max_row, column=4)
+        cell.font = BODY
+        cell.alignment = Alignment(vertical="top", wrap_text=True)
 
 
 def _request23(wb, work) -> None:

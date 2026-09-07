@@ -47,8 +47,8 @@ EXAMPLES = {
                         "Re-checked footprint still 0; renamed with ZZ_ prefix, delete after 30 days"],
     "P3 Dormant clusters": ["Retire cluster", "R. Ops", "2026-09-10",
                             "All 4 downstream workflows also off; retiring the group together"],
-    "P4 Active and stale": ["Keep — reviewed", "Sales ops", "2026-09-15",
-                            "Confirmed with deal desk: stage mapping still correct, no change needed"],
+    "P4 Active and stale": ["Switch off", "Sales ops", "2026-09-15",
+                            "Never enrolled anyone; starting conditions referenced a field we retired in 2023"],
     "P5 Competing writes": ["Add enrolment condition", "R. Ops", "2026-09-18",
                             "Routing wins over the import workflow; condition added so only one fires"],
     "P6 Unused fields": ["Archive", "R. Ops", "2026-09-22",
@@ -107,6 +107,17 @@ def _steps(workflow: dict[str, Any]) -> str:
     """The workflow description as numbered lines, one point per line."""
     points = workflow.get("steps_text") or [workflow.get("description", "")]
     return "\n".join(f"{i}. {line}" for i, line in enumerate(points, 1) if line)
+
+
+def _step_count(workflow: dict[str, Any]) -> Any:
+    """Step count, or an honest blank where the definition was never read.
+
+    A workflow created after the snapshot has no step list, and printing 0 there
+    would read as "this workflow does nothing" — the opposite of the truth.
+    """
+    if workflow.get("definition_available"):
+        return workflow["action_count"]
+    return "not read"
 
 
 def _lines(values, limit: int = 12) -> str:
@@ -175,10 +186,11 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
     # ---------------------------------------------------------- workflows
     ws = _sheet(
         wb, "Workflows",
-        ["Workflow", "Your description in HubSpot", "What it does", "Status", "Area", "Steps",
-         "Enrolled (lifetime)", "In it now", "Only runs", "Writes to", "Reads",
-         "Hands off to", "Last updated", "Link"],
-        [38, 50, 62, 11, 24, 7, 16, 11, 22, 28, 28, 22, 13, 17],
+        ["Workflow", "Your description in HubSpot", "What it does", "Status",
+         "Last time it ran", "Enrolled (lifetime)", "In it now", "Enrolled last 7 days",
+         "Open issues", "Area", "Steps", "Only runs", "Writes to", "Reads", "Hands off to",
+         "Starts on", "Built with", "Created by", "Last edited", "Edited by", "Link"],
+        [38, 50, 62, 11, 13, 16, 11, 13, 10, 24, 7, 22, 28, 28, 22, 15, 22, 17, 13, 17, 17],
     )
     by_id = {w["id"]: w for w in analysis["workflows"]}
     for w in sorted(analysis["workflows"], key=lambda w: (not w["enabled"], w["name"].lower())):
@@ -187,15 +199,22 @@ def build(analysis: dict[str, Any], out_path: Path) -> Path:
             w.get("hubspot_description") or "",
             _steps(w),
             "Active" if w["enabled"] else "Turned off",
-            area_of.get(f"wf:{w['id']}", ""),
-            w["action_count"],
+            str(w.get("last_action_at") or "")[:10] or "never",
             w.get("enrolled_total") if w.get("enrolled_total") is not None else "not measured",
             w.get("enrolled_active") if w.get("enrolled_active") is not None else "",
+            w.get("enrolled_7d") if w.get("enrolled_7d") is not None else "",
+            w.get("open_issues") or "",
+            area_of.get(f"wf:{w['id']}", ""),
+            _step_count(w),
             w.get("time_windows") or "",
             _lines(w["properties_written_labels"]),
             _lines(w["properties_read_labels"]),
             _lines([by_id[t]["name"] for t in w["workflows_triggered"] if t in by_id]),
+            w.get("trigger_summary") or "",
+            w.get("built_in") or "",
+            w.get("created_by") or "",
             str(w["updated_at"] or "")[:10],
+            w.get("updated_by") or "",
             w["link"],
         ])
     _finish(ws)
@@ -326,17 +345,22 @@ def _review_tabs(wb: Workbook, analysis: dict[str, Any], g) -> None:
     phases = review_mod.phases(analysis, work)
 
     wf_head = ["Workflow", "Your description in HubSpot", "Why it is on this list",
-               "What it does", "Status", "Enrolled (lifetime)", "In it now", "Steps",
-               "Last updated", "Footprint", "Writes to", "Link"]
-    wf_width = [34, 42, 30, 54, 11, 16, 11, 7, 13, 11, 28, 17]
+               "What it does", "Status", "Last time it ran", "Enrolled (lifetime)",
+               "In it now", "Enrolled last 7 days", "Open issues", "Steps",
+               "Last edited", "Edited by", "Footprint", "Writes to", "Link"]
+    wf_width = [34, 42, 34, 54, 11, 13, 16, 11, 13, 10, 7, 13, 17, 11, 28, 17]
 
     def wf_rows(key):
         return [[r["name"], r.get("their_note") or "", r["reason"],
                  "\n".join(f"{i}. {t}" for i, t in enumerate(r["does"], 1) if t),
                  r["status"],
+                 r.get("last_action") or "never",
                  r.get("enrolled_total") if r.get("enrolled_total") is not None else "not measured",
                  r.get("enrolled_active") if r.get("enrolled_active") is not None else "",
-                 r["steps"], r["updated"], r["footprint"],
+                 r.get("enrolled_7d") if r.get("enrolled_7d") is not None else "",
+                 r.get("open_issues") or "",
+                 r["steps"], r["updated"], r.get("updated_by") or "",
+                 r["footprint"],
                  _lines(r["writes"]), r["link"]] for r in work[key]]
 
     ranges = {}
@@ -350,8 +374,9 @@ def _review_tabs(wb: Workbook, analysis: dict[str, Any], g) -> None:
               "Phase 3 — turned off but something downstream. Retire a whole dormant cluster, "
               "never one workflow out of it. Sorted by footprint.")
     ranges["p4"] = _worklist(wb, "P4 Active and stale", wf_head, wf_width, wf_rows("p4"),
-              "Phase 4 — running, and not edited in over a year. Highest risk in the audit. "
-              "Sorted by footprint: work down from the top.")
+              "Phase 4 — switched on, but no record has gone through it in over a year. "
+              "Read the “Last time it ran” column: “never” means it has not enrolled anybody "
+              "since the day it was built, and those come first. Then work down by footprint.")
 
     ranges["p5"] = _worklist(wb, "P5 Competing writes",
               ["Property", "Internal name", "Written by these workflows", "How many writers",
@@ -445,6 +470,18 @@ def _overview(wb: Workbook, analysis: dict[str, Any], scores, portal_areas) -> N
                "Every tab is a flat table — select a block and paste it straight into Sheets. " \
                "Counts are as of the snapshot."
     ws["A2"].font = NOTE_FONT
+
+    export = analysis.get("workflow_export") or {}
+    if export:
+        ws["A3"] = (
+            f"Workflow activity — last run date, seven-day enrolment, open issues — comes from "
+            f"a HubSpot workflow export taken {export.get('exported_at') or 'later'}: "
+            f"{export.get('matched', 0)} workflows matched, "
+            f"{export.get('added', 0)} created after the snapshot and added from the export "
+            f"alone (their step-by-step reads “not read”), "
+            f"{export.get('missing_from_export', 0)} in the snapshot but no longer in HubSpot."
+        )
+        ws["A3"].font = NOTE_FONT
 
     row = 4
     ws.cell(row=row, column=1, value="Health check").font = Font(name=FONT, size=11, bold=True)

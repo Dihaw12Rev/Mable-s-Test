@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["python-docx>=1.1"]
+# dependencies = ["python-docx>=1.1", "openpyxl>=3.1"]
 # ///
 """End-to-end check of analyze + render against the synthetic portal fixture."""
 
@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -15,7 +16,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
 from fixture import snapshot  # noqa: E402
-from hubspot_audit import analyze, render  # noqa: E402
+from hubspot_audit import analyze, graph, render, review, workflow_export  # noqa: E402
 
 FAILURES: list[str] = []
 
@@ -107,6 +108,9 @@ def main() -> int:
     check("off workflows described as turned off",
           by_id["106"]["description"].startswith("Turned off"))
 
+    print("\nWorkflow export merge")
+    _check_export_merge()
+
     print("\nRendering")
     out = ROOT / "reports" / "_fixture"
     html = render.render_html(a, out / "sample.html")
@@ -132,6 +136,78 @@ def main() -> int:
         return 1
     print("All checks passed.")
     return 0
+
+
+def _check_export_merge() -> None:
+    """The merge has three ways to silently corrupt the account picture. Lock all three.
+
+    Excel hands ids back as floats, so a flow id has to survive the round trip or every
+    row matches by name or not at all. A workflow the export cannot see must not have
+    its enrolment invented as zero. And a workflow whose definition was never read must
+    never reach the "empty, safe to delete" list — reading no steps is not the same as
+    there being no steps.
+    """
+    import tempfile
+
+    from openpyxl import Workbook
+
+    header = ["Flow ID", "Name", "On or Off", "Object type", "Last action on",
+              "Enrolled last 7-days", "Enrolled unique", "Currently Enrolled",
+              "Current Issue Count", "Action type", "Trigger Type", "Created in"]
+    rows = [
+        # Ids as floats, exactly as openpyxl reads HubSpot's own file.
+        [101.0, "MQL handoff", "true", "CONTACT", datetime(2020, 1, 2), 0.0, 40.0, 0.0, 0.0,
+         "Send email; Set property value", "Filter criteria", "WORKFLOWS_APP"],
+        [999.0, "Built after the snapshot", "true", "CONTACT", datetime(2026, 9, 1), 5.0,
+         12.0, 3.0, 2.0, "Send email", "Events", "WORKFLOWS_APP"],
+    ]
+    book = Workbook()
+    sheet = book.active
+    sheet.append(header)
+    for row in rows:
+        sheet.append(row)
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp) / "workflow-export.xlsx"
+        book.save(path)
+
+        snap = snapshot()
+        before = len(snap["workflows"])
+        report = workflow_export.merge(snap, path)
+
+        check("flow id survives Excel's float round trip", report["matched"] == 1,
+              f"matched {report['matched']}")
+        check("a workflow the export does not know is added", report["added"] == 1)
+        check("the rest are reported as absent from the export",
+              report["missing_from_export"] == before - 1, str(report["missing_from_export"]))
+        check("export date falls back to the newest row when the filename has none",
+              report["exported_at"] == "2026-09-01", str(report["exported_at"]))
+
+        merged = {str(w["id"]): w for w in snap["workflows"]}
+        check("activity lands on the matched workflow",
+              merged["101"]["_export_last_action_at"].startswith("2020-01-02"))
+        check("enrolment is not invented for workflows the export never covered",
+              all(w.get("_enrolled_total") is None
+                  for wid, w in merged.items() if wid not in {"101", "999"}))
+
+        a = analyze.run(snap)
+        by_id = {w["id"]: w for w in a["workflows"]}
+        added = by_id["999"]
+        check("an export-only workflow says so rather than reading as empty",
+              added["export_only"] and not added["definition_available"])
+        check("its description is built from the export",
+              any("Send email" in line for line in added["steps_text"]),
+              " | ".join(added["steps_text"]))
+
+        work = review.cohorts(a, graph.build(a))
+        check("an unread definition never reaches the delete list",
+              "999" not in {r["name"] for r in work["p1"]}
+              and added["name"] not in {r["name"] for r in work["p1"]})
+        check("a year without a run makes a live workflow stale",
+              by_id["101"]["name"] in {r["name"] for r in work["p4"]})
+        check("the stale reason cites the run date, not the edit date",
+              any("2020-01-02" in r["reason"] for r in work["p4"] if r["name"] == by_id["101"]["name"]),
+              str([r["reason"] for r in work["p4"] if r["name"] == by_id["101"]["name"]]))
 
 
 def _payload_is_escaped(text: str) -> bool:

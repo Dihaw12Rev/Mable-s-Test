@@ -123,11 +123,16 @@
   }
 
   /* health dials */
-  .dials { display: flex; flex-wrap: wrap; gap: 6pt; }
+  /* A fixed table rather than flex. The print renderer sizes a percentage
+     flex-basis from the card's content, so the five dials came out wider than a
+     fifth each and the last one wrapped onto its own row. Table cells divide the
+     row exactly and cannot wrap, which is the whole requirement here. */
+  .dials {
+    display: table; table-layout: fixed; width: 100%;
+    border-spacing: 6pt 0; margin: 0 -6pt;
+  }
   .dial {
-    /* Fixed basis, no grow: five dials hold one row instead of the last
-       one stretching across the page. */
-    flex: 0 0 calc(20% - 4.8pt); min-width: 0; text-align: center;
+    display: table-cell; width: 20%; vertical-align: top; text-align: center;
     border: .75pt solid var(--rule); border-radius: 4pt; padding: 8pt 6pt;
   }
   .dial-t { font-size: 9pt; font-weight: 700; margin-top: 3pt; }

@@ -89,9 +89,25 @@ def health(a: dict[str, Any]) -> list[dict[str, Any]]:
     total_wf = len(workflows) or 1
 
     named = sum(1 for w in workflows if not re.match(r"^\s*unnamed workflow", w["name"], re.I))
-    with_steps = sum(1 for w in workflows if w["action_count"])
-    fresh = sum(1 for w in workflows
-                if (d := _age_days(w["updated_at"], now)) is not None and d < 365)
+    # Only workflows whose definition we actually read can be judged on their steps.
+    # Scoring an unread definition as "does nothing" would invent a problem.
+    readable = [w for w in workflows if w.get("definition_available")]
+    with_steps = sum(1 for w in readable if w["action_count"])
+    steps_of = len(readable) or 1
+    # Upkeep asks whether the automation is alive, not whether anyone has opened it.
+    # Where a run date exists it settles the question; only workflows with no run date
+    # at all fall back to the edit date, and `measured` says how many that was.
+    def _alive(w) -> bool:
+        ran = _age_days(w.get("last_action_at"), now)
+        if ran is not None:
+            return ran < 365
+        if w.get("enrolled_total") == 0:
+            return False
+        edited = _age_days(w["updated_at"], now)
+        return edited is not None and edited < 365
+
+    fresh = sum(1 for w in workflows if _alive(w))
+    measured = sum(1 for w in workflows if w.get("last_action_at") or w.get("enrolled_total") == 0)
     used_custom = sum(1 for p in custom if p["usage_score"] > 0)
     connected_lists = sum(1 for l in a["lists"] if l.get("properties"))
 
@@ -99,12 +115,14 @@ def health(a: dict[str, Any]) -> list[dict[str, Any]]:
         ("Documentation", named / total_wf * 100,
          f"{named} of {len(workflows)} workflows carry a real name",
          "An unnamed workflow is invisible to whoever inherits it."),
-        ("Workflow hygiene", with_steps / total_wf * 100,
-         f"{with_steps} of {len(workflows)} workflows actually do something",
+        ("Workflow hygiene", with_steps / steps_of * 100,
+         f"{with_steps} of {len(readable)} readable workflows actually do something",
          "Empty workflows clutter the list and hide the ones that matter."),
         ("Upkeep", fresh / total_wf * 100,
-         f"{fresh} of {len(workflows)} were edited in the last year",
-         "Automation nobody has reviewed drifts away from how the business works."),
+         f"{fresh} of {len(workflows)} moved a record in the last year"
+         + (f" ({measured} judged on real run dates)" if measured else ""),
+         "A workflow that has stopped firing still looks like coverage on the screen, "
+         "so nobody builds the thing that would actually do the job."),
         ("Property discipline", (used_custom / len(custom) * 100) if custom else 100,
          f"{used_custom} of {len(custom)} custom fields are actually used",
          "Unused fields make forms and reports harder to get right."),

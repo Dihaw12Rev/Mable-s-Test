@@ -95,7 +95,8 @@ def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
             + ".",
         ))
 
-    empty = [w for w in workflows if not w["action_count"]
+    # Only a definition we actually read can be shown to be empty.
+    empty = [w for w in workflows if w["definition_available"] and not w["action_count"]
              and not w["properties_written"] and not w["properties_read"]]
     if empty:
         out.append((
@@ -136,17 +137,35 @@ def findings(a: dict[str, Any]) -> list[tuple[str, str]]:
             + ", ".join(f"“{w['name']}”" for w in test_like[:4]) + ".",
         ))
 
-    stale = [
-        w for w in workflows
-        if (d := _age_days(w["updated_at"], now)) is not None and d >= 365 and w["enabled"]
-    ]
-    if stale:
+    # Never-ran and long-stopped overlap, so count the union rather than the sum.
+    never = [w for w in workflows if w["enabled"] and w.get("enrolled_total") == 0]
+    never_ids = {w["id"] for w in never}
+    dead = [w for w in workflows
+            if w["enabled"] and w["id"] not in never_ids and w.get("last_action_at")
+            and (d := _age_days(w["last_action_at"], now)) is not None and d >= 365]
+    if dead or never:
+        parts = []
+        if never:
+            parts.append(f"{len(never)} have never enrolled a single record")
+        if dead:
+            parts.append(f"{len(dead)} last moved a record over a year ago")
         out.append((
-            f"{_plural(len(stale), 'active workflow')} have not been edited in over a year",
-            "Still enrolling records against logic nobody has reviewed recently.",
+            f"{_plural(len(dead) + len(never), 'switched-on workflow')} are not doing anything",
+            " and ".join(parts).capitalize()
+            + ". A workflow that never fires still reads as coverage on the screen, so "
+              "nobody builds the thing that would actually do the job.",
         ))
 
-    no_def = [w for w in workflows if not w["definition_available"]]
+    added = [w for w in workflows if w.get("export_only")]
+    if added:
+        out.append((
+            f"{_plural(len(added), 'workflow')} were built after this snapshot was taken",
+            "They come from the workflow export, so their name, status and activity are here "
+            "but their steps and property dependencies are not. Re-run the audit to read them "
+            "in full.",
+        ))
+    no_def = [w for w in workflows
+              if not w["definition_available"] and not w.get("export_only")]
     if no_def:
         out.append((
             f"{_plural(len(no_def), 'workflow')} could not be read in full",
@@ -244,6 +263,7 @@ def build_html(a: dict[str, Any], portal_name: str) -> str:
     order = ["workflow", "property", "list", "form", "email", "page", "pipeline", "stage"]
 
     generated = str(a.get("extracted_at") or "")[:10]
+    export = a.get("workflow_export") or {}
     body = [
         '<div class="page">',
         '<header class="mast">',
@@ -251,10 +271,13 @@ def build_html(a: dict[str, Any], portal_name: str) -> str:
         f"<h1>{escape(portal_name)}</h1>",
         '<div class="meta">'
         + (f'Portal {escape(str(a["portal_id"]))} · ' if portal_name != f"Portal {a['portal_id']}" else "")
-        + f"snapshot {escape(generated)}</div>",
+        + f"snapshot {escape(generated)}"
+        + (f" · workflow activity {escape(str(export.get('exported_at')))}"
+           if export.get("exported_at") else "")
+        + "</div>",
         "</header>",
         '<p class="lede">A plain-language map of everything running in this HubSpot account — '
-        "what each piece does and what it is connected to. This is the summary; the '"
+        "what each piece does and what it is connected to. This is the summary; the "
         "interactive guide lets you click into any area or asset.</p>",
     ]
 

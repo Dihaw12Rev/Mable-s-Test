@@ -239,6 +239,21 @@ class Analysis:
             "hubspot_description": (flow.get("description") or "").strip(),
             "enrolled_total": flow.get("_enrolled_total"),
             "enrolled_active": flow.get("_enrolled_active"),
+            # Operational history, only present when a workflow listing export was merged.
+            "last_action_at": flow.get("_export_last_action_at"),
+            "enrolled_7d": flow.get("_export_enrolled_7d"),
+            "enrolled_runs": flow.get("_export_enrolled_runs"),
+            "open_issues": flow.get("_export_open_issues"),
+            "last_issue_at": flow.get("_export_last_issue_at"),
+            "trigger_summary": flow.get("_export_trigger_type"),
+            "built_in": flow.get("_export_built_in"),
+            "created_by": flow.get("_export_created_by"),
+            "updated_by": flow.get("_export_updated_by"),
+            "brand": flow.get("_export_brand"),
+            "used_elsewhere": flow.get("_export_used_elsewhere"),
+            "export_action_types": flow.get("_export_action_types") or [],
+            "in_export": flow.get("_export_present"),
+            "export_only": bool(flow.get("_export_only")),
             "time_windows": _time_windows(flow.get("timeWindows") or []),
             "blocked_dates": len(flow.get("blockedDates") or []),
             "associations_used": len([d for d in (flow.get("dataSources") or [])
@@ -376,8 +391,7 @@ class Analysis:
     def _describe_steps(self, r: dict[str, Any]) -> list[str]:
         """What this workflow does, as short numbered points rather than a paragraph."""
         if not r["definition_available"]:
-            return ["The full definition could not be read from HubSpot, so only the name, "
-                    "status and dates below are known."]
+            return self._describe_from_export(r)
 
         obj = _object_label(r["object_type"])
         state = "Active" if r["enabled"] else "Turned off"
@@ -404,12 +418,7 @@ class Analysis:
             steps = ", ".join(f"{n}x {label}" for label, n in counts.most_common(8))
             out.append(f"{r['action_count']} steps: {steps}.")
 
-        total, active = r.get("enrolled_total"), r.get("enrolled_active")
-        if total == 0:
-            out.append("Has never enrolled a single record since it was created.")
-        elif total:
-            out.append(f"Has enrolled {total:,} records in its lifetime"
-                       + (f", {active:,} currently in it." if active else ", none in it now."))
+        out.extend(_activity_lines(r))
 
         if r.get("time_windows"):
             out.append(f"Only runs {r['time_windows']}."
@@ -424,6 +433,33 @@ class Analysis:
             tail.append("re-enrolment is on")
         if tail:
             out.append(_sentence(tail) + ".")
+        return out
+
+    def _describe_from_export(self, r: dict[str, Any]) -> list[str]:
+        """All we can honestly say about a workflow whose definition we could not read.
+
+        For one created after the snapshot that is still a lot: HubSpot's own export
+        carries the name, the team's description, the action types and the activity.
+        """
+        obj = _object_label(r["object_type"])
+        state = "Active" if r["enabled"] else "Turned off"
+        if r.get("export_only"):
+            out = [f"{state} {obj} workflow, created after this audit's snapshot was taken, "
+                   "so the step-by-step below comes from HubSpot's workflow export rather "
+                   "than a full read of the definition."]
+        else:
+            out = [f"{state} {obj} workflow. The full definition could not be read from "
+                   "HubSpot, so only what follows is known."]
+        if r.get("hubspot_description"):
+            out.append(f"Your own note in HubSpot: “{r['hubspot_description']}”")
+        if r.get("trigger_summary"):
+            out.append(f"Starts: {r['trigger_summary'].lower()}.")
+        types = r.get("export_action_types") or []
+        if types:
+            shown = ", ".join(types[:8])
+            more = f" (+{len(types) - 8} more kinds)" if len(types) > 8 else ""
+            out.append(f"Uses these kinds of step: {shown}{more}.")
+        out.extend(_activity_lines(r))
         return out
 
     # ---------------------------------------------------------------------- forms
@@ -738,6 +774,48 @@ def _sentence(parts: list[str]) -> str:
     return joined[0].upper() + joined[1:]
 
 
+def _activity_lines(r: dict[str, Any]) -> list[str]:
+    """What this workflow has actually been doing, in plain sentences.
+
+    Enrolment counts come from the Automation API; the dates and the seven-day figure
+    come from a merged workflow export. Either can be absent, and an absent number is
+    never written as a zero — "we did not measure it" and "it never happened" are
+    different answers and a reader will act on them differently.
+    """
+    out: list[str] = []
+    total, active = r.get("enrolled_total"), r.get("enrolled_active")
+    last = str(r.get("last_action_at") or "")[:10]
+
+    if total == 0:
+        out.append("Has never enrolled a single record since it was created.")
+    elif total:
+        line = f"Has enrolled {total:,} records in its lifetime"
+        line += f", {active:,} currently in it" if active else ", none in it now"
+        out.append(line + ".")
+
+    if last:
+        recent = r.get("enrolled_7d")
+        line = f"Last did something on {last}"
+        if recent:
+            line += f", and {recent:,} records went through it in the last seven days"
+        elif recent == 0:
+            line += ", and nothing has gone through it in the last seven days"
+        out.append(line + ".")
+    elif total:
+        out.append("No record of when it last ran.")
+
+    if r.get("in_export") is False:
+        out.append("Not present in the workflow export taken after this snapshot, so it may "
+                   "have been deleted from HubSpot since.")
+
+    issues = r.get("open_issues")
+    if issues:
+        when = str(r.get("last_issue_at") or "")[:10]
+        out.append(f"HubSpot is currently reporting {issues} problem(s) with it"
+                   + (f", the most recent on {when}." if when else "."))
+    return out
+
+
 def _object_label(object_type_id: Any) -> str:
     mapping = {
         "0-1": "contact", "0-2": "company", "0-3": "deal",
@@ -759,6 +837,7 @@ def run(snapshot: dict[str, Any]) -> dict[str, Any]:
         "portal_id": a.portal_id,
         "account": snapshot.get("account", {}),
         "extracted_at": snapshot.get("extracted_at"),
+        "workflow_export": snapshot.get("workflow_export"),
         "workflows": workflows,
         "properties": properties,
         "forms": forms,

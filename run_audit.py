@@ -22,7 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from hubspot_audit import (analyze, extract, followup_workbook, graph, render,  # noqa: E402
-                           usage, workbook)
+                           usage, workbook, workflow_export)
 from hubspot_audit.client import Client  # noqa: E402
 
 
@@ -31,6 +31,10 @@ def main() -> int:
     parser.add_argument("--out", type=Path, default=Path("reports"), help="report output directory")
     parser.add_argument("--data", type=Path, default=Path("data"), help="raw snapshot directory")
     parser.add_argument("--snapshot", type=Path, help="re-render from an existing snapshot.json")
+    parser.add_argument("--workflow-export", type=Path,
+                        help="HubSpot workflow listing export (.xlsx) — adds last-run dates, "
+                             "seven-day enrolment and open issues. Defaults to "
+                             "data/workflow-export.xlsx when that file exists.")
     parser.add_argument("--no-pdf", action="store_true", help="skip the PDF dashboard")
     parser.add_argument("--no-docx", action="store_true", help="skip the Word reference")
     parser.add_argument("--no-guide", action="store_true",
@@ -61,6 +65,17 @@ def main() -> int:
         print(f"Re-rendering from {args.snapshot}")
     else:
         snapshot = extract.extract_all(Client.from_env(), args.data)
+
+    export_path = args.workflow_export or (args.data / "workflow-export.xlsx")
+    if export_path.exists():
+        report = workflow_export.merge(snapshot, export_path)
+        print(f"\nMerging workflow export {export_path.name} "
+              f"(exported {report['exported_at'] or 'date unknown'})")
+        print(f"  {report['rows']} rows: {report['matched']} matched, "
+              f"{report['added']} created since the snapshot, "
+              f"{report['missing_from_export']} in the snapshot but not the export")
+    elif args.workflow_export:
+        print(f"! workflow export not found at {export_path}")
 
     print("\nCross-referencing...")
     analysis = analyze.run(snapshot)

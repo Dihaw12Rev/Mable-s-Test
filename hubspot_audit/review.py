@@ -75,21 +75,31 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
             "footprint": reach[w["id"]],
             "enrolled_total": w.get("enrolled_total"),
             "enrolled_active": w.get("enrolled_active"),
+            "last_action": str(w.get("last_action_at") or "")[:10],
+            "enrolled_7d": w.get("enrolled_7d"),
+            "open_issues": w.get("open_issues"),
+            "updated_by": w.get("updated_by") or "",
+            "in_export": w.get("in_export"),
             "writes": w.get("properties_written_labels") or [],
             "link": w["link"],
         }
         base.update(extra)
         return base
 
-    empty = [w for w in workflows
+    # A workflow whose definition we could not read only *looks* empty. Reading zero
+    # steps is not the same as there being zero steps, and this list ends in deletion.
+    readable = [w for w in workflows if w.get("definition_available")]
+    empty = [w for w in readable
              if not w["action_count"] and not w["properties_written"] and not w["properties_read"]]
     leftover = [w for w in workflows
                 if any(k in w["name"].lower() for k in LEFTOVER) and w not in empty]
     off = [w for w in workflows if not w["enabled"]]
     dormant_safe = [w for w in off if reach[w["id"]] == 0 and w not in empty]
     dormant_linked = [w for w in off if reach[w["id"]] > 0]
-    live_stale = [w for w in workflows
-                  if w["enabled"] and (d := _age_days(w["updated_at"], now)) is not None and d >= 365]
+    # Stale means "no records have gone through it in a year", not "nobody has edited
+    # it in a year". A correct workflow that nobody needs to touch is not stale; a
+    # workflow nothing enrols into is, however recently someone opened it.
+    live_stale = [w for w in workflows if w["enabled"] and _stale(w, now)]
     # Measured, not inferred: enrolment counts say a workflow has never acted at all.
     never_enrolled = [w for w in workflows if w["enabled"] and w.get("enrolled_total") == 0]
 
@@ -136,15 +146,49 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
     }
 
 
-def _p4_reason(w: dict[str, Any]) -> str:
-    """Why this workflow is on the list. Enrolment evidence wins over edit dates."""
+def _stale(w: dict[str, Any], now: datetime) -> bool:
+    """Has this switched-on workflow gone a year without touching a record?
+
+    Preference order is deliberate. A last-action date is direct evidence and settles
+    it outright. Without one, a lifetime enrolment count of zero settles it the other
+    way. Only when neither exists does the edit date stand in — and the reason string
+    then says so, because an edit date is a much weaker claim.
+    """
+    last_action = _age_days(w.get("last_action_at"), now)
+    if last_action is not None:
+        return last_action >= 365
     if w.get("enrolled_total") == 0:
-        return "Switched on, but has never enrolled a record"
-    edited = str(w.get("updated_at") or "")[:10]
+        return True
+    if w.get("enrolled_total"):
+        # It has enrolled records but the export carries no run date: nothing to judge.
+        return False
+    edited = _age_days(w.get("updated_at"), now)
+    return edited is not None and edited >= 365
+
+
+def _p4_reason(w: dict[str, Any]) -> str:
+    """Why this workflow is on the list, in the strongest evidence available."""
     total = w.get("enrolled_total")
+    last = str(w.get("last_action_at") or "")[:10]
+    recent = w.get("enrolled_7d")
+
+    if total == 0 and not last:
+        return "Switched on, but has never enrolled a record"
+    if last:
+        line = f"Switched on, but nothing has run through it since {last}"
+        if total:
+            line += f" ({total:,} enrolled in its lifetime)"
+        if recent:
+            line += f" — though {recent:,} enrolled in the last seven days"
+        return line
+    edited = str(w.get("updated_at") or "")[:10]
+    if w.get("in_export") is False:
+        return (f"Last edited {edited}, and not in the later workflow export — "
+                "check whether it still exists in HubSpot at all")
     if total:
-        return f"Active, last edited {edited}, {total:,} enrolled lifetime"
-    return f"Active, last edited {edited}"
+        return (f"Active, {total:,} enrolled lifetime, last edited {edited} — "
+                "no run date available, so this one is judged on the edit date")
+    return f"Active, last edited {edited} — no enrolment or run date available"
 
 
 def _usage_fields(measured: dict[str, Any] | None) -> dict[str, Any]:
@@ -289,29 +333,34 @@ def phases(analysis: dict[str, Any], work: dict[str, list]) -> list[dict[str, An
                      "system is harder to understand than all of it, and much harder to restore.",
         },
         {
-            "id": "p4", "n": 4, "title": "Running but unreviewed", "risk": CARE,
+            "id": "p4", "n": 4, "title": "Switched on, but nothing is going through", "risk": CARE,
             "count": f"{len(work['p4'])} workflows", "effort": "~1 week",
             "tab": "P4 Active and stale",
-            "what": "Workflows that are running right now, and that nobody has opened in over a year. They are changing your records today using rules written for how the business used to work.",
-            "fix": "You cannot fix these by reading the audit — this phase needs a conversation with whoever owns the process. Take the top twenty by footprint into one meeting and ask, for each: is this still how we do it? Change or switch off what no longer matches.",
-            "why": f"{len(work['p4'])} workflows are active and have not been edited in over a "
-                   "year. They are touching records today against logic nobody has checked "
-                   "against how the business currently works. Everything before this was about "
-                   "removing clutter. This is about correctness.",
-            "where": "Workbook → P4 tab, already sorted by footprint — largest blast radius first.",
+            "what": "Workflows that are switched on but have not moved a single record in over a year — plus the ones that have never enrolled anybody at all. Each one is either quietly broken, or a rule the business stopped needing and nobody switched off.",
+            "fix": "Split them in two. The ones that have never enrolled anybody are almost certainly misconfigured or obsolete — check the starting conditions, then switch off what is not wanted. The ones that used to run and stopped need a conversation with whoever owned that process: did the process change, or did the workflow break?",
+            "why": f"{len(work['p4'])} workflows are switched on and have not acted on a record in "
+                   "over a year. A switched-on workflow that never fires is not harmless: it "
+                   "looks like coverage on a screen, so nobody builds the thing that would "
+                   "actually do the job. Everything before this was about removing clutter. "
+                   "This is about the gap between what the account looks like it does and what "
+                   "it does.",
+            "where": "Workbook → P4 tab. Each row carries the date it last ran and its lifetime "
+                     "enrolment, sorted with the never-ran ones first, then by footprint.",
             "steps": [
-                "Rank by footprint, not by age. The largest reach over a thousand assets each, "
-                "so a wrong assumption there propagates furthest.",
-                "For each of the top twenty, answer one question with the business owner: does "
-                "this still describe how we work? Not “does it run” — it plainly does.",
+                "Start with the rows whose reason reads “has never enrolled a record”. Open the "
+                "starting conditions: in most cases they can never be true. That is a bug, not "
+                "a retired process.",
+                "For the rest, read the last-run date. A workflow that stopped in the same month "
+                "an integration changed usually broke; one that faded out over a year usually "
+                "lost its purpose.",
+                "Then rank by footprint. The largest reach over a thousand assets each, so a "
+                "wrong assumption there propagates furthest.",
                 "Pay closest attention to anything writing lifecycle stage, deal stage or "
                 "owner. Those drive reporting and routing, so an outdated rule distorts both.",
-                "Timebox the rest. Sampling twenty at random tells you whether the problem is "
-                "systemic or confined to the big ones.",
             ],
-            "guard": "Do not treat “no changes needed” as the default outcome. This is the only "
-                     "phase where leaving something alone is itself a decision with "
-                     "consequences — it keeps acting on stale assumptions every day.",
+            "guard": "Do not treat “no changes needed” as the default outcome. Switching a dead "
+                     "workflow off is a real decision and costs nothing; leaving it on keeps a "
+                     "process on the org chart that nothing is actually performing.",
         },
         {
             "id": "p5", "n": 5, "title": "Competing writes", "risk": JUDGE,

@@ -105,17 +105,17 @@
   <header class="top">
     <div class="eyebrow">HubSpot account 5411323 · follow-up scoping</div>
     <h1>Three new requests, checked against the live account</h1>
-    <p class="lede">All three were tested against the live portal, and two are now built and
-    measured across all 2,249 fields. The third runs into a hard limit in HubSpot itself: the
-    data needed to answer it as asked does not exist in the API.</p>
-    <div class="stamp">Measured 2026-09-04 · portal 5411323 · read-only · 2,249 fields, 200 records sampled per object</div>
+    <p class="lede">All three are built and measured against the live account. The first took
+    three attempts and two corrections to get right — the data it needs is real, but it is not
+    in the API, and finding that out changed the answer twice.</p>
+    <div class="stamp">Measured 2026-09-04 · portal 5411323 · read-only · 2,249 fields, 200 records sampled per object · 714 workflows, run dates from the 4 Sept workflow export</div>
   </header>
 
   <div class="verdicts">
     <div class="vrow">
       <span class="n">1</span>
-      <span class="t"><b>Stale = no enrolments in a year</b><span>Counts are available after all, on a legacy endpoint. Dates are not — but "never enrolled anyone" is now measurable.</span></span>
-      <span><span class="chip part">Mostly</span></span>
+      <span class="t"><b>Stale = no enrolments in a year</b><span>Built. Real run dates, from HubSpot's workflow export. P4 went from 198 workflows to 135, and 59 of those are new to the list.</span></span>
+      <span><span class="chip yes">Done</span></span>
     </div>
     <div class="vrow">
       <span class="n">2</span>
@@ -135,47 +135,61 @@
     consider stale the ones that have had no enrolments in a year?"</p>
 
     <div class="finding">
-      <p><b>An earlier version of this note said enrolment data was unavailable. That was
-      wrong.</b> The first round tested nine per-workflow routes and concluded the data did not
-      exist. It never tested the list endpoint, and it passed the wrong identifiers: the modern
-      API calls this workflow 7870191 while the legacy API calls it 7023659, so every
-      per-workflow probe was asking about a workflow that does not exist under that name.</p>
+      <p><b>Two earlier versions of this note were wrong, in opposite directions.</b> The first
+      said enrolment data did not exist — it tested nine per-workflow routes and passed the
+      wrong identifiers, since the modern API calls a workflow 7870191 while the legacy API
+      calls the same one 7023659. The second found the counts but concluded the dates were
+      unreachable. They are reachable. They are just not in the API.</p>
     </div>
 
-    <h3>What is actually available</h3>
-    <p><code>GET /automation/v3/workflows</code> returns, for each workflow,
-    <code>contactCounts</code> — how many records it has enrolled in its lifetime, and how many
-    are inside it right now. That is real enrolment data and it is now part of the audit.</p>
+    <h3>The dates live in HubSpot's own workflow export</h3>
+    <p>The workflow listing in HubSpot is a CRM object, and exporting that listing produces a
+    spreadsheet the API has no equivalent for. Four of its columns are the whole answer:</p>
     <ul class="tight">
-      <li><b>Lifetime enrolled</b> — the total ever put through it. Zero means it has never acted
-      on a single record, whatever its edit date says.</li>
-      <li><b>Currently enrolled</b> — records sitting inside it today, mid-sequence.</li>
+      <li><b>Last action on</b> — the last time this workflow did anything to a record. This is
+      the field the request was really asking for.</li>
+      <li><b>Enrolled last 7-days</b> — how many records went through it this week, so a
+      workflow can be checked as live rather than merely recently edited.</li>
+      <li><b>Currently Enrolled</b> — records sitting inside it today, mid-sequence.</li>
+      <li><b>Current Issue Count</b> — actions HubSpot is currently reporting as failing.
+      78 workflows here have at least one, 251 problems in total.</li>
     </ul>
+    <p>The audit now reads that file. Drop the export in as
+    <code>data/workflow-export.xlsx</code> and every run picks it up. The one merged here was
+    taken 4 September: 710 rows, 642 matched to the snapshot by workflow id, 68 built after the
+    snapshot and carried in from the export alone, 4 in the snapshot and no longer in HubSpot.</p>
 
-    <h3>What is still missing</h3>
-    <p>A date. Nothing returns "last enrolled on". Per-workflow performance and enrolment routes
-    do not exist under either identifier — that part of the original finding holds. Property
-    history records automation writes as
+    <h3>What changed in P4, and it is not a small change</h3>
+    <p>Stale now means <b>no record has gone through it in a year</b>. The list went from 198
+    workflows to 135, but the overlap is the interesting part:</p>
+    <ul class="tight">
+      <li><b>122 came off the list.</b> They were flagged only because nobody had opened them in
+      a year. They run every day — several last acted on 3 September. A correct workflow nobody
+      needs to touch is not a problem, and asking the business to review 122 of them was going
+      to burn the credibility of the whole exercise.</li>
+      <li><b>59 went on to the list.</b> These look maintained — edited in August 2026 — and have
+      not moved a record since 2020, 2021 or 2022. The edit-date rule was hiding exactly the
+      workflows that most deserve the question.</li>
+      <li><b>16 have never enrolled a single record</b>, and are switched on. Those sort to the
+      top of the tab: in most cases the starting conditions can never be true, which is a bug
+      rather than a retired process.</li>
+    </ul>
+    <p>The oldest switched-on workflow last acted on 2 December 2019.</p>
+
+    <h3>What is still not available</h3>
+    <p>A per-record enrolment history, and a run date for the 119 workflows the export shows no
+    activity for at all. Those read "never" where the export is certain and "not measured" where
+    it is not — an unmeasured workflow and an unused one must never look the same in a column
+    someone acts on. The API side of the finding also still holds: no endpoint returns a
+    per-workflow run date, and property history records automation writes as
     <code>enrollmentId:…;actionExecutionIndex:N</code>, naming the enrolment rather than the
-    workflow, and no endpoint resolves one to the other.</p>
-
-    <h3>How to get the year window anyway</h3>
-    <p>The count is a running total, so the difference between two runs is enrolment during that
-    period. From the second monthly run onward the audit can report "enrolled 0 records since
-    last month" per workflow, which is the question originally asked, answered continuously
-    rather than looked up once. Nothing to build beyond storing the previous run.</p>
-
-    <h3>What it changes today</h3>
-    <p>P4 no longer rests on edit dates alone. A workflow that is switched on and has
-    <b>never enrolled anyone</b> is now flagged on measured evidence rather than inferred from
-    when someone last touched it, and those rows sort to the top of the tab.</p>
+    workflow.</p>
 
     <div class="flag">
-      <b>Coverage is partial</b>
-      The legacy endpoint returns 581 of the 646 workflows, and matching them to the modern list
-      by identifier and name reaches most but not all. Anything unmatched reads
-      "not measured" rather than zero — an unmeasured workflow and an unused one must never look
-      the same in a column someone acts on.
+      <b>The export is a manual step, and it expires</b>
+      Automation → Workflows → export, with the four columns above added. It takes a minute and
+      HubSpot emails the file. Everything in this section is as of the export date, not the
+      audit date; re-export before the next review round or the run dates will quietly age.
     </div>
   </section>
 
@@ -250,6 +264,33 @@
       proof the field is dead. The fill rate is exact — only the dates are sampled.
     </div>
   </section>
+
+  <div class="scoper">
+    <h2 style="font-size: 20px; margin: 0 0 6px; letter-spacing: -.015em">Where this leaves P4</h2>
+    <p style="color: var(--muted); margin: 0 0 4px; max-width: 66ch">The phase that previously
+    said "nobody has edited these in a year" now says "nothing has gone through these in a
+    year", which is a different list of workflows and a much better use of the review meeting.</p>
+
+    <div class="scroller">
+      <table>
+        <thead><tr><th>Group</th><th style="text-align:right">Workflows</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Switched on, never enrolled anyone</td><td class="mono" style="text-align:right">16</td><td>Open the starting conditions first. Usually a bug, not a retired process.</td></tr>
+          <tr><td>Ran once, stopped over a year ago</td><td class="mono" style="text-align:right">119</td><td>Ask the process owner: did the process change, or did the workflow break?</td></tr>
+          <tr><td>Came off the list — edited long ago, still running daily</td><td class="mono" style="text-align:right">122</td><td>Nothing. These were never the problem.</td></tr>
+          <tr><td>New to the list — recently edited, dead for years</td><td class="mono" style="text-align:right">59</td><td>The edit-date rule was hiding these. Start here.</td></tr>
+          <tr><td>Switched on with actions currently failing</td><td class="mono" style="text-align:right">78</td><td>251 open problems in total. Separate from staleness, and more urgent.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 26px 0 8px">What is in the workbook now</h3>
+    <p style="margin: 0 0 10px; max-width: 68ch">The <b>P4</b> tab and the full <b>Workflows</b>
+    tab both carry Last time it ran, Enrolled last 7 days, In it now and Open issues, plus who
+    built each workflow and who last edited it. The 68 workflows created after the snapshot are
+    in there too, with their steps column reading "not read" — HubSpot's export names them and
+    their activity, but only a fresh audit run can read their logic.</p>
+  </div>
 
   <div class="scoper">
     <h2 style="font-size: 20px; margin: 0 0 6px; letter-spacing: -.015em">Where this leaves P6</h2>
