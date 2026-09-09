@@ -198,9 +198,12 @@ class Correlator:
                     "verdict": "DUPLICATE",
                     "detail": (
                         "byte-identical payload already arrived %.1fs ago as svix-id %s, "
-                        "but this one is svix-id %s. Fellow sent the same event as TWO "
-                        "separate messages -- you almost certainly have two webhook "
-                        "endpoints subscribed to it, or the same URL registered twice."
+                        "but this one is svix-id %s. Two SEPARATE Svix messages were "
+                        "created for one event. A single message keeps one id however "
+                        "many endpoints it fans out to, and a retry reuses its id -- so "
+                        "the event was published twice upstream. Run 'verify-secrets' to "
+                        "tell a Fellow-side duplicate (same signing secret) from a "
+                        "message minted per endpoint (different secrets)."
                         % (gap, prior_id, svix_id)
                     ),
                     "related_svix_id": prior_id,
@@ -318,7 +321,9 @@ def make_handler(log_path, secret, correlator):
                 "related_svix_id": classification.get("related_svix_id"),
                 "headers": headers,
                 "payload": payload,
-                "raw_body": None if payload is not None else body.decode("utf-8", "replace"),
+                # Always kept: re-verifying a signature offline needs the exact
+                # bytes, and a re-serialized payload will never match.
+                "raw_body": body.decode("utf-8", "replace"),
                 "parse_error": parse_error,
             }
             with open(log_path, "a", encoding="utf-8") as handle:
@@ -531,11 +536,15 @@ def analyze(args):
                     record.get("svix_id"), record["received_at"], suffix
                 ))
         print("")
-        print("  MEANING: Fellow generated two separate messages carrying the same")
-        print("  event. This is the signature of TWO WEBHOOK ENDPOINTS subscribed to")
-        print("  the same event -- commonly the same Make URL registered twice, or a")
-        print("  second endpoint someone added while testing.")
-        print("  FIX: delete the duplicate endpoint in Fellow's webhook settings.")
+        print("  MEANING: two separate Svix messages carry one event. Because a")
+        print("  single message keeps ONE id however many endpoints it fans out to,")
+        print("  and a retry reuses its id, the event was published twice upstream.")
+        print("  Deduping on svix-id will NOT stop this -- the ids genuinely differ.")
+        print("  NEXT: run 'verify-secrets --secret ...' to separate the two cases:")
+        print("    same secret verifies both -> Fellow-side duplicate publication;")
+        print("                                 escalate with both message ids.")
+        print("    different secrets         -> a message minted per registered")
+        print("                                 endpoint; delete the duplicate.")
 
     # -- distinct events sharing an object id
     print("")
@@ -580,8 +589,10 @@ def analyze(args):
         print("  Your duplicates are RETRIES. Fellow fired once; your endpoint failed")
         print("  to ack in time and Svix redelivered. Fix the receiver, not Fellow.")
     elif dup_clusters and not retries:
-        print("  Your duplicates are TWO SUBSCRIPTIONS. Fellow is sending the same")
-        print("  event twice as two messages. Delete the extra webhook endpoint.")
+        print("  Your duplicates are TWO PUBLICATIONS of one event: two distinct")
+        print("  Svix messages, same payload. Not a retry and not plain fan-out.")
+        print("  Run verify-secrets to see whether one endpoint or two produced")
+        print("  them, and dedupe on a PAYLOAD id -- svix-id will not work here.")
     elif dup_clusters and retries:
         print("  You have BOTH problems: an extra subscription AND retries. Remove the")
         print("  duplicate endpoint first, then fix the ack timing.")
@@ -694,6 +705,121 @@ def selftest(args):
     return 0
 
 
+
+# --------------------------------------------------------------------------
+# verify-secrets: which signing secret validates which delivery?
+# --------------------------------------------------------------------------
+
+def verify_secrets(args):
+    """Test each logged delivery against every candidate signing secret.
+
+    This is the decisive test once you know two DIFFERENT svix-ids carry the
+    same event. Each Svix endpoint has its own signing secret, so:
+
+      every delivery verifies under the SAME secret
+        -> one endpoint received two separately-created messages.
+           The duplication is upstream, in whatever publishes the event.
+           You cannot fix that from your side -- escalate with the message ids.
+
+      deliveries verify under DIFFERENT secrets
+        -> the messages went to two different registered endpoints, i.e. a
+           message is being minted per endpoint. Delete the duplicate endpoint.
+
+    Signature checking needs the exact bytes as received, which is why the
+    log keeps raw_body verbatim.
+    """
+    records = load_log(args.log)
+    if not records:
+        sys.exit("Log %s is empty." % args.log)
+
+    secrets = list(args.secret or [])
+    if not secrets:
+        sys.exit("Pass at least one --secret whsec_... (repeat the flag for each endpoint's secret).")
+
+    labels = {}
+    for index, secret in enumerate(secrets):
+        labels[secret] = args.label[index] if args.label and index < len(args.label) else "secret#%d" % (index + 1)
+
+    print("=" * 74)
+    print("SIGNING-SECRET ATTRIBUTION  --  %d deliveries, %d candidate secret(s)"
+          % (len(records), len(secrets)))
+    print("=" * 74)
+    print("")
+
+    matched_by = {}
+    unverified = []
+    for record in sorted(records, key=lambda r: r.get("received_at_epoch") or 0):
+        raw = record.get("raw_body")
+        if raw is None:
+            unverified.append((record, "log predates raw-body capture; re-capture to use this"))
+            continue
+        body = raw.encode("utf-8")
+
+        winners = []
+        for secret in secrets:
+            status, _ = verify_signature(
+                secret,
+                record.get("svix_id"),
+                record.get("svix_timestamp"),
+                body,
+                record.get("svix_signature"),
+            )
+            if status == "valid":
+                winners.append(labels[secret])
+
+        svix_id = record.get("svix_id")
+        if winners:
+            for name in winners:
+                matched_by.setdefault(name, []).append(svix_id)
+            print("  %s  ->  %s" % (svix_id, ", ".join(winners)))
+        else:
+            unverified.append((record, "no candidate secret verified it"))
+            print("  %s  ->  NO MATCH" % svix_id)
+
+    if unverified:
+        print("")
+        print("  %d delivery/deliveries could not be attributed:" % len(unverified))
+        for record, why in unverified[:8]:
+            print("    %s: %s" % (record.get("svix_id"), why))
+
+    print("")
+    print("=" * 74)
+    print("CONCLUSION")
+    print("=" * 74)
+    if not matched_by:
+        print("  Nothing verified. Either these secrets are not the right ones, or the")
+        print("  bodies were altered in transit. Copy each endpoint's signing secret")
+        print("  again and re-run before drawing any conclusion.")
+    elif len(matched_by) == 1:
+        name, ids = next(iter(matched_by.items()))
+        distinct = len(set(ids))
+        print("  All %d delivery/deliveries verify under ONE secret (%s)." % (len(ids), name))
+        if distinct > 1:
+            print("")
+            print("  That secret belongs to a single endpoint, yet it received %d" % distinct)
+            print("  DISTINCT message ids. So one endpoint was fed several separately-")
+            print("  created messages: the event is being published more than once")
+            print("  upstream, before delivery ever happens.")
+            print("")
+            print("  This is not something you can configure away. Escalate with these")
+            print("  message ids and ask why one event produced several messages:")
+            for svix_id in sorted(set(ids)):
+                print("    %s" % svix_id)
+        else:
+            print("  Only one distinct message here -- nothing to attribute.")
+    else:
+        print("  Deliveries split across %d DIFFERENT secrets:" % len(matched_by))
+        for name, ids in matched_by.items():
+            print("    %-14s %d delivery/deliveries" % (name, len(ids)))
+        print("")
+        print("  Different secrets means different registered endpoints. Each is")
+        print("  getting its own message for the same event, and both point at your")
+        print("  automation. FIX: delete the endpoint you did not intend to keep.")
+        print("  This one IS fixable from your side.")
+    print("")
+    return 0
+
+
 # --------------------------------------------------------------------------
 
 def main():
@@ -714,6 +840,17 @@ def main():
     p_analyze = sub.add_parser("analyze", help="summarize a log and diagnose the cause")
     p_analyze.add_argument("--log", default=DEFAULT_LOG)
     p_analyze.set_defaults(func=analyze)
+
+    p_verify = sub.add_parser(
+        "verify-secrets",
+        help="find which signing secret validates each logged delivery",
+    )
+    p_verify.add_argument("--log", default=DEFAULT_LOG)
+    p_verify.add_argument("--secret", action="append",
+                          help="a candidate signing secret; repeat for each endpoint")
+    p_verify.add_argument("--label", action="append",
+                          help="optional name for each --secret, in the same order")
+    p_verify.set_defaults(func=verify_secrets)
 
     p_selftest = sub.add_parser("selftest", help="verify this tool works")
     p_selftest.set_defaults(func=selftest)

@@ -15,14 +15,30 @@ at `svix-*` headers. Every delivery carries:
 
 ## The one question that decides everything
 
-Compare the two `svix-id` values from a single double-fire:
+Compare the two `svix-id` values from a single double-fire.
+
+The reason this works is Svix's data model. A **message** is the event; a
+**message attempt** is one delivery of it to one endpoint. The `svix-id` header
+carries the *message* id, so:
+
+- a **retry** of a message reuses its id, and
+- **one message fanned out to several endpoints keeps that same id** across all
+  of them.
+
+Which gives you:
 
 ```
-same svix-id      -> ONE event, delivered twice.  Receiver problem (retry).
-different svix-id -> TWO messages were created.   Sender-side config problem.
+same svix-id      -> ONE message. Either a retry, or fan-out to two
+                     endpoints. Dedupe on svix-id and it stops.
+different svix-id -> TWO messages were CREATED upstream. The event was
+                     published twice. Dedupe on svix-id will NOT help,
+                     because the ids genuinely differ.
 ```
 
-Everything below hangs off that.
+That last point is the one most easily got wrong: two different ids is *not*
+the fingerprint of "two endpoints subscribed". Two endpoints receiving one
+message would both show the **same** id. Two different ids means something
+minted two messages.
 
 ---
 
@@ -39,7 +55,15 @@ incoming request — it just hides the headers until you ask for them.
    output bundle. `headers[]` now contains `svix-id`, `svix-timestamp`, and
    `svix-signature`.
 
-Read the two `svix-id` values and jump to the matching case below.
+Read the two `svix-id` values and jump to the matching case below. To have that
+comparison done for you, paste both header objects into a file as a JSON array
+and run:
+
+```bash
+python3 inspect_headers.py pair.json
+```
+
+which prints the differences and the verdict, no server needed.
 
 > While you are in History, check the **number of executions**. If Make shows
 > **two executions**, two HTTP requests arrived. If it shows **one execution**
@@ -67,25 +91,41 @@ behaviour option; set it so the webhook responds at once, or place a **Webhook
 response** module returning status `200` as the *first* step after the trigger.
 Then let the slow work continue behind it.
 
-### 2. Different `svix-id`, identical payload → two subscriptions
+### 2. Different `svix-id`, identical payload → the event was published twice
 
-Fellow created two separate messages carrying the same event. That means the
-event is subscribed twice. In practice:
+Two separate messages were created for one event. Corroborating signs: an
+**identical `svix-timestamp`** (both minted in the same second) and an
+**identical `content-length`** (same payload size, which two genuinely
+different events would rarely match on).
 
-- the same Make URL registered as **two webhook endpoints** in Fellow, or
-- a **second endpoint** someone added while testing and never removed.
+This splits into two sub-cases, and **each Svix endpoint has its own signing
+secret**, which is what tells them apart. Capture both deliveries with the
+logger, then:
 
-These arrive near-simultaneously (well under a second apart), which is the
-tell-tale difference from a retry.
+```bash
+python3 webhook_logger.py verify-secrets \
+    --secret whsec_FIRST_ENDPOINT  --label first \
+    --secret whsec_SECOND_ENDPOINT --label second
+```
 
-**Fix:** delete the extra endpoint in Fellow's webhook settings. Fellow's own
-docs are the authority on where that lives in the UI — I could not reach
-`developers.fellow.ai` from this sandbox to quote the exact menu path, so I am
-not going to invent one. Ask support to list the endpoints registered for your
-workspace if you cannot find the screen; they can see them directly. The
-**workspace audit log** they mentioned is genuinely useful here — it records
-webhook creation, so it will show *when* a second endpoint was added, which
-should line up with when the duplicates started.
+- **Both verify under the same secret** → one endpoint was fed two
+  separately-created messages. The duplication happens upstream, before
+  delivery. Not fixable from your side: escalate to Fellow with both message
+  ids and ask why one event produced two messages.
+- **Each verifies under a different secret** → two registered endpoints, each
+  getting its own message. Delete the one you did not intend to keep. Fixable
+  from your side.
+
+If you only have one endpoint registered and only one signing secret, you are
+already in the first case.
+
+Fellow's own docs are the authority on where the endpoint list lives in the UI —
+I could not reach `developers.fellow.ai` from this sandbox to quote the exact
+menu path, so I am not going to invent one. Ask support to list the endpoints
+registered for your workspace if you cannot find the screen; they can see them
+directly. The **workspace audit log** they mentioned is genuinely useful here —
+it records webhook creation, so it shows *when* a second endpoint was added,
+which should line up with when the duplicates started.
 
 ### 3. Different `svix-id`, different payload → two event types
 
@@ -150,6 +190,12 @@ python3 webhook_logger.py analyze
 
 which groups the whole log and ends with a diagnosis naming the cause.
 
+To attribute deliveries to endpoints by signing secret:
+
+```bash
+python3 webhook_logger.py verify-secrets --secret whsec_ONE --secret whsec_TWO
+```
+
 To rehearse before wiring up the real thing:
 
 ```bash
@@ -177,17 +223,30 @@ both requests are actually from Fellow. If one fails verification or has no
 
 ## Worth doing regardless: make the automation idempotent
 
-Even after you find the cause, retries are a normal part of webhook delivery —
-any endpoint should tolerate receiving the same message twice. Make this your
-scenario's first two steps and a duplicate becomes harmless:
+Retries are a normal part of webhook delivery, so any endpoint should tolerate
+receiving the same event twice. A guard as the first step after the trigger
+makes a duplicate harmless whatever its cause.
 
-1. Add a **Data store** with `svix-id` as its key.
-2. First module after the trigger: **Data store → Add/replace a record**, key
-   `svix-id`, with *overwrite disabled* so a repeat key errors.
+**Choose the key by which cause you have** — this matters, and the usual advice
+gets it wrong for cause 2:
+
+| Cause | Dedupe key |
+| --- | --- |
+| 1 (retry, same `svix-id`) | `svix-id` |
+| 2 (published twice, different `svix-id`) | a **payload id** — the meeting or note id |
+| 3 (two event types) | filter on `type` instead |
+
+For cause 2, `svix-id` is useless: the two ids genuinely differ, so both would
+pass the guard. Key on the meeting or note id instead.
+
+Setup:
+
+1. Add a **Data store** whose key is whichever field the table above selects.
+2. First module after the trigger: **Data store → Add/replace a record**, using
+   that key, with *overwrite disabled* so a repeat key errors.
 3. Set that module's error handling to stop the route quietly on failure.
 
-The first delivery writes the key and continues; a repeat of the same `svix-id`
-fails to write and stops. Note this only stops **cause 1** — two distinct
-messages have two distinct IDs, so causes 2 and 3 still need their config fixed.
-To guard those too, key the store on a payload field instead (the meeting or
-notes ID) with a short TTL.
+The first delivery writes the key and continues; the second fails to write and
+stops. Give the store a short TTL (or a periodic cleanup) so a legitimate
+later event for the same meeting isn't suppressed forever — a few minutes is
+enough to absorb same-second duplicates.
