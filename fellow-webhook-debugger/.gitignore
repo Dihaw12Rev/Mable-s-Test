@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+# captured webhook deliveries -- contain real meeting content, never commit
+events.jsonl
+*.jsonl
+server.out
