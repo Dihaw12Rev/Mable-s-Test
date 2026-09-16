@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #E5A03C; } a:hover { color: #F2B75C; }
+  </style>
+</helmet>
+<div style="width: 580px; min-height: 760px; background: #14161A; color: #F0EDE8; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; padding: 34px 32px 30px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+  <div style="display: flex; flex-direction: column; gap: 9px; border-bottom: 2px solid #C4553F; padding-bottom: 16px">
+    <div style="display: flex; align-items: baseline; justify-content: space-between">
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 40px; font-weight: 600; color: #C4553F; letter-spacing: -.05em; line-height: 1">04</span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: #8E8880; letter-spacing: .08em">~4 weeks</span>
+    </div>
+    <h1 style="margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -.03em; line-height: 1.02">Assisted Fix</h1>
+    <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 17px; line-height: 1.45; color: #C9C3BA">The tool proposes. A person decides. The system executes and remembers.</p>
+  </div>
+
+  <div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #6E6860; margin-bottom: 9px">What the client gets</div>
+    <div style="background: #1C1F25; padding: 16px 18px; border-left: 2px solid #C4553F">
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 15.5px; line-height: 1.5; color: #E4DFD7">A queue of proposed changes, each with the evidence behind it. Approve, skip or edit. What you approve gets applied and logged; what you skip stays visible with your reason attached.</p>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+    <div>
+      <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 9px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#46B39D" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: #46B39D">Already built</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 5px"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Phase cohorts</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Footprint evidence</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Zero-reach detection</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Decision tracking</div></div>
+    </div>
+    <div>
+      <div style="display: flex; align-items: center; gap: 7px; margin-bottom: 9px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C4553F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: #C4553F">To build</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 5px"><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Proposal queue</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Approval interface</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Executor</div><div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.4; color: #B5AFA6">Full audit trail</div></div>
+    </div>
+  </div>
+
+  <div>
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #6E6860; margin-bottom: 10px">How it runs</div>
+    <ol style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 7px"><li style="font-family: Newsreader, Georgia, serif; font-size: 15px; line-height: 1.45; color: #C9C3BA">Only propose from cohorts where the evidence is measured, not inferred.</li><li style="font-family: Newsreader, Georgia, serif; font-size: 15px; line-height: 1.45; color: #C9C3BA">Start with zero-footprint workflows — provably nothing depends on them.</li><li style="font-family: Newsreader, Georgia, serif; font-size: 15px; line-height: 1.45; color: #C9C3BA">A human approves every batch. No exceptions, no silent mode.</li><li style="font-family: Newsreader, Georgia, serif; font-size: 15px; line-height: 1.45; color: #C9C3BA">Log everything. The log is what makes the next batch trustworthy.</li></ol>
+  </div>
+
+  <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px">
+    <div style="border-top: 1px solid #2A2E36; padding-top: 14px">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: #6E6860; margin-bottom: 6px">What it is worth</div>
+      <p style="margin: 0; font-size: 15.5px; line-height: 1.42; font-weight: 500; color: #F0EDE8">Margin. The same team carries more accounts without carrying more risk.</p>
+    </div>
+    <div style="background: #221A18; border: 1px solid #4A2E27; padding: 13px 15px">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: #C4553F; margin-bottom: 5px">Watch out for</div>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 14.5px; line-height: 1.45; color: #C9C3BA">Never let this touch the judgment phases. Automating a decision you have already made is leverage; automating the decision itself is how you break a client's account at scale.</p>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

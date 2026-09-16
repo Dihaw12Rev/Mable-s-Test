@@ -1,0 +1,159 @@
+<title>__PORTAL__ Review Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #F6F3F0; --surface: #FFFFFF; --sunken: #EFEAE4;
+    --ink: #12171A; --muted: #5F5952; --faint: #918980;
+    --rule: #E0D9D1; --rule-strong: #CBC1B6;
+    --accent: #0F5F63; --accent-soft: #DDEBEA;
+    --safe: #2E6B3F; --safe-soft: #E1EDE4;
+    --judge: #8A5A12; --judge-soft: #F6EBD8;
+    --care: #A03028; --care-soft: #F7E2E0;
+    --sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131418; --surface: #1B1D22; --sunken: #24262C;
+      --ink: #ECE8E3; --muted: #A9A199; --faint: #77706A;
+      --rule: #2C2F36; --rule-strong: #3D414A;
+      --accent: #5CC3BC; --accent-soft: #17383A;
+      --safe: #7FC796; --safe-soft: #1C3325;
+      --judge: #DCA95F; --judge-soft: #382E1B;
+      --care: #E8867C; --care-soft: #3A211F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131418; --surface: #1B1D22; --sunken: #24262C;
+    --ink: #ECE8E3; --muted: #A9A199; --faint: #77706A;
+    --rule: #2C2F36; --rule-strong: #3D414A;
+    --accent: #5CC3BC; --accent-soft: #17383A;
+    --safe: #7FC796; --safe-soft: #1C3325;
+    --judge: #DCA95F; --judge-soft: #382E1B;
+    --care: #E8867C; --care-soft: #3A211F;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+  .mono { font-family: var(--mono); }
+
+  .shell { display: grid; grid-template-columns: 214px minmax(0, 1fr); max-width: 1140px; margin: 0 auto; }
+  @media (max-width: 840px) { .shell { grid-template-columns: minmax(0, 1fr); } .rail { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--rule); } }
+
+  .rail {
+    position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 26px 16px;
+    border-right: 1px solid var(--rule); display: flex; flex-direction: column; gap: 14px;
+  }
+  .rail .lbl { font-size: 10.5px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; color: var(--faint); }
+  .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+  .rail a {
+    display: flex; gap: 8px; align-items: baseline; text-decoration: none; color: var(--muted);
+    font-size: 12.5px; padding: 5px 7px; border-radius: 4px; border-left: 2px solid transparent;
+  }
+  .rail a:hover { background: var(--sunken); color: var(--ink); }
+  .rail a .n { font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
+  .rail a.s-safe { border-left-color: var(--safe); }
+  .rail a.s-judge { border-left-color: var(--judge); }
+  .rail a.s-care { border-left-color: var(--care); }
+  .rail a.s-none { border-left-color: var(--rule-strong); }
+
+  main { padding: 30px clamp(16px, 3.5vw, 44px) 90px; min-width: 0; }
+
+  header.top { border-bottom: 2px solid var(--ink); padding-bottom: 18px; margin-bottom: 8px; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: clamp(27px, 4vw, 35px); line-height: 1.1; margin: 8px 0 10px; letter-spacing: -.025em; text-wrap: balance; }
+  .lede { font-family: var(--serif); font-size: 16px; color: var(--muted); max-width: 64ch; margin: 0; }
+
+  .totals { display: flex; flex-wrap: wrap; gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin: 22px 0 6px; }
+  .tot { background: var(--surface); padding: 9px 13px; flex: 1 1 120px; }
+  .tot b { display: block; font-family: var(--mono); font-size: 18px; font-weight: 600; letter-spacing: -.02em; }
+  .tot span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--faint); font-weight: 600; }
+
+  .phase { border-top: 1px solid var(--rule); padding: 24px 0 6px 16px; border-left: 3px solid var(--rule-strong); margin-top: 22px; scroll-margin-top: 14px; }
+  .phase.safe { border-left-color: var(--safe); }
+  .phase.judge { border-left-color: var(--judge); }
+  .phase.care { border-left-color: var(--care); }
+
+  .ph-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .ph-num { font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--faint); }
+  .phase h2 { font-size: 20px; margin: 0; letter-spacing: -.015em; flex: 1 1 auto; }
+  .tagrow { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 0; }
+  .tag { font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 3px; letter-spacing: .03em; text-transform: uppercase; }
+  .tag.safe { background: var(--safe-soft); color: var(--safe); }
+  .tag.judge { background: var(--judge-soft); color: var(--judge); }
+  .tag.care { background: var(--care-soft); color: var(--care); }
+  .tag.count { background: var(--sunken); color: var(--muted); font-family: var(--mono); text-transform: none; }
+
+  .why { font-family: var(--serif); color: var(--muted); margin: 11px 0 0; max-width: 68ch; }
+  .why b { color: var(--ink); font-weight: 600; }
+
+  .where {
+    font-family: var(--mono); font-size: 12px; background: var(--sunken); color: var(--muted);
+    padding: 8px 11px; border-radius: 4px; margin: 13px 0 0; max-width: 72ch;
+  }
+  .where b { color: var(--ink); font-weight: 600; }
+
+  ol.steps { margin: 13px 0 0; padding-left: 20px; max-width: 70ch; }
+  ol.steps li { margin-bottom: 7px; }
+  ol.steps li::marker { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+
+  .guard {
+    border: 1px solid var(--care); background: var(--care-soft); color: var(--ink);
+    padding: 10px 13px; border-radius: 4px; margin: 15px 0 0; max-width: 72ch; font-size: 13.5px;
+  }
+  .guard b { color: var(--care); text-transform: uppercase; font-size: 10.5px; letter-spacing: .09em; display: block; margin-bottom: 3px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 13px 0 0; }
+  .scroller { overflow-x: auto; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; white-space: nowrap; }
+  td.num { font-family: var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+
+  footer { margin-top: 44px; padding-top: 18px; border-top: 1px solid var(--rule); color: var(--faint); font-size: 12.5px; max-width: 72ch; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  .lead-q { font-size: 15px; margin: 12px 0 0; max-width: 68ch; }
+  .lead-q b, .why b { color: var(--ink); font-weight: 700; }
+  .fixline { border-left: 2px solid var(--accent); padding-left: 11px; }
+  .steplabel { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); margin: 16px 0 0; }
+  .glossary dl { margin: 12px 0 0; max-width: 72ch; }
+  .glossary dt { font-weight: 700; font-size: 14px; margin-top: 11px; }
+  .glossary dd { margin: 2px 0 0; color: var(--muted); font-family: var(--serif); }
+</style>
+
+<div class="shell">
+  <nav class="rail">
+    <div class="lbl">Phases</div>
+    <ol>__NAV__</ol>
+  </nav>
+  <main>
+    <header class="top">
+      <div class="eyebrow">__PORTAL__ · audit review plan</div>
+      <h1>How to review this audit</h1>
+      <p class="lede">Nine phases, ordered so the risk-free work happens first and nothing
+      irreversible happens before there is a backup. Each phase names the exact cohort, where
+      to find it, the rule for deciding, and the mistake to avoid.</p>
+    </header>
+    <div class="totals">__TOTALS__</div>
+    <p class="why" style="margin-top:12px">Work top to bottom. The first two phases are
+    evidence-backed and need no debate &mdash; clearing them makes everything after easier to
+    read. <b>Phase 4 carries the real business risk</b>, and it is the only phase where doing
+    nothing is also a risk. Each phase names the workbook tab holding its work list.</p>
+    __BODY__
+    <footer>
+      Counts are as of __DATE__ and drift as the account changes &mdash; re-run the audit before
+      acting on a figure that looks stale. Every number comes from the account&rsquo;s own
+      settings; anything driven by an outside integration or custom code is invisible to the
+      audit, so treat each footprint as a floor rather than a ceiling.
+    </footer>
+  </main>
+</div>

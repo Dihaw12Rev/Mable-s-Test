@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #E5A03C; } a:hover { color: #F2B75C; }
+  </style>
+</helmet>
+<div style="width: 880px; min-height: 560px; background: #14161A; color: #F0EDE8; font-family: Archivo, 'Helvetica Neue', Arial, sans-serif; padding: 40px 44px; box-sizing: border-box; display: flex; flex-direction: column; gap: 24px">
+
+  <div style="display: flex; flex-direction: column; gap: 8px; border-bottom: 2px solid #C4553F; padding-bottom: 16px">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: #C4553F; font-weight: 600">Before you start</div>
+    <h1 style="margin: 0; font-size: 38px; font-weight: 800; letter-spacing: -.032em; line-height: 1.02">Four ways this goes wrong</h1>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px">
+
+    <div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 22px; align-items: start">
+      <div>
+        <div style="font-size: 17px; font-weight: 700; letter-spacing: -.015em; margin-bottom: 3px">Alert fatigue</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #8E8880">Kills phase 1</div>
+      </div>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 15.5px; line-height: 1.5; color: #C9C3BA">A drift report that fires on every change becomes a folder rule within two months, and the retainer loses the artefact justifying it. The graph already knows what has a footprint — report only changes that reach something, and let the rest go unmentioned.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 22px; align-items: start; border-top: 1px solid #2A2E36; padding-top: 16px">
+      <div>
+        <div style="font-size: 17px; font-weight: 700; letter-spacing: -.015em; margin-bottom: 3px">Production writes</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #8E8880">Kills phases 2 and 4</div>
+      </div>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 15.5px; line-height: 1.5; color: #C9C3BA">One bad write to a client's live account costs more than every phase here earns. Dry run by default, log every previous value, test the revert path on a sandbox before it ever runs on a customer — and hold the tool to the same blast-radius standard it holds them to.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 22px; align-items: start; border-top: 1px solid #2A2E36; padding-top: 16px">
+      <div>
+        <div style="font-size: 17px; font-weight: 700; letter-spacing: -.015em; margin-bottom: 3px">Consent, after the fact</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #8E8880">Kills the benchmark</div>
+      </div>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 15.5px; line-height: 1.5; color: #C9C3BA">Aggregated benchmarks need permission written into the agreement before collection starts. Asking twenty existing clients for retrospective consent is a worse conversation than adding one clause today.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 22px; align-items: start; border-top: 1px solid #2A2E36; padding-top: 16px">
+      <div>
+        <div style="font-size: 17px; font-weight: 700; letter-spacing: -.015em; margin-bottom: 3px">Building ahead of demand</div>
+        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: #8E8880">Kills the roadmap</div>
+      </div>
+      <p style="margin: 0; font-family: Newsreader, Georgia, serif; font-size: 15.5px; line-height: 1.5; color: #C9C3BA">Phase 1 is a week and pays immediately. Phases 3 and 4 are a month each and pay only once several clients are on the cycle. Run phase 1 with two real clients for a quarter before committing to anything below it — if the monthly note does not change renewal conversations, the rest of this plan is wrong.</p>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>
