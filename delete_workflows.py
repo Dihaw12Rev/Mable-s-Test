@@ -146,9 +146,13 @@ def main() -> int:
         print(f"{head}\n    {'deleted' if ok else f'! delete returned {out.status_code}'}")
         if not ok:
             print(f"      {out.text[:300]}")
+        # HubSpot refuses (400) to delete a workflow other tools still reference. That is a
+        # safe refusal, not a partial delete — but the reason only exists in the response
+        # body, so keep it: it is the whole explanation for why a row survived.
         log.write(json.dumps({"at": _stamp(), "id": wid, "name": name,
                               "status": out.status_code,
-                              "outcome": "deleted" if ok else "failed"}) + "\n")
+                              "outcome": "deleted" if ok else "failed",
+                              "reason": None if ok else out.text[:500]}) + "\n")
         log.flush()
         time.sleep(PAUSE)
 
