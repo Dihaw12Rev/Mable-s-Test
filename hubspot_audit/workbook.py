@@ -479,7 +479,11 @@ def _overview(wb: Workbook, analysis: dict[str, Any], scores, portal_areas) -> N
             f"{export.get('matched', 0)} workflows matched, "
             f"{export.get('added', 0)} created after the snapshot and added from the export "
             f"alone (their step-by-step reads “not read”), "
-            f"{export.get('missing_from_export', 0)} in the snapshot but no longer in HubSpot."
+            f"{export.get('missing_from_export', 0)} covered by the export but not listed in it. "
+            + (f"{export['outside_export_scope']} workflows sit outside what the export "
+               f"covered (it listed {', '.join(export.get('object_types') or [])} workflows "
+               "only), so they carry no activity figures at all."
+               if export.get("outside_export_scope") else "")
         )
         ws["A3"].font = NOTE_FONT
 

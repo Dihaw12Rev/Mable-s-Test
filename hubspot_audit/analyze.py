@@ -253,6 +253,7 @@ class Analysis:
             "used_elsewhere": flow.get("_export_used_elsewhere"),
             "export_action_types": flow.get("_export_action_types") or [],
             "in_export": flow.get("_export_present"),
+            "export_covered": flow.get("_export_covered"),
             "export_only": bool(flow.get("_export_only")),
             "time_windows": _time_windows(flow.get("timeWindows") or []),
             "blocked_dates": len(flow.get("blockedDates") or []),
@@ -804,9 +805,12 @@ def _activity_lines(r: dict[str, Any]) -> list[str]:
     elif total:
         out.append("No record of when it last ran.")
 
-    if r.get("in_export") is False:
-        out.append("Not present in the workflow export taken after this snapshot, so it may "
-                   "have been deleted from HubSpot since.")
+    if r.get("export_covered") is False:
+        out.append("This kind of workflow was outside the scope of the workflow export, so "
+                   "its run dates and enrolment are simply not measured here.")
+    elif r.get("in_export") is False:
+        out.append("The workflow export taken after this snapshot covered this kind of "
+                   "workflow but did not list this one, so it may have been deleted since.")
 
     issues = r.get("open_issues")
     if issues:

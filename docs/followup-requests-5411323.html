@@ -157,7 +157,18 @@
     <p>The audit now reads that file. Drop the export in as
     <code>data/workflow-export.xlsx</code> and every run picks it up. The one merged here was
     taken 4 September: 710 rows, 642 matched to the snapshot by workflow id, 68 built after the
-    snapshot and carried in from the export alone, 4 in the snapshot and no longer in HubSpot.</p>
+    snapshot and carried in from the export alone, 1 that the export covered but did not list
+    and which has since been confirmed deleted.</p>
+
+    <div class="flag">
+      <b>An export only covers the object types its view had selected</b>
+      This one listed contact, company, deal, payment, subscription and user workflows — and no
+      ticket workflows at all. All three ticket workflows in the account are therefore absent
+      from it, and an earlier version of this note read that absence as "deleted from HubSpot".
+      They exist and are fine. The audit now records which object types an export covers and
+      reports anything outside that scope as <em>not measured</em>, never as missing. When you
+      re-export, check the view is set to all workflows and not a filtered one.
+    </div>
 
     <h3>What changed in P4, and it is not a small change</h3>
     <p>Stale now means <b>no record has gone through it in a year</b>. The list went from 198

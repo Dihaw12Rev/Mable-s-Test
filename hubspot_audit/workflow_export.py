@@ -181,9 +181,23 @@ def merge(snapshot: dict[str, Any], path: Path) -> dict[str, Any]:
         _apply(flow, row)
         matched.add(str(flow.get("id")))
 
+    # A HubSpot export only covers the object types its saved view had selected. On this
+    # portal the view omitted ticket workflows entirely, and reading their absence as
+    # "deleted" would have put live records' automation on a delete list. So record which
+    # object types the file actually covers, and judge absence only within those.
+    covered = {row.get("object_type") for row in rows if row.get("object_type")}
+    covered_ids = {_OBJECT_TYPE_IDS[name] for name in covered if name in _OBJECT_TYPE_IDS}
+
+    missing, uncovered = 0, 0
     for flow in flows:
-        if str(flow.get("id")) not in matched:
+        if str(flow.get("id")) in matched:
+            continue
+        if covered_ids and str(flow.get("objectTypeId")) not in covered_ids:
+            flow["_export_covered"] = False
+            uncovered += 1
+        else:
             flow["_export_present"] = False
+            missing += 1
 
     flows.extend(added)
     snapshot["workflows"] = flows
@@ -192,7 +206,9 @@ def merge(snapshot: dict[str, Any], path: Path) -> dict[str, Any]:
         "rows": len(rows),
         "matched": len(matched),
         "added": len(added),
-        "missing_from_export": len(flows) - len(added) - len(matched),
+        "missing_from_export": missing,
+        "outside_export_scope": uncovered,
+        "object_types": sorted(covered),
     }
     return snapshot["workflow_export"]
 

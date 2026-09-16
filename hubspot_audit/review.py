@@ -80,6 +80,7 @@ def cohorts(analysis: dict[str, Any], g) -> dict[str, list[dict[str, Any]]]:
             "open_issues": w.get("open_issues"),
             "updated_by": w.get("updated_by") or "",
             "in_export": w.get("in_export"),
+            "export_covered": w.get("export_covered"),
             "writes": w.get("properties_written_labels") or [],
             "link": w["link"],
         }
@@ -182,7 +183,7 @@ def _p4_reason(w: dict[str, Any]) -> str:
             line += f" — though {recent:,} enrolled in the last seven days"
         return line
     edited = str(w.get("updated_at") or "")[:10]
-    if w.get("in_export") is False:
+    if w.get("in_export") is False and w.get("export_covered") is not False:
         return (f"Last edited {edited}, and not in the later workflow export — "
                 "check whether it still exists in HubSpot at all")
     if total:

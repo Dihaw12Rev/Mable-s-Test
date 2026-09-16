@@ -74,6 +74,10 @@ def main() -> int:
         print(f"  {report['rows']} rows: {report['matched']} matched, "
               f"{report['added']} created since the snapshot, "
               f"{report['missing_from_export']} in the snapshot but not the export")
+        if report.get("outside_export_scope"):
+            print(f"  ! {report['outside_export_scope']} workflows are outside what this "
+                  f"export covered (it lists {', '.join(report['object_types'])} only) "
+                  "— they carry no activity figures")
     elif args.workflow_export:
         print(f"! workflow export not found at {export_path}")
 
