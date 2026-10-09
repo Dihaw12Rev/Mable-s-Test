@@ -16,8 +16,8 @@ script is built to be hard to misfire:
   thirteen workflows share the name "Send a follow-up email after form submission",
   seven of them live — so a name-driven delete would take out running automation.
 * Every id is **re-fetched from HubSpot immediately before deletion** and re-checked:
-  still exists, still turned off, name still matches the manifest. Anything that moved
-  since the manifest was written is skipped, not deleted.
+  still exists, name still matches, and still in the on/off state the manifest recorded
+  for it. Anything that moved since sign-off is skipped, not deleted.
 * Nothing runs without `--confirm-delete`. Without it this is a read-only rehearsal.
 * Every outcome is appended to a JSONL log as it happens, so an interrupted run leaves
   a complete record of what did and did not go.
@@ -113,11 +113,23 @@ def main() -> int:
 
         live = resp.json()
         live_name = (live.get("name") or "").strip()
-        if live.get("isEnabled"):
-            print(f"{head}\n    ! SWITCHED ON since the manifest was written — skipped")
+        # Compare against the state the manifest recorded, not against a fixed
+        # expectation of "off". P1-P3 were dormant workflows where being switched on
+        # meant something had changed since sign-off; P4 is made entirely of live
+        # workflows, where being switched on is the normal case and being switched
+        # off is the thing that changed. Either way the rule is the same: if the
+        # workflow is not in the state it was signed off in, somebody touched it and
+        # it is no longer the thing that was approved.
+        expected = row.get("enabled")
+        actual = bool(live.get("isEnabled"))
+        if expected is None:
+            expected = False  # older manifests carry no state; they were all dormant
+        if actual != bool(expected):
+            was, now = ("on", "off") if expected else ("off", "on")
+            print(f"{head}\n    ! was signed off as {was}, is {now} now — skipped")
             counts["skipped"] += 1
             log.write(json.dumps({"at": _stamp(), "id": wid, "name": name,
-                                  "outcome": "skipped-now-enabled"}) + "\n")
+                                  "outcome": f"skipped-state-changed-{was}-to-{now}"}) + "\n")
             log.flush()
             continue
         if live_name != name.strip():
@@ -131,7 +143,8 @@ def main() -> int:
             continue
 
         if not args.confirm_delete:
-            print(f"{head}\n    would delete (off, name matches)")
+            state = "on" if actual else "off"
+            print(f"{head}\n    would delete ({state} as signed off, name matches)")
             continue
 
         try:
