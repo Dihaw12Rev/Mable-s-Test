@@ -1,0 +1,448 @@
+<title>__PORTAL_TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #F6F3F0; --surface: #FFFFFF; --sunken: #F0ECE7;
+    --ink: #12171A; --muted: #635D57; --faint: #948C84;
+    --rule: #E2DCD5; --rule-strong: #CEC5BB;
+    --accent: #0F5F63; --accent-soft: #DCEBEA;
+    --ok: #2E6B3F; --ok-soft: #E0EDE3;
+    --warn: #8A5A12; --warn-soft: #F6EBD9;
+    --crit: #A03028; --crit-soft: #F7E3E1;
+    --shadow: 0 1px 2px rgba(18,23,26,.05), 0 1px 8px rgba(18,23,26,.04);
+    --sans: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131418; --surface: #1B1D22; --sunken: #23262C;
+      --ink: #ECE8E3; --muted: #A8A099; --faint: #77706A;
+      --rule: #2C2F36; --rule-strong: #3C4048;
+      --accent: #5CC3BC; --accent-soft: #17383A;
+      --ok: #7FC796; --ok-soft: #1C3325;
+      --warn: #DCA95F; --warn-soft: #382E1B;
+      --crit: #E8867C; --crit-soft: #3A211F;
+      --shadow: 0 1px 2px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131418; --surface: #1B1D22; --sunken: #23262C;
+    --ink: #ECE8E3; --muted: #A8A099; --faint: #77706A;
+    --rule: #2C2F36; --rule-strong: #3C4048;
+    --accent: #5CC3BC; --accent-soft: #17383A;
+    --ok: #7FC796; --ok-soft: #1C3325;
+    --warn: #DCA95F; --warn-soft: #382E1B;
+    --crit: #E8867C; --crit-soft: #3A211F;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 14.5px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-underline-offset: 2px; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  .mono { font-family: var(--mono); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(14px, 3vw, 26px); }
+
+  /* ---------------------------------------------------------- top bar */
+  header {
+    position: sticky; top: 0; z-index: 20; background: var(--surface);
+    border-bottom: 1px solid var(--rule);
+  }
+  .bar { display: flex; align-items: center; gap: 14px; padding: 11px 0; flex-wrap: wrap; }
+  .home { font-weight: 700; font-size: 15px; letter-spacing: -.015em; }
+  .crumbs { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--muted); flex: 1 1 auto; min-width: 0; }
+  .crumbs .sep { color: var(--faint); }
+  .crumbs button { color: var(--accent); }
+  #q {
+    flex: 0 1 300px; min-width: 160px; font: inherit; font-size: 13px; padding: 7px 11px;
+    border: 1px solid var(--rule-strong); border-radius: 20px;
+    background: var(--ground); color: var(--ink);
+  }
+  #q::placeholder { color: var(--faint); }
+
+  /* -------------------------------------------------------- overview */
+  .hero { padding: 26px 0 6px; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+  h1 { font-size: clamp(25px, 4vw, 34px); line-height: 1.1; margin: 7px 0 8px; letter-spacing: -.025em; }
+  .lede { color: var(--muted); max-width: 66ch; margin: 0; font-size: 15px; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 9px;
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .panel > h2 {
+    font-size: 13px; margin: 0 0 3px; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--muted); font-weight: 700;
+  }
+  .panel .sub { font-size: 12.5px; color: var(--faint); margin: 0 0 14px; }
+  .grid { display: grid; gap: 14px; margin: 20px 0; }
+  .g-kpi { grid-template-columns: repeat(auto-fit, minmax(178px, 1fr)); }
+  .g-two { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  .g-area { grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); }
+  @media (max-width: 780px) { .g-two { grid-template-columns: minmax(0, 1fr); } }
+
+  /* KPI dial */
+  .kpi { text-align: center; }
+  .kpi h3 { font-size: 12.5px; margin: 0 0 9px; font-weight: 600; color: var(--muted); }
+  .kpi .dialwrap { position: relative; display: inline-block; }
+  .kpi .val {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 25px; font-weight: 600; letter-spacing: -.02em;
+  }
+  .kpi .det { font-size: 11.5px; color: var(--faint); margin-top: 7px; line-height: 1.35; }
+  .kpi .why { font-size: 11.5px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+
+  /* findings */
+  .find { border-bottom: 1px solid var(--rule); padding: 9px 0; }
+  .find:last-child { border-bottom: 0; }
+  .find b { display: block; font-size: 13.5px; margin-bottom: 2px; }
+  .find span { font-size: 12.5px; color: var(--muted); }
+
+  /* area cards */
+  .area {
+    display: block; width: 100%; text-align: left; background: var(--surface);
+    border: 1px solid var(--rule); border-radius: 9px; padding: 15px 17px;
+    box-shadow: var(--shadow); transition: border-color .12s ease, transform .12s ease;
+  }
+  .area:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .area h3 { font-size: 16px; margin: 0 0 5px; letter-spacing: -.01em; }
+  .area p { font-size: 12.5px; color: var(--muted); margin: 0 0 11px; }
+  .area .tally { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    font-family: var(--mono); font-size: 10.5px; padding: 2px 7px; border-radius: 4px;
+    background: var(--sunken); color: var(--muted);
+  }
+  .tag b { color: var(--ink); font-weight: 600; }
+  .area .head { font-size: 12px; color: var(--faint); margin-top: 10px; font-style: italic; }
+
+  /* ------------------------------------------------------ area detail */
+  .sectionhead { margin: 22px 0 10px; }
+  .sectionhead h2 { font-size: 20px; margin: 0 0 5px; letter-spacing: -.015em; }
+  .sectionhead p { margin: 0; color: var(--muted); max-width: 68ch; font-size: 14px; }
+
+  .listbox { background: var(--surface); border: 1px solid var(--rule); border-radius: 9px; overflow: hidden; box-shadow: var(--shadow); }
+  .listbox h3 {
+    font-size: 12px; margin: 0; padding: 10px 15px; background: var(--sunken);
+    text-transform: uppercase; letter-spacing: .07em; color: var(--muted); font-weight: 700;
+    border-bottom: 1px solid var(--rule);
+  }
+  .item {
+    display: flex; align-items: baseline; gap: 10px; width: 100%; text-align: left;
+    padding: 9px 15px; border-bottom: 1px solid var(--rule);
+  }
+  .item:last-child { border-bottom: 0; }
+  .item:hover { background: var(--sunken); }
+  .item .nm { flex: 1 1 auto; min-width: 0; font-size: 13.5px; }
+  .item .meta { font-family: var(--mono); font-size: 10.5px; color: var(--faint); white-space: nowrap; }
+  .more { padding: 9px 15px; font-size: 12.5px; color: var(--faint); }
+
+  .chip { display: inline-flex; font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 3px; }
+  .chip.on { background: var(--ok-soft); color: var(--ok); }
+  .chip.off { background: var(--sunken); color: var(--muted); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.crit { background: var(--crit-soft); color: var(--crit); }
+  .kind {
+    font-family: var(--mono); font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--muted); border: 1px solid var(--rule-strong);
+    border-radius: 3px; padding: 0 4px;
+  }
+
+  /* ----------------------------------------------------- asset detail */
+  .blast { border-left: 3px solid var(--rule-strong); padding: 2px 0 2px 15px; margin: 16px 0; }
+  .verdict { font-size: 17px; font-weight: 600; margin: 3px 0 8px; }
+  .verdict.none { color: var(--muted); } .verdict.low { color: var(--ok); }
+  .verdict.moderate { color: var(--warn); } .verdict.high { color: var(--crit); }
+  .depthctl { display: inline-flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--faint); margin-top: 4px; }
+  .plain { font-size: 14px; color: var(--muted); max-width: 72ch; }
+  footer { color: var(--faint); font-size: 12px; padding: 30px 0 50px; border-top: 1px solid var(--rule); margin-top: 34px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<header>
+  <div class="wrap bar">
+    <button class="home" id="home"></button>
+    <nav class="crumbs" id="crumbs"></nav>
+    <input id="q" type="search" placeholder="Search everything…" aria-label="Search all assets" autocomplete="off">
+  </div>
+</header>
+<div class="wrap" id="view"></div>
+<div class="wrap"><footer id="foot"></footer></div>
+
+<script id="payload" type="application/json">__PAYLOAD_JSON__</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("payload").textContent);
+  var N = D.graph.nodes, LABELS = D.type_labels, PLURALS = D.type_plurals, VERBS = D.verbs;
+  var out = {}, inc = {};
+  D.graph.edges.forEach(function (e) {
+    (out[e.from] = out[e.from] || []).push([e.to, e.rel]);
+    (inc[e.to] = inc[e.to] || []).push([e.from, e.rel]);
+  });
+  var IDS = Object.keys(N);
+  var view = document.getElementById("view");
+  var depth = 3;
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function links(id) { return (out[id] || []).length + (inc[id] || []).length; }
+
+  function walk(start, adj, maxDepth) {
+    var seen = {}, q = [[start, 0]];
+    while (q.length) {
+      var c = q.shift();
+      if (c[1] >= maxDepth) continue;
+      (adj[c[0]] || []).forEach(function (p) {
+        if (p[0] === start || seen[p[0]] !== undefined) return;
+        seen[p[0]] = c[1] + 1; q.push([p[0], c[1] + 1]);
+      });
+    }
+    return seen;
+  }
+  function severity(n) {
+    if (!n) return ["none", "Nothing else depends on this"];
+    if (n <= 5) return ["low", "Small footprint — " + n + " other item" + (n === 1 ? "" : "s") + " affected"];
+    if (n <= 20) return ["moderate", "Moderate footprint — " + n + " other items affected"];
+    return ["high", "Large footprint — " + n + " other items affected"];
+  }
+
+  /* ---- gauge dial, mirroring the KPI tiles in the reference layout ---- */
+  function dial(pct, tone) {
+    var r = 38, c = 2 * Math.PI * r, span = c * 0.72, filled = span * (pct / 100);
+    var col = { A: "var(--ok)", B: "var(--ok)", C: "var(--accent)", D: "var(--warn)", F: "var(--crit)" }[tone];
+    return '<svg width="104" height="104" viewBox="0 0 104 104" role="img" aria-label="' + pct + ' percent">' +
+      '<circle cx="52" cy="52" r="' + r + '" fill="none" stroke="var(--sunken)" stroke-width="10" ' +
+      'stroke-linecap="round" stroke-dasharray="' + span.toFixed(1) + " " + c.toFixed(1) +
+      '" transform="rotate(129 52 52)"/>' +
+      '<circle cx="52" cy="52" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="10" ' +
+      'stroke-linecap="round" stroke-dasharray="' + filled.toFixed(1) + " " + c.toFixed(1) +
+      '" transform="rotate(129 52 52)"/></svg>';
+  }
+
+  /* ----------------------------------------------------------- routing */
+  function go(hash) { location.hash = hash; }
+  window.addEventListener("hashchange", route);
+
+  function route() {
+    var h = decodeURIComponent(location.hash.slice(1));
+    if (h.indexOf("area/") === 0) return renderArea(h.slice(5));
+    if (h.indexOf("asset/") === 0) return renderAsset(h.slice(6));
+    if (h.indexOf("search/") === 0) return renderSearch(h.slice(7));
+    renderOverview();
+  }
+
+  function crumbs(trail) {
+    document.getElementById("crumbs").innerHTML = trail.map(function (t, i) {
+      var last = i === trail.length - 1;
+      return (i ? '<span class="sep">›</span>' : "") +
+        (last ? "<span>" + esc(t[0]) + "</span>"
+              : '<button data-h="' + esc(t[1]) + '">' + esc(t[0]) + "</button>");
+    }).join("");
+  }
+  document.getElementById("crumbs").addEventListener("click", function (e) {
+    var b = e.target.closest("button"); if (b) go(b.dataset.h);
+  });
+  document.getElementById("home").addEventListener("click", function () { go(""); });
+
+  /* ---------------------------------------------------------- overview */
+  function renderOverview() {
+    crumbs([["Overview", ""]]);
+    var h = '<div class="hero"><div class="eyebrow">HubSpot account guide</div>' +
+      "<h1>" + esc(D.portal_name) + "</h1>" +
+      '<p class="lede">A plain-language map of everything running in this HubSpot account — ' +
+      "what each piece does, and what it is connected to. Start with an area below, or search " +
+      "for anything by name.</p></div>";
+
+    h += '<div class="grid g-kpi">' + D.health.map(function (s) {
+      return '<div class="panel kpi"><h3>' + esc(s.label) + "</h3>" +
+        '<div class="dialwrap">' + dial(s.pct, s.grade) +
+        '<span class="val">' + s.pct + "%</span></div>" +
+        '<div class="det">' + esc(s.detail) + "</div>" +
+        '<div class="why">' + esc(s.why) + "</div></div>";
+    }).join("") + "</div>";
+
+    h += '<div class="grid g-two">';
+    h += '<div class="panel"><h2>What we found</h2>' +
+      '<p class="sub">The things most worth acting on, biggest first.</p>' +
+      D.findings.map(function (f) {
+        return '<div class="find"><b>' + esc(f[0]) + "</b><span>" + esc(f[1]) + "</span></div>";
+      }).join("") + "</div>";
+    h += '<div class="panel"><h2>What is in the account</h2>' +
+      '<p class="sub">Every asset this guide covers.</p>' +
+      D.stats.map(function (s) {
+        return '<div class="find" style="display:flex;justify-content:space-between;align-items:baseline">' +
+          "<span>" + esc(s[0]) + '</span><b class="mono" style="font-size:15px">' + s[1] + "</b></div>";
+      }).join("") + "</div>";
+    h += "</div>";
+
+    h += '<div class="sectionhead"><h2>Explore by area</h2>' +
+      "<p>Each area groups the workflows, fields and assets that do one job together.</p></div>";
+    h += '<div class="grid g-area">' + D.areas.map(function (a) {
+      var tags = Object.keys(a.counts).map(function (k) {
+        return '<span class="tag"><b>' + a.counts[k] + "</b> " +
+          esc(a.counts[k] === 1 ? (LABELS[k] || k) : (PLURALS[k] || k)) + "</span>";
+      }).join("");
+      return '<button class="area" data-h="area/' + esc(a.id) + '">' +
+        "<h3>" + esc(a.name) + "</h3><p>" + esc(a.blurb) + "</p>" +
+        '<div class="tally">' + tags + "</div>" +
+        '<div class="head">' + esc(a.headline) + "</div></button>";
+    }).join("") + "</div>";
+    view.innerHTML = h;
+  }
+
+  /* -------------------------------------------------------- area view */
+  function renderArea(id) {
+    var a = D.areas.filter(function (x) { return x.id === id; })[0];
+    if (!a) return renderOverview();
+    crumbs([["Overview", ""], [a.name, "area/" + a.id]]);
+    var h = '<div class="sectionhead"><h2>' + esc(a.name) + "</h2><p>" + esc(a.blurb) + "</p></div>";
+    h += '<div class="grid g-area">';
+    var order = ["pipeline", "workflow", "list", "form", "email", "page", "property", "stage"];
+    order.forEach(function (kind) {
+      var ids = a.members[kind];
+      if (!ids || !ids.length) return;
+      var sorted = ids.slice().sort(function (x, y) { return links(y) - links(x); });
+      h += '<div class="listbox"><h3>' + esc(PLURALS[kind] || kind) + " · " + ids.length + "</h3>";
+      h += sorted.slice(0, 25).map(function (nid) {
+        var n = N[nid];
+        var chip = n.type === "workflow"
+          ? '<span class="chip ' + (n.enabled ? "on" : "off") + '">' + (n.enabled ? "on" : "off") + "</span> "
+          : "";
+        return '<button class="item" data-h="asset/' + esc(nid) + '">' + chip +
+          '<span class="nm">' + esc(n.label) + "</span>" +
+          '<span class="meta">' + links(nid) + " links</span></button>";
+      }).join("");
+      if (ids.length > 25) {
+        h += '<div class="more">+ ' + (ids.length - 25) + " more — search by name to find a specific one.</div>";
+      }
+      h += "</div>";
+    });
+    h += "</div>";
+    view.innerHTML = h;
+  }
+
+  /* ------------------------------------------------------- asset view */
+  function renderAsset(id) {
+    var n = N[id];
+    if (!n) return renderOverview();
+    var home = D.areas.filter(function (a) {
+      return Object.keys(a.members).some(function (k) { return a.members[k].indexOf(id) > -1; });
+    })[0];
+    crumbs(home ? [["Overview", ""], [home.name, "area/" + home.id], [n.label, ""]]
+                : [["Overview", ""], [n.label, ""]]);
+
+    var down = walk(id, out, depth), up = walk(id, inc, depth);
+    var downN = Object.keys(down).length, sev = severity(downN);
+
+    var h = '<div class="sectionhead"><span class="kind">' + esc(LABELS[n.type] || n.type) + "</span> ";
+    if (n.type === "workflow") h += '<span class="chip ' + (n.enabled ? "on" : "off") + '">' + (n.enabled ? "Active" : "Turned off") + "</span>";
+    h += "<h2 style='margin-top:8px'>" + esc(n.label) + "</h2>";
+    if (n.note) h += "<p>" + esc(n.note) + "</p>";
+    if (n.link) h += '<p style="margin-top:8px"><a href="' + esc(n.link) + '" target="_blank" rel="noopener">Open in HubSpot ↗</a></p>';
+    h += "</div>";
+
+    h += '<div class="blast"><div class="eyebrow">If someone changes this</div>' +
+      '<div class="verdict ' + sev[0] + '">' + esc(sev[1]) + "</div>";
+    if (downN) {
+      var byType = {};
+      Object.keys(down).forEach(function (t) { byType[N[t].type] = (byType[N[t].type] || 0) + 1; });
+      h += '<div class="tally">' + Object.keys(byType).sort().map(function (t) {
+        return '<span class="tag"><b>' + byType[t] + "</b> " + esc(PLURALS[t] || t) + "</span>";
+      }).join("") + "</div>";
+    } else {
+      h += '<p class="plain" style="margin:0">Nothing else in the account reads what this produces, ' +
+        "so editing it is unlikely to affect anything beyond itself.</p>";
+    }
+    h += '<label class="depthctl">how far to look <input id="depth" type="range" min="1" max="6" value="' +
+      depth + '"><span class="mono" id="depthv">' + depth + " step" + (depth === 1 ? "" : "s") + "</span></label></div>";
+
+    h += '<div class="grid g-two">';
+    h += relBox("Directly affects", out[id] || [], "down",
+      "Change this and these are the first things to feel it.");
+    h += relBox("Depends on", inc[id] || [], "up",
+      "These feed into it. A change to any of them can change this.");
+    h += "</div>";
+
+    var direct = (out[id] || []).map(function (p) { return p[0]; });
+    var indirect = Object.keys(down).filter(function (t) { return direct.indexOf(t) < 0; })
+      .sort(function (x, y) { return down[x] - down[y]; });
+    if (indirect.length) {
+      h += '<div class="grid"><div class="listbox"><h3>Further down the chain · ' + indirect.length + "</h3>" +
+        indirect.slice(0, 30).map(function (t) {
+          return '<button class="item" data-h="asset/' + esc(t) + '">' +
+            '<span class="nm">' + esc(N[t].label) + ' <span class="kind">' + esc(N[t].type) + "</span></span>" +
+            '<span class="meta">' + down[t] + " steps away</span></button>";
+        }).join("") +
+        (indirect.length > 30 ? '<div class="more">+ ' + (indirect.length - 30) + " more</div>" : "") +
+        "</div></div>";
+    }
+    view.innerHTML = h;
+
+    var sl = document.getElementById("depth");
+    if (sl) sl.addEventListener("input", function () { depth = +this.value; renderAsset(id); });
+  }
+
+  function relBox(title, pairs, dir, blurb) {
+    var h = '<div class="listbox"><h3>' + esc(title) + " · " + pairs.length + "</h3>";
+    if (!pairs.length) return h + '<div class="more">Nothing.</div></div>';
+    h += pairs.slice(0, 30).map(function (p) {
+      var n = N[p[0]]; if (!n) return "";
+      var verb = (VERBS[p[1]] || [p[1], p[1]])[dir === "down" ? 0 : 1];
+      return '<button class="item" data-h="asset/' + esc(p[0]) + '">' +
+        '<span class="meta" style="min-width:104px">' + esc(verb) + "</span>" +
+        '<span class="nm">' + esc(n.label) + ' <span class="kind">' + esc(n.type) + "</span></span></button>";
+    }).join("");
+    if (pairs.length > 30) h += '<div class="more">+ ' + (pairs.length - 30) + " more</div>";
+    return h + "</div>";
+  }
+
+  /* ----------------------------------------------------------- search */
+  function renderSearch(q) {
+    crumbs([["Overview", ""], ['Search “' + q + '”', ""]]);
+    var ql = q.toLowerCase();
+    var hits = IDS.filter(function (id) {
+      return (N[id].label || "").toLowerCase().indexOf(ql) > -1 ||
+             (N[id].note || "").toLowerCase().indexOf(ql) > -1;
+    }).sort(function (a, b) { return links(b) - links(a); });
+    var h = '<div class="sectionhead"><h2>' + hits.length + " result" + (hits.length === 1 ? "" : "s") +
+      " for “" + esc(q) + "”</h2><p>Ordered by how connected each one is.</p></div>";
+    h += '<div class="grid"><div class="listbox">' + (hits.length
+      ? hits.slice(0, 120).map(function (id) {
+          return '<button class="item" data-h="asset/' + esc(id) + '">' +
+            '<span class="nm">' + esc(N[id].label) + ' <span class="kind">' + esc(N[id].type) + "</span></span>" +
+            '<span class="meta">' + links(id) + " links</span></button>";
+        }).join("")
+      : '<div class="more">Nothing matched.</div>') + "</div></div>";
+    view.innerHTML = h;
+  }
+
+  var qEl = document.getElementById("q"), timer;
+  qEl.addEventListener("input", function () {
+    clearTimeout(timer);
+    var v = this.value.trim();
+    timer = setTimeout(function () { go(v ? "search/" + encodeURIComponent(v) : ""); }, 220);
+  });
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-h]");
+    if (b && !b.closest(".crumbs")) { go(b.dataset.h); window.scrollTo({ top: 0 }); }
+  });
+
+  document.getElementById("home").textContent = D.portal_name;
+  document.getElementById("foot").innerHTML =
+    "Snapshot taken " + esc(D.extracted_at) + " · portal " + esc(D.portal_id) + ". " +
+    "Connections are read from the account's own settings. Anything driven by an outside " +
+    "integration or custom code is not visible here, so treat the footprint as a minimum.";
+  route();
+})();
+</script>

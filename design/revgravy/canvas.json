@@ -1,0 +1,16 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1240, "h": 880, "title": "Roadmap" },
+    { "file": "Phase1.dc.html", "x": 0, "y": 1000, "w": 580, "h": 760 },
+    { "file": "Phase2.dc.html", "x": 660, "y": 1000, "w": 580, "h": 760 },
+    { "file": "Phase3.dc.html", "x": 1320, "y": 1000, "w": 580, "h": 760 },
+    { "file": "Phase4.dc.html", "x": 1980, "y": 1000, "w": 580, "h": 760 },
+    { "file": "Moat.dc.html", "x": 0, "y": 1880, "w": 880, "h": 560 },
+    { "file": "Risks.dc.html", "x": 960, "y": 1880, "w": 880, "h": 560 }
+  ],
+  "annotations": [
+    { "id": "start-here", "x": 1320, "y": -150, "w": 300, "text": "Start with Phase 1.\n\nIt is a week of work on top of what already exists, and it is the only phase that pays before anything else is built." },
+    { "id": "sequencing", "x": 2660, "y": 1000, "w": 300, "text": "Phases 3 and 4 only make sense once two or more clients are running the monthly cycle. Until then they are cost without return." }
+  ],
+  "launch": { "view": "canvas" }
+}
