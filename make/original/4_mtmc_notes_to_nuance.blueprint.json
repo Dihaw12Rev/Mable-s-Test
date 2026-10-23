@@ -1,0 +1,2206 @@
+{
+    "name": "MTMC > Nuance - Notes Sync (Create and Update) (Ready)",
+    "flow": [
+        {
+            "id": 2,
+            "module": "hubspotcrm:searchForNotes",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 9423792
+            },
+            "mapper": {
+                "limit": "100",
+                "filter": [
+                    [
+                        {
+                            "a": "hs_createdate",
+                            "b": "{{addHours(formatDate(now; \"x\"); -4)}}",
+                            "o": "GT"
+                        },
+                        {
+                            "a": "hs_body_preview",
+                            "b": "[Note from Nuance Team",
+                            "o": "NOT_CONTAINS_TOKEN"
+                        }
+                    ]
+                ],
+                "direction": "DESCENDING",
+                "propertyName": "hs_createdate",
+                "outputProperties": [
+                    "hubspot_owner_id",
+                    "hs_created_by",
+                    "hs_timestamp",
+                    "hs_attachment_ids",
+                    "hs_body_preview",
+                    "hs_createdate",
+                    "hs_created_by_user_id",
+                    "hubspot_team_id",
+                    "hs_lastmodifieddate",
+                    "hs_merged_object_ids",
+                    "hs_note_body",
+                    "hs_object_id",
+                    "hs_object_source_label",
+                    "hs_object_source_detail_1",
+                    "hs_object_source_detail_2",
+                    "hs_object_source_detail_3",
+                    "hs_shared_team_ids",
+                    "hs_shared_user_ids",
+                    "hs_updated_by_user_id"
+                ],
+                "parseCustomFields": true
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 150,
+                    "name": "HOM Notes Search"
+                },
+                "restore": {
+                    "expect": {
+                        "direction": {
+                            "label": "Descending"
+                        },
+                        "propertyName": {
+                            "mode": "chose",
+                            "label": "Create Date"
+                        },
+                        "outputProperties": {
+                            "mode": "chose",
+                            "label": [
+                                "hubspot_owner_id",
+                                "hs_created_by",
+                                "hs_timestamp",
+                                "hs_attachment_ids",
+                                "hs_body_preview",
+                                "hs_createdate",
+                                "hs_created_by_user_id",
+                                "hubspot_team_id",
+                                "hs_lastmodifieddate",
+                                "hs_merged_object_ids",
+                                "hs_note_body",
+                                "hs_object_id",
+                                "hs_object_source_label",
+                                "hs_object_source_detail_1",
+                                "hs_object_source_detail_2",
+                                "hs_object_source_detail_3",
+                                "hs_shared_team_ids",
+                                "hs_shared_user_ids",
+                                "hs_updated_by_user_id"
+                            ]
+                        },
+                        "parseCustomFields": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "outputProperties",
+                        "type": "select",
+                        "label": "Output Properties",
+                        "multiple": true
+                    },
+                    {
+                        "name": "query",
+                        "type": "text",
+                        "label": "Query"
+                    },
+                    {
+                        "name": "filter",
+                        "type": "filter",
+                        "label": "Filter search results",
+                        "options": {
+                            "store": [
+                                {
+                                    "label": "Activity Assigned To",
+                                    "value": "hubspot_owner_id"
+                                },
+                                {
+                                    "label": "Activity Created By",
+                                    "value": "hs_created_by"
+                                },
+                                {
+                                    "label": "Activity Date",
+                                    "value": "hs_timestamp"
+                                },
+                                {
+                                    "label": "Attached File IDs",
+                                    "value": "hs_attachment_ids"
+                                },
+                                {
+                                    "label": "Body Preview",
+                                    "value": "hs_body_preview"
+                                },
+                                {
+                                    "label": "Create Date",
+                                    "value": "hs_createdate"
+                                },
+                                {
+                                    "label": "Created By User ID",
+                                    "value": "hs_created_by_user_id"
+                                },
+                                {
+                                    "label": "HubSpot Team",
+                                    "value": "hubspot_team_id"
+                                },
+                                {
+                                    "label": "Last Modified Date",
+                                    "value": "hs_lastmodifieddate"
+                                },
+                                {
+                                    "label": "Merged Record IDs",
+                                    "value": "hs_merged_object_ids"
+                                },
+                                {
+                                    "label": "Note Body",
+                                    "value": "hs_note_body"
+                                },
+                                {
+                                    "label": "Record ID",
+                                    "value": "hs_object_id"
+                                },
+                                {
+                                    "label": "Record Source",
+                                    "value": "hs_object_source_label"
+                                },
+                                {
+                                    "label": "Record Source Detail 1",
+                                    "value": "hs_object_source_detail_1"
+                                },
+                                {
+                                    "label": "Record Source Detail 2",
+                                    "value": "hs_object_source_detail_2"
+                                },
+                                {
+                                    "label": "Record Source Detail 3",
+                                    "value": "hs_object_source_detail_3"
+                                },
+                                {
+                                    "label": "Shared Teams",
+                                    "value": "hs_shared_team_ids"
+                                },
+                                {
+                                    "label": "Shared Users",
+                                    "value": "hs_shared_user_ids"
+                                },
+                                {
+                                    "label": "Updated By User ID",
+                                    "value": "hs_updated_by_user_id"
+                                }
+                            ],
+                            "operators": [
+                                {
+                                    "label": "Operators",
+                                    "options": [
+                                        {
+                                            "label": "Equal to",
+                                            "value": "EQ"
+                                        },
+                                        {
+                                            "label": "Not Equal to",
+                                            "value": "NEQ"
+                                        },
+                                        {
+                                            "label": "Less Than",
+                                            "value": "LT"
+                                        },
+                                        {
+                                            "label": "Less Than or Equal to",
+                                            "value": "LTE"
+                                        },
+                                        {
+                                            "label": "Greater Than",
+                                            "value": "GT"
+                                        },
+                                        {
+                                            "label": "Greater Than or Equal to",
+                                            "value": "GTE"
+                                        },
+                                        {
+                                            "label": "Contains Token",
+                                            "value": "CONTAINS_TOKEN"
+                                        },
+                                        {
+                                            "label": "Does Not Contain Token",
+                                            "value": "NOT_CONTAINS_TOKEN"
+                                        },
+                                        {
+                                            "label": "Has Property Value",
+                                            "value": "HAS_PROPERTY"
+                                        },
+                                        {
+                                            "label": "Does Not Have Property Value",
+                                            "value": "NOT_HAS_PROPERTY"
+                                        },
+                                        {
+                                            "label": "between (provide an array of 2 values)",
+                                            "value": "BETWEEN"
+                                        },
+                                        {
+                                            "label": "in (provide an array of values)",
+                                            "value": "IN"
+                                        },
+                                        {
+                                            "label": "not in (provide an array of values)",
+                                            "value": "NOT_IN"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "propertyName",
+                        "type": "select",
+                        "label": "Sort by Property Name"
+                    },
+                    {
+                        "name": "direction",
+                        "type": "select",
+                        "label": "Sorting Direction",
+                        "validate": {
+                            "enum": [
+                                "DESCENDING",
+                                "ASCENDING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "cursor",
+                        "type": "text",
+                        "label": "Paging Cursor"
+                    },
+                    {
+                        "name": "parseCustomFields",
+                        "type": "boolean",
+                        "label": "Parse Custom Fields",
+                        "required": true
+                    },
+                    {
+                        "name": "limit",
+                        "type": "uinteger",
+                        "label": "Limit"
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "__IMTLENGTH__",
+                        "type": "uinteger",
+                        "label": "Total number of bundles"
+                    },
+                    {
+                        "name": "__IMTINDEX__",
+                        "type": "uinteger",
+                        "label": "Bundle order position"
+                    },
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "Note ID"
+                    },
+                    {
+                        "name": "properties",
+                        "spec": [
+                            {
+                                "name": "hs_attachment_ids",
+                                "type": "text",
+                                "label": "Attached file IDs"
+                            },
+                            {
+                                "name": "hs_body_preview",
+                                "type": "text",
+                                "label": "Body preview"
+                            },
+                            {
+                                "name": "hs_created_by",
+                                "type": "number",
+                                "label": "Activity created by"
+                            },
+                            {
+                                "name": "hs_created_by_user_id",
+                                "type": "number",
+                                "label": "Created by user ID"
+                            },
+                            {
+                                "name": "hs_createdate",
+                                "type": "date",
+                                "label": "Create date"
+                            },
+                            {
+                                "name": "hs_lastmodifieddate",
+                                "type": "date",
+                                "label": "Last modified date"
+                            },
+                            {
+                                "name": "hs_merged_object_ids",
+                                "type": "text",
+                                "label": "Merged record IDs"
+                            },
+                            {
+                                "name": "hs_note_body",
+                                "type": "text",
+                                "label": "Note body"
+                            },
+                            {
+                                "name": "hs_object_id",
+                                "type": "number",
+                                "label": "Record ID"
+                            },
+                            {
+                                "name": "hs_object_source_detail_1",
+                                "type": "text",
+                                "label": "Record source detail 1"
+                            },
+                            {
+                                "name": "hs_object_source_detail_2",
+                                "type": "text",
+                                "label": "Record source detail 2"
+                            },
+                            {
+                                "name": "hs_object_source_detail_3",
+                                "type": "text",
+                                "label": "Record source detail 3"
+                            },
+                            {
+                                "name": "hs_object_source_label",
+                                "type": "text",
+                                "label": "Record source"
+                            },
+                            {
+                                "name": "hs_shared_team_ids",
+                                "type": "text",
+                                "label": "Shared teams"
+                            },
+                            {
+                                "name": "hs_shared_user_ids",
+                                "type": "text",
+                                "label": "Shared users"
+                            },
+                            {
+                                "name": "hs_timestamp",
+                                "type": "date",
+                                "label": "Activity date"
+                            },
+                            {
+                                "name": "hs_updated_by_user_id",
+                                "type": "number",
+                                "label": "Updated by user ID"
+                            },
+                            {
+                                "name": "hubspot_owner_id",
+                                "type": "text",
+                                "label": "Activity assigned to"
+                            },
+                            {
+                                "name": "hubspot_team_id",
+                                "type": "text",
+                                "label": "HubSpot Team"
+                            },
+                            {
+                                "name": "hs_createdate",
+                                "type": "date",
+                                "label": "HS Created Date"
+                            },
+                            {
+                                "name": "hs_lastmodifieddate",
+                                "type": "date",
+                                "label": "HS Last Modified Date"
+                            },
+                            {
+                                "name": "hs_object_id",
+                                "type": "text",
+                                "label": "HS Object ID"
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Properties"
+                    },
+                    {
+                        "name": "createdAt",
+                        "type": "date",
+                        "label": "Created At"
+                    },
+                    {
+                        "name": "updatedAt",
+                        "type": "date",
+                        "label": "Updated At"
+                    },
+                    {
+                        "name": "archived",
+                        "type": "boolean",
+                        "label": "Archived"
+                    }
+                ],
+                "advanced": true
+            }
+        },
+        {
+            "id": 7,
+            "module": "hubspotcrm:ListCRMObjectAssociation",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 9423792
+            },
+            "filter": {
+                "name": "Not a Sync Note",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{2.properties.hs_body_preview}}",
+                            "b": "[Note from MTMC Team",
+                            "o": "text:notstartwith"
+                        },
+                        {
+                            "a": "{{2.properties.hs_body_preview}}",
+                            "b": "[Note from Pelstar Team",
+                            "o": "text:notstartwith"
+                        },
+                        {
+                            "a": "{{2.id}}",
+                            "o": "exist"
+                        }
+                    ]
+                ]
+            },
+            "mapper": {
+                "limit": "10",
+                "objectId": "{{2.id}}",
+                "objectType": "notes",
+                "toObjectType": [
+                    "deals"
+                ]
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 150
+                },
+                "restore": {
+                    "expect": {
+                        "objectType": {
+                            "mode": "chose",
+                            "label": "Notes"
+                        },
+                        "toObjectType": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "objectType",
+                        "type": "select",
+                        "label": "From Object Type",
+                        "required": true
+                    },
+                    {
+                        "name": "toObjectType",
+                        "type": "select",
+                        "label": "To Object Type",
+                        "multiple": true,
+                        "required": true
+                    },
+                    {
+                        "name": "limit",
+                        "type": "uinteger",
+                        "label": "Limit"
+                    },
+                    {
+                        "name": "objectId",
+                        "type": "text",
+                        "label": "Object ID"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 8,
+            "module": "hubspotcrm:getDeal",
+            "version": 2,
+            "parameters": {
+                "__IMTCONN__": 9423792
+            },
+            "filter": {
+                "name": "Deal Found",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{7.associations.deals[].id}}",
+                            "o": "exist"
+                        }
+                    ]
+                ]
+            },
+            "mapper": {
+                "dealId": "{{7.associations.deals[].id}}",
+                "outputProperties": [
+                    "hubspot_owner_id",
+                    "nuance_deal_id"
+                ],
+                "parseCustomFields": true
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 150
+                },
+                "restore": {
+                    "expect": {
+                        "dealId": {
+                            "mode": "edit"
+                        },
+                        "outputProperties": {
+                            "mode": "chose",
+                            "label": [
+                                "Deal Owner",
+                                "Nuance Deal ID"
+                            ]
+                        },
+                        "parseCustomFields": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "dealId",
+                        "type": "select",
+                        "label": "Deal ID",
+                        "required": true
+                    },
+                    {
+                        "name": "outputProperties",
+                        "type": "select",
+                        "label": "Output Properties",
+                        "multiple": true
+                    },
+                    {
+                        "name": "parseCustomFields",
+                        "type": "boolean",
+                        "label": "Parse Custom Fields",
+                        "required": true
+                    }
+                ],
+                "advanced": true
+            }
+        },
+        {
+            "id": 3,
+            "module": "datastore:GetRecord",
+            "version": 1,
+            "parameters": {
+                "datastore": 138595
+            },
+            "filter": {
+                "name": "HOM Deal Found",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{8.properties.nuance_deal_id}}",
+                            "o": "exist"
+                        }
+                    ]
+                ]
+            },
+            "mapper": {
+                "key": "{{2.id}}",
+                "returnWrapped": true
+            },
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 150
+                },
+                "restore": {
+                    "parameters": {
+                        "datastore": {
+                            "label": "Nuance <> MTMC - Notes Sync"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "datastore",
+                        "type": "datastore",
+                        "label": "Data store",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "key",
+                        "type": "text",
+                        "label": "Key",
+                        "required": true
+                    },
+                    {
+                        "name": "returnWrapped",
+                        "type": "boolean",
+                        "label": "Return Wrapped Output",
+                        "required": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "key",
+                        "type": "text",
+                        "label": "Key"
+                    },
+                    {
+                        "name": "data",
+                        "spec": [
+                            {
+                                "help": "",
+                                "name": "last synced at",
+                                "type": "date",
+                                "label": null,
+                                "required": false
+                            },
+                            {
+                                "help": "",
+                                "name": "MTMC Note ID",
+                                "type": "number",
+                                "label": null,
+                                "default": null,
+                                "required": false
+                            },
+                            {
+                                "help": "",
+                                "name": "Nuance Note ID",
+                                "type": "number",
+                                "label": null,
+                                "default": null,
+                                "required": false
+                            }
+                        ],
+                        "type": "collection",
+                        "label": "Record"
+                    }
+                ],
+                "advanced": true
+            }
+        },
+        {
+            "id": 5,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "mapper": null,
+            "metadata": {
+                "designer": {
+                    "x": 1200,
+                    "y": 150
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 15,
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
+                            "parameters": {
+                                "__IMTCONN__": 9423792
+                            },
+                            "filter": {
+                                "name": "Note ID Found (Update)",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{3.data.last_synced_at}}",
+                                            "o": "exist"
+                                        },
+                                        {
+                                            "a": "{{3.data.`MTMC Note ID`}}",
+                                            "o": "exist"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "url": "/crm/v3/owners/{{8.properties.hubspot_owner_id}}",
+                                "method": "GET",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "GET"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "url",
+                                        "type": "text",
+                                        "label": "URL",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "method",
+                                        "type": "select",
+                                        "label": "Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "GET",
+                                                "POST",
+                                                "PUT",
+                                                "PATCH",
+                                                "DELETE"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Headers"
+                                    },
+                                    {
+                                        "name": "qs",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Query String"
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "any",
+                                        "label": "Body"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 16,
+                            "module": "hubspotcrm:updateANote",
+                            "version": 2,
+                            "parameters": {
+                                "__IMTCONN__": 9735744
+                            },
+                            "mapper": {
+                                "noteId": "{{3.data.`MTMC Note ID`}}",
+                                "hs_note_body": "[Note from Nuance Team. Rep Name: {{15.body.firstName}} {{15.body.lastName}}]\n{{newline}}\n{{2.properties.hs_note_body}}",
+                                "parseCustomFields": true
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "hubspot_owner_id": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_attachment_ids": {
+                                            "mode": "chose"
+                                        },
+                                        "parseCustomFields": {
+                                            "mode": "chose"
+                                        },
+                                        "hs_shared_team_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_shared_user_ids": {
+                                            "mode": "edit"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "noteId",
+                                        "type": "uinteger",
+                                        "label": "Note ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "hubspot_owner_id",
+                                        "type": "select",
+                                        "label": "Activity Assigned To"
+                                    },
+                                    {
+                                        "name": "hs_timestamp",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Activity Date"
+                                    },
+                                    {
+                                        "name": "hs_attachment_ids",
+                                        "type": "select",
+                                        "label": "Attached File IDs",
+                                        "multiple": true
+                                    },
+                                    {
+                                        "name": "hs_note_body",
+                                        "type": "text",
+                                        "label": "Note Body"
+                                    },
+                                    {
+                                        "mode": "edit",
+                                        "name": "hs_shared_team_ids",
+                                        "type": "select",
+                                        "label": "Shared Teams",
+                                        "multiple": true
+                                    },
+                                    {
+                                        "mode": "edit",
+                                        "name": "hs_shared_user_ids",
+                                        "type": "select",
+                                        "label": "Shared Users",
+                                        "multiple": true
+                                    },
+                                    {
+                                        "name": "parseCustomFields",
+                                        "type": "boolean",
+                                        "label": "Parse Custom Fields",
+                                        "required": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "Note ID"
+                                    },
+                                    {
+                                        "name": "properties",
+                                        "spec": [
+                                            {
+                                                "name": "hs_ai_detected_language",
+                                                "type": "text",
+                                                "label": "Detected Language"
+                                            },
+                                            {
+                                                "name": "hs_ai_detected_language_confidence",
+                                                "type": "number",
+                                                "label": "Language Detection Confidence"
+                                            },
+                                            {
+                                                "name": "hs_ai_is_noise",
+                                                "type": "text",
+                                                "label": "Content Quality"
+                                            },
+                                            {
+                                                "name": "hs_all_accessible_team_ids",
+                                                "type": "text",
+                                                "label": "All teams"
+                                            },
+                                            {
+                                                "name": "hs_all_assigned_business_unit_ids",
+                                                "type": "text",
+                                                "label": "Business units"
+                                            },
+                                            {
+                                                "name": "hs_all_owner_ids",
+                                                "type": "text",
+                                                "label": "All owner IDs"
+                                            },
+                                            {
+                                                "name": "hs_all_team_ids",
+                                                "type": "text",
+                                                "label": "All team IDs"
+                                            },
+                                            {
+                                                "name": "hs_at_mentioned_owner_ids",
+                                                "type": "text",
+                                                "label": "At-Mentioned Owner Ids"
+                                            },
+                                            {
+                                                "name": "hs_at_mentioned_team_ids",
+                                                "type": "text",
+                                                "label": "At-Mentioned Team Ids"
+                                            },
+                                            {
+                                                "name": "hs_attachment_from_form_submission",
+                                                "type": "text",
+                                                "label": "attachment_from_form_submission"
+                                            },
+                                            {
+                                                "name": "hs_attachment_ids",
+                                                "type": "text",
+                                                "label": "Attached file IDs"
+                                            },
+                                            {
+                                                "name": "hs_body_preview",
+                                                "type": "text",
+                                                "label": "Body preview"
+                                            },
+                                            {
+                                                "name": "hs_body_preview_html",
+                                                "type": "text",
+                                                "label": "HTML Body Preview"
+                                            },
+                                            {
+                                                "name": "hs_body_preview_is_truncated",
+                                                "type": "text",
+                                                "label": "Body Preview Truncated"
+                                            },
+                                            {
+                                                "name": "hs_created_by",
+                                                "type": "number",
+                                                "label": "Activity created by"
+                                            },
+                                            {
+                                                "name": "hs_created_by_user_id",
+                                                "type": "number",
+                                                "label": "Created by user ID"
+                                            },
+                                            {
+                                                "name": "hs_createdate",
+                                                "type": "date",
+                                                "label": "Create date"
+                                            },
+                                            {
+                                                "name": "hs_engagement_source",
+                                                "type": "text",
+                                                "label": "Engagement Source"
+                                            },
+                                            {
+                                                "name": "hs_engagement_source_id",
+                                                "type": "text",
+                                                "label": "Engagement Source ID"
+                                            },
+                                            {
+                                                "name": "hs_follow_up_action",
+                                                "type": "text",
+                                                "label": "Follow up action"
+                                            },
+                                            {
+                                                "name": "hs_gdpr_deleted",
+                                                "type": "text",
+                                                "label": "GDPR deleted"
+                                            },
+                                            {
+                                                "name": "hs_hd_ticket_ids",
+                                                "type": "number",
+                                                "label": "hd_ticket_ids"
+                                            },
+                                            {
+                                                "name": "hs_lastmodifieddate",
+                                                "type": "date",
+                                                "label": "Last modified date"
+                                            },
+                                            {
+                                                "name": "hs_merged_object_ids",
+                                                "type": "text",
+                                                "label": "Merged record IDs"
+                                            },
+                                            {
+                                                "name": "hs_modified_by",
+                                                "type": "number",
+                                                "label": "Updated by"
+                                            },
+                                            {
+                                                "name": "hs_note_body",
+                                                "type": "text",
+                                                "label": "Note body"
+                                            },
+                                            {
+                                                "name": "hs_note_ms_teams_payload",
+                                                "type": "text",
+                                                "label": "MsTeams payload"
+                                            },
+                                            {
+                                                "name": "hs_obj_coords",
+                                                "type": "text",
+                                                "label": "Object Coordinates"
+                                            },
+                                            {
+                                                "name": "hs_object_id",
+                                                "type": "number",
+                                                "label": "Record ID"
+                                            },
+                                            {
+                                                "name": "hs_object_source",
+                                                "type": "text",
+                                                "label": "Record creation source"
+                                            },
+                                            {
+                                                "name": "hs_object_source_detail_1",
+                                                "type": "text",
+                                                "label": "Record source detail 1"
+                                            },
+                                            {
+                                                "name": "hs_object_source_detail_2",
+                                                "type": "text",
+                                                "label": "Record source detail 2"
+                                            },
+                                            {
+                                                "name": "hs_object_source_detail_3",
+                                                "type": "text",
+                                                "label": "Record source detail 3"
+                                            },
+                                            {
+                                                "name": "hs_object_source_id",
+                                                "type": "text",
+                                                "label": "Record creation source ID"
+                                            },
+                                            {
+                                                "name": "hs_object_source_label",
+                                                "type": "text",
+                                                "label": "Record source"
+                                            },
+                                            {
+                                                "name": "hs_object_source_user_id",
+                                                "type": "number",
+                                                "label": "Record creation source user ID"
+                                            },
+                                            {
+                                                "name": "hs_origin_object_coordinates",
+                                                "type": "text",
+                                                "label": "Origin Object Coordinates"
+                                            },
+                                            {
+                                                "name": "hs_owning_teams",
+                                                "type": "text",
+                                                "label": "Owning Teams"
+                                            },
+                                            {
+                                                "name": "hs_pinned_engagement_id",
+                                                "type": "number",
+                                                "label": "Pinned engagement ID"
+                                            },
+                                            {
+                                                "name": "hs_product_name",
+                                                "type": "text",
+                                                "label": "Product name"
+                                            },
+                                            {
+                                                "name": "hs_queue_membership_ids",
+                                                "type": "text",
+                                                "label": "Queue Memberships"
+                                            },
+                                            {
+                                                "name": "hs_read_only",
+                                                "type": "text",
+                                                "label": "Read only object"
+                                            },
+                                            {
+                                                "name": "hs_shared_team_ids",
+                                                "type": "text",
+                                                "label": "Shared teams"
+                                            },
+                                            {
+                                                "name": "hs_shared_user_ids",
+                                                "type": "text",
+                                                "label": "Shared users"
+                                            },
+                                            {
+                                                "name": "hs_timestamp",
+                                                "type": "date",
+                                                "label": "Activity date"
+                                            },
+                                            {
+                                                "name": "hs_unique_creation_key",
+                                                "type": "text",
+                                                "label": "Unique creation key"
+                                            },
+                                            {
+                                                "name": "hs_unique_id",
+                                                "type": "text",
+                                                "label": "Unique ID"
+                                            },
+                                            {
+                                                "name": "hs_updated_by_user_id",
+                                                "type": "number",
+                                                "label": "Updated by user ID"
+                                            },
+                                            {
+                                                "name": "hs_user_ids_of_all_notification_followers",
+                                                "type": "text",
+                                                "label": "User IDs of all notification followers"
+                                            },
+                                            {
+                                                "name": "hs_user_ids_of_all_notification_unfollowers",
+                                                "type": "text",
+                                                "label": "User IDs of all notification unfollowers"
+                                            },
+                                            {
+                                                "name": "hs_user_ids_of_all_owners",
+                                                "type": "text",
+                                                "label": "User IDs of all owners"
+                                            },
+                                            {
+                                                "name": "hs_was_imported",
+                                                "type": "text",
+                                                "label": "Performed in an import"
+                                            },
+                                            {
+                                                "name": "hubspot_owner_assigneddate",
+                                                "type": "date",
+                                                "label": "Owner assigned date"
+                                            },
+                                            {
+                                                "name": "hubspot_owner_id",
+                                                "type": "text",
+                                                "label": "Activity assigned to"
+                                            },
+                                            {
+                                                "name": "hubspot_team_id",
+                                                "type": "text",
+                                                "label": "HubSpot Team"
+                                            },
+                                            {
+                                                "name": "hs_lastmodifieddate",
+                                                "type": "date",
+                                                "label": "HS Last Modified Date"
+                                            },
+                                            {
+                                                "name": "hs_object_id",
+                                                "type": "text",
+                                                "label": "HS Object ID"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Properties"
+                                    },
+                                    {
+                                        "name": "createdAt",
+                                        "type": "date",
+                                        "label": "Created At"
+                                    },
+                                    {
+                                        "name": "updatedAt",
+                                        "type": "date",
+                                        "label": "Updated At"
+                                    },
+                                    {
+                                        "name": "archived",
+                                        "type": "boolean",
+                                        "label": "Archived"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 4,
+                            "module": "datastore:AddRecord",
+                            "version": 1,
+                            "parameters": {
+                                "datastore": 120619
+                            },
+                            "mapper": {
+                                "key": "{{2.id}}",
+                                "data": {
+                                    "MTMC Note ID": "",
+                                    "Nuance Note ID": "",
+                                    "last_synced_at": "{{formatDate(now; \"x\")}}"
+                                },
+                                "overwrite": true
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 0
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "overwrite": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "datastore": {
+                                            "label": "MTMC <> HOM Note IDs (Sync)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "datastore",
+                                        "type": "datastore",
+                                        "label": "Data store",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "key",
+                                        "type": "text",
+                                        "label": "Key"
+                                    },
+                                    {
+                                        "name": "overwrite",
+                                        "type": "boolean",
+                                        "label": "Overwrite an existing record",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "data",
+                                        "spec": [
+                                            {
+                                                "name": "last_synced_at",
+                                                "type": "date",
+                                                "label": null
+                                            },
+                                            {
+                                                "name": "MTMC Note ID",
+                                                "type": "number",
+                                                "label": null
+                                            },
+                                            {
+                                                "name": "Nuance Note ID",
+                                                "type": "number",
+                                                "label": null
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 13,
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
+                            "parameters": {
+                                "__IMTCONN__": 9423792
+                            },
+                            "filter": {
+                                "name": "Note ID Not Found (Create)",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{3.data.last_synced_at}}",
+                                            "o": "notexist"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "url": "/crm/v3/owners/{{8.properties.hubspot_owner_id}}",
+                                "method": "GET",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 300
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "GET"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "url",
+                                        "type": "text",
+                                        "label": "URL",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "method",
+                                        "type": "select",
+                                        "label": "Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "GET",
+                                                "POST",
+                                                "PUT",
+                                                "PATCH",
+                                                "DELETE"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Headers"
+                                    },
+                                    {
+                                        "name": "qs",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Query String"
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "any",
+                                        "label": "Body"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 6,
+                            "module": "hubspotcrm:createANote",
+                            "version": 2,
+                            "parameters": {
+                                "__IMTCONN__": 9735744
+                            },
+                            "mapper": {
+                                "associations": [
+                                    {
+                                        "toId": "{{8.properties.nuance_deal_id}}",
+                                        "associationTypeId": 214,
+                                        "associationCategory": "HUBSPOT_DEFINED"
+                                    }
+                                ],
+                                "hs_note_body": "[Note from MTMC Team. Rep Name: {{13.body.firstName}} {{13.body.lastName}}]\n{{newline}}\n{{2.properties.hs_note_body}}",
+                                "hs_timestamp": "{{2.properties.hs_timestamp}}",
+                                "parseCustomFields": true
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 300
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "associations": {
+                                            "mode": "chose",
+                                            "items": [
+                                                {
+                                                    "associationTypeId": {
+                                                        "mode": "chose",
+                                                        "label": "Note to deal"
+                                                    },
+                                                    "associationCategory": {
+                                                        "mode": "chose",
+                                                        "label": "Hubspot Defined"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "hubspot_owner_id": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_attachment_ids": {
+                                            "mode": "chose"
+                                        },
+                                        "parseCustomFields": {
+                                            "mode": "chose"
+                                        },
+                                        "hs_shared_team_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_shared_user_ids": {
+                                            "mode": "edit"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "associations",
+                                        "spec": {
+                                            "name": "value",
+                                            "spec": [
+                                                {
+                                                    "name": "associationCategory",
+                                                    "type": "select",
+                                                    "label": "Association Category",
+                                                    "options": [
+                                                        {
+                                                            "label": "Hubspot Defined",
+                                                            "value": "HUBSPOT_DEFINED"
+                                                        },
+                                                        {
+                                                            "label": "User Defined",
+                                                            "value": "USER_DEFINED"
+                                                        },
+                                                        {
+                                                            "label": "Integrator Defined",
+                                                            "value": "INTEGRATOR_DEFINED"
+                                                        }
+                                                    ],
+                                                    "required": true
+                                                },
+                                                {
+                                                    "name": "associationTypeId",
+                                                    "type": "select",
+                                                    "label": "Association Type ID",
+                                                    "options": [
+                                                        {
+                                                            "label": "Note to contact",
+                                                            "value": 202,
+                                                            "nested": [
+                                                                {
+                                                                    "rpc": {
+                                                                        "url": "rpc://hubspotcrm/2/searchObjects?objectType=contacts",
+                                                                        "label": "ID Finder",
+                                                                        "parameters": [
+                                                                            {
+                                                                                "type": "html",
+                                                                                "label": "<div style='color: #205671; background: #E8F6FF; border-radius: 5px; padding: 12px 16px 12px 16px; font-size: 12px;'>If you don't see the result you're looking for, try more specific search criteria.</div>"
+                                                                            },
+                                                                            {
+                                                                                "name": "query",
+                                                                                "type": "text",
+                                                                                "label": "Content"
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "name": "toId",
+                                                                    "type": "uinteger",
+                                                                    "label": "To Object ID",
+                                                                    "required": true
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "label": "Note to company",
+                                                            "value": 190,
+                                                            "nested": [
+                                                                {
+                                                                    "rpc": {
+                                                                        "url": "rpc://hubspotcrm/2/searchObjects?objectType=companies",
+                                                                        "label": "ID Finder",
+                                                                        "parameters": [
+                                                                            {
+                                                                                "type": "html",
+                                                                                "label": "<div style='color: #205671; background: #E8F6FF; border-radius: 5px; padding: 12px 16px 12px 16px; font-size: 12px;'>If you don't see the result you're looking for, try more specific search criteria.</div>"
+                                                                            },
+                                                                            {
+                                                                                "name": "query",
+                                                                                "type": "text",
+                                                                                "label": "Content"
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "name": "toId",
+                                                                    "type": "uinteger",
+                                                                    "label": "To Object ID",
+                                                                    "required": true
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "label": "Note to deal",
+                                                            "value": 214,
+                                                            "nested": [
+                                                                {
+                                                                    "rpc": {
+                                                                        "url": "rpc://hubspotcrm/2/searchObjects?objectType=deals",
+                                                                        "label": "ID Finder",
+                                                                        "parameters": [
+                                                                            {
+                                                                                "type": "html",
+                                                                                "label": "<div style='color: #205671; background: #E8F6FF; border-radius: 5px; padding: 12px 16px 12px 16px; font-size: 12px;'>If you don't see the result you're looking for, try more specific search criteria.</div>"
+                                                                            },
+                                                                            {
+                                                                                "name": "query",
+                                                                                "type": "text",
+                                                                                "label": "Content"
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "name": "toId",
+                                                                    "type": "uinteger",
+                                                                    "label": "To Object ID",
+                                                                    "required": true
+                                                                }
+                                                            ]
+                                                        },
+                                                        {
+                                                            "label": "Note to ticket",
+                                                            "value": 228,
+                                                            "nested": [
+                                                                {
+                                                                    "rpc": {
+                                                                        "url": "rpc://hubspotcrm/2/searchObjects?objectType=tickets",
+                                                                        "label": "ID Finder",
+                                                                        "parameters": [
+                                                                            {
+                                                                                "type": "html",
+                                                                                "label": "<div style='color: #205671; background: #E8F6FF; border-radius: 5px; padding: 12px 16px 12px 16px; font-size: 12px;'>If you don't see the result you're looking for, try more specific search criteria.</div>"
+                                                                            },
+                                                                            {
+                                                                                "name": "query",
+                                                                                "type": "text",
+                                                                                "label": "Content"
+                                                                            }
+                                                                        ]
+                                                                    },
+                                                                    "name": "toId",
+                                                                    "type": "uinteger",
+                                                                    "label": "To Object ID",
+                                                                    "required": true
+                                                                }
+                                                            ]
+                                                        }
+                                                    ],
+                                                    "required": true
+                                                }
+                                            ],
+                                            "type": "collection",
+                                            "label": "Types",
+                                            "required": true
+                                        },
+                                        "type": "array",
+                                        "label": "Associations"
+                                    },
+                                    {
+                                        "name": "hubspot_owner_id",
+                                        "type": "select",
+                                        "label": "Activity Assigned To"
+                                    },
+                                    {
+                                        "name": "hs_timestamp",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Activity Date"
+                                    },
+                                    {
+                                        "name": "hs_attachment_ids",
+                                        "type": "select",
+                                        "label": "Attached File IDs",
+                                        "multiple": true
+                                    },
+                                    {
+                                        "name": "hs_note_body",
+                                        "type": "text",
+                                        "label": "Note Body"
+                                    },
+                                    {
+                                        "mode": "edit",
+                                        "name": "hs_shared_team_ids",
+                                        "type": "select",
+                                        "label": "Shared Teams",
+                                        "multiple": true
+                                    },
+                                    {
+                                        "mode": "edit",
+                                        "name": "hs_shared_user_ids",
+                                        "type": "select",
+                                        "label": "Shared Users",
+                                        "multiple": true
+                                    },
+                                    {
+                                        "name": "parseCustomFields",
+                                        "type": "boolean",
+                                        "label": "Parse Custom Fields",
+                                        "required": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "Note ID"
+                                    },
+                                    {
+                                        "name": "properties",
+                                        "spec": [
+                                            {
+                                                "name": "hs_ai_detected_language",
+                                                "type": "text",
+                                                "label": "Detected Language"
+                                            },
+                                            {
+                                                "name": "hs_ai_detected_language_confidence",
+                                                "type": "number",
+                                                "label": "Language Detection Confidence"
+                                            },
+                                            {
+                                                "name": "hs_ai_is_noise",
+                                                "type": "text",
+                                                "label": "Content Quality"
+                                            },
+                                            {
+                                                "name": "hs_all_accessible_team_ids",
+                                                "type": "text",
+                                                "label": "All teams"
+                                            },
+                                            {
+                                                "name": "hs_all_assigned_business_unit_ids",
+                                                "type": "text",
+                                                "label": "Business units"
+                                            },
+                                            {
+                                                "name": "hs_all_owner_ids",
+                                                "type": "text",
+                                                "label": "All owner IDs"
+                                            },
+                                            {
+                                                "name": "hs_all_team_ids",
+                                                "type": "text",
+                                                "label": "All team IDs"
+                                            },
+                                            {
+                                                "name": "hs_at_mentioned_owner_ids",
+                                                "type": "text",
+                                                "label": "At-Mentioned Owner Ids"
+                                            },
+                                            {
+                                                "name": "hs_at_mentioned_team_ids",
+                                                "type": "text",
+                                                "label": "At-Mentioned Team Ids"
+                                            },
+                                            {
+                                                "name": "hs_attachment_from_form_submission",
+                                                "type": "text",
+                                                "label": "attachment_from_form_submission"
+                                            },
+                                            {
+                                                "name": "hs_attachment_ids",
+                                                "type": "text",
+                                                "label": "Attached file IDs"
+                                            },
+                                            {
+                                                "name": "hs_body_preview",
+                                                "type": "text",
+                                                "label": "Body preview"
+                                            },
+                                            {
+                                                "name": "hs_body_preview_html",
+                                                "type": "text",
+                                                "label": "HTML Body Preview"
+                                            },
+                                            {
+                                                "name": "hs_body_preview_is_truncated",
+                                                "type": "text",
+                                                "label": "Body Preview Truncated"
+                                            },
+                                            {
+                                                "name": "hs_created_by",
+                                                "type": "number",
+                                                "label": "Activity created by"
+                                            },
+                                            {
+                                                "name": "hs_created_by_user_id",
+                                                "type": "number",
+                                                "label": "Created by user ID"
+                                            },
+                                            {
+                                                "name": "hs_createdate",
+                                                "type": "date",
+                                                "label": "Create date"
+                                            },
+                                            {
+                                                "name": "hs_engagement_source",
+                                                "type": "text",
+                                                "label": "Engagement Source"
+                                            },
+                                            {
+                                                "name": "hs_engagement_source_id",
+                                                "type": "text",
+                                                "label": "Engagement Source ID"
+                                            },
+                                            {
+                                                "name": "hs_follow_up_action",
+                                                "type": "text",
+                                                "label": "Follow up action"
+                                            },
+                                            {
+                                                "name": "hs_gdpr_deleted",
+                                                "type": "text",
+                                                "label": "GDPR deleted"
+                                            },
+                                            {
+                                                "name": "hs_hd_ticket_ids",
+                                                "type": "number",
+                                                "label": "hd_ticket_ids"
+                                            },
+                                            {
+                                                "name": "hs_lastmodifieddate",
+                                                "type": "date",
+                                                "label": "Last modified date"
+                                            },
+                                            {
+                                                "name": "hs_merged_object_ids",
+                                                "type": "text",
+                                                "label": "Merged record IDs"
+                                            },
+                                            {
+                                                "name": "hs_modified_by",
+                                                "type": "number",
+                                                "label": "Updated by"
+                                            },
+                                            {
+                                                "name": "hs_note_body",
+                                                "type": "text",
+                                                "label": "Note body"
+                                            },
+                                            {
+                                                "name": "hs_note_ms_teams_payload",
+                                                "type": "text",
+                                                "label": "MsTeams payload"
+                                            },
+                                            {
+                                                "name": "hs_obj_coords",
+                                                "type": "text",
+                                                "label": "Object Coordinates"
+                                            },
+                                            {
+                                                "name": "hs_object_id",
+                                                "type": "number",
+                                                "label": "Record ID"
+                                            },
+                                            {
+                                                "name": "hs_object_source",
+                                                "type": "text",
+                                                "label": "Record creation source"
+                                            },
+                                            {
+                                                "name": "hs_object_source_detail_1",
+                                                "type": "text",
+                                                "label": "Record source detail 1"
+                                            },
+                                            {
+                                                "name": "hs_object_source_detail_2",
+                                                "type": "text",
+                                                "label": "Record source detail 2"
+                                            },
+                                            {
+                                                "name": "hs_object_source_detail_3",
+                                                "type": "text",
+                                                "label": "Record source detail 3"
+                                            },
+                                            {
+                                                "name": "hs_object_source_id",
+                                                "type": "text",
+                                                "label": "Record creation source ID"
+                                            },
+                                            {
+                                                "name": "hs_object_source_label",
+                                                "type": "text",
+                                                "label": "Record source"
+                                            },
+                                            {
+                                                "name": "hs_object_source_user_id",
+                                                "type": "number",
+                                                "label": "Record creation source user ID"
+                                            },
+                                            {
+                                                "name": "hs_origin_object_coordinates",
+                                                "type": "text",
+                                                "label": "Origin Object Coordinates"
+                                            },
+                                            {
+                                                "name": "hs_owning_teams",
+                                                "type": "text",
+                                                "label": "Owning Teams"
+                                            },
+                                            {
+                                                "name": "hs_pinned_engagement_id",
+                                                "type": "number",
+                                                "label": "Pinned engagement ID"
+                                            },
+                                            {
+                                                "name": "hs_product_name",
+                                                "type": "text",
+                                                "label": "Product name"
+                                            },
+                                            {
+                                                "name": "hs_queue_membership_ids",
+                                                "type": "text",
+                                                "label": "Queue Memberships"
+                                            },
+                                            {
+                                                "name": "hs_read_only",
+                                                "type": "text",
+                                                "label": "Read only object"
+                                            },
+                                            {
+                                                "name": "hs_shared_team_ids",
+                                                "type": "text",
+                                                "label": "Shared teams"
+                                            },
+                                            {
+                                                "name": "hs_shared_user_ids",
+                                                "type": "text",
+                                                "label": "Shared users"
+                                            },
+                                            {
+                                                "name": "hs_timestamp",
+                                                "type": "date",
+                                                "label": "Activity date"
+                                            },
+                                            {
+                                                "name": "hs_unique_creation_key",
+                                                "type": "text",
+                                                "label": "Unique creation key"
+                                            },
+                                            {
+                                                "name": "hs_unique_id",
+                                                "type": "text",
+                                                "label": "Unique ID"
+                                            },
+                                            {
+                                                "name": "hs_updated_by_user_id",
+                                                "type": "number",
+                                                "label": "Updated by user ID"
+                                            },
+                                            {
+                                                "name": "hs_user_ids_of_all_notification_followers",
+                                                "type": "text",
+                                                "label": "User IDs of all notification followers"
+                                            },
+                                            {
+                                                "name": "hs_user_ids_of_all_notification_unfollowers",
+                                                "type": "text",
+                                                "label": "User IDs of all notification unfollowers"
+                                            },
+                                            {
+                                                "name": "hs_user_ids_of_all_owners",
+                                                "type": "text",
+                                                "label": "User IDs of all owners"
+                                            },
+                                            {
+                                                "name": "hs_was_imported",
+                                                "type": "text",
+                                                "label": "Performed in an import"
+                                            },
+                                            {
+                                                "name": "hubspot_owner_assigneddate",
+                                                "type": "date",
+                                                "label": "Owner assigned date"
+                                            },
+                                            {
+                                                "name": "hubspot_owner_id",
+                                                "type": "text",
+                                                "label": "Activity assigned to"
+                                            },
+                                            {
+                                                "name": "hubspot_team_id",
+                                                "type": "text",
+                                                "label": "HubSpot Team"
+                                            },
+                                            {
+                                                "name": "hs_lastmodifieddate",
+                                                "type": "date",
+                                                "label": "HS Last Modified Date"
+                                            },
+                                            {
+                                                "name": "hs_object_id",
+                                                "type": "text",
+                                                "label": "HS Object ID"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Properties"
+                                    },
+                                    {
+                                        "name": "createdAt",
+                                        "type": "date",
+                                        "label": "Created At"
+                                    },
+                                    {
+                                        "name": "updatedAt",
+                                        "type": "date",
+                                        "label": "Updated At"
+                                    },
+                                    {
+                                        "name": "archived",
+                                        "type": "boolean",
+                                        "label": "Archived"
+                                    }
+                                ],
+                                "advanced": true
+                            }
+                        },
+                        {
+                            "id": 14,
+                            "module": "datastore:AddRecord",
+                            "version": 1,
+                            "parameters": {
+                                "datastore": 120619
+                            },
+                            "mapper": {
+                                "key": "{{2.id}}",
+                                "data": {
+                                    "MTMC Note ID": "{{6.id}}",
+                                    "Nuance Note ID": "{{2.id}}",
+                                    "last_synced_at": "{{formatDate(now; \"x\")}}"
+                                },
+                                "overwrite": true
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 300
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "overwrite": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "datastore": {
+                                            "label": "MTMC <> HOM Note IDs (Sync)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "datastore",
+                                        "type": "datastore",
+                                        "label": "Data store",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "key",
+                                        "type": "text",
+                                        "label": "Key"
+                                    },
+                                    {
+                                        "name": "overwrite",
+                                        "type": "boolean",
+                                        "label": "Overwrite an existing record",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "data",
+                                        "spec": [
+                                            {
+                                                "name": "last_synced_at",
+                                                "type": "date",
+                                                "label": null
+                                            },
+                                            {
+                                                "name": "MTMC Note ID",
+                                                "type": "number",
+                                                "label": null
+                                            },
+                                            {
+                                                "name": "Nuance Note ID",
+                                                "type": "number",
+                                                "label": null
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": []
+    }
+}
