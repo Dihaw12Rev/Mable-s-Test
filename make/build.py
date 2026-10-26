@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Builds the fixed MTMC <> Nuance Make.com blueprints.
 
-Reads the original exports in make/original/, reuses their native HubSpot modules
+Reads the live blueprints saved in make/original/ (pulled from the MTMC Health Make
+organization on 2026-10-26), reuses their native HubSpot modules
 (so connection labels and field metadata survive), injects the JavaScript in
 make/code/, and writes importable blueprints to make/dist/.
 
@@ -37,6 +38,14 @@ MTMC_CRYODOSE_TA_PRODUCT = "42895084420"
 # Deals that entered "Ready for MTMC" before this date are never auto-sent (prevents a
 # flood of old deals on the first run). Move it earlier to backfill on purpose.
 HANDOFF_CUTOFF = "2026-10-23T00:00:00.000Z"
+# Scenario 1 runs every hour (set in Make). Each run re-checks edits made since the previous
+# run started, minus this overlap, so a slow or skipped run never drops an edit. Keep it short:
+# every edit inside the overlap is sent to MTMC twice.
+HANDOFF_OVERLAP_MINUTES = 30
+# Notes scenarios (hourly) look back the same way; duplicates are prevented by the note map.
+NOTES_OVERLAP_MINUTES = 60
+# Only Nuance-supplied MTMC line items are copied (same rule as the line-item backfill).
+LINE_ITEM_VENDOR = "Nuance Medical"
 
 HELPERS = (CODE / "_helpers.js").read_text()
 
@@ -63,6 +72,7 @@ SRC = {
     "deal_in": index(load("2_mtmc_deal_create_to_nuance.blueprint.json")["flow"]),
     "update_in": index(load("3_mtmc_deal_update_to_nuance.blueprint.json")["flow"]),
     "notes_in": index(load("4_mtmc_notes_to_nuance.blueprint.json")["flow"]),
+    "backfill": index(load("6_mtmc_backfill_companies_contacts_to_nuance.blueprint.json")["flow"]),
 }
 
 
@@ -171,7 +181,7 @@ def retry(m, attempts=3, minutes=15):
     """Attach a Break handler: the run is stored as an incomplete execution and retried."""
     _eid[0] += 1
     m["onerror"] = [{"id": _eid[0], "module": "builtin:Break", "version": 1, "parameters": {},
-                     "mapper": {"count": str(attempts), "retry": True, "interval": str(minutes)},
+                     "mapper": {"count": attempts, "retry": True, "interval": minutes},
                      "metadata": {"designer": {},
                                   "restore": {"expect": {"retry": {"mode": "chose"}}},
                                   "expect": [{"name": "retry", "type": "boolean", "label": "Automatically complete execution", "required": True},
@@ -236,10 +246,10 @@ def write(filename, name, flow, instant):
     return bp
 
 
-def since(watermark_mid, hours_back, fallback_hours):
-    """Epoch-ms lower bound: previous run minus an overlap, or now minus a fallback."""
-    return ('{{if(%d.last_run_at; formatDate(addHours(parseDate(%d.last_run_at; "x"); -%d); "x"); '
-            'formatDate(addHours(now; -%d); "x"))}}' % (watermark_mid, watermark_mid, hours_back, fallback_hours))
+def since(watermark_mid, minutes_back, fallback_minutes):
+    """Epoch-ms lower bound: previous run minus an overlap, or now minus a fallback (first run)."""
+    return ('{{if(%d.last_run_at; formatDate(addMinutes(parseDate(%d.last_run_at; "x"); -%d); "x"); '
+            'formatDate(addMinutes(now; -%d); "x"))}}' % (watermark_mid, watermark_mid, minutes_back, fallback_minutes))
 
 
 NOTE_FIELDS = "hs_note_body,hs_timestamp,hs_createdate,hs_lastmodifieddate,hubspot_owner_id"
@@ -248,7 +258,7 @@ NOTE_FIELDS = "hs_note_body,hs_timestamp,hs_createdate,hs_lastmodifieddate,hubsp
 # ================================================================ 1. Nuance deal -> MTMC
 def build_deal_out():
     search = reuse("deal_out", 12, name="Cryodose deals to send or update")
-    search["mapper"]["limit"] = "200"
+    search["mapper"]["limit"] = 200
     search["mapper"]["filter"] = [
         [  # new handoffs: in Ready for MTMC and never sent (retries any failed handoff automatically)
             {"a": "pipeline", "b": NUANCE_CRYODOSE_PIPELINE, "o": "EQ"},
@@ -259,7 +269,7 @@ def build_deal_out():
         [  # edits to deals already sent
             {"a": "pipeline", "b": NUANCE_CRYODOSE_PIPELINE, "o": "EQ"},
             {"a": "mtmc_deal_id", "o": "HAS_PROPERTY"},
-            {"a": "hs_lastmodifieddate", "b": since(100, 4, 4), "o": "GT"},
+            {"a": "hs_lastmodifieddate", "b": since(100, HANDOFF_OVERLAP_MINUTES, 4 * 60), "o": "GT"},
         ],
     ]
     props = search["mapper"]["outputProperties"]
@@ -360,7 +370,8 @@ def build_deal_in():
     get_deal = ignore(reuse("deal_in", 4, name="MTMC: get deal"))
     get_deal["mapper"]["outputProperties"] = [
         "dealname", "dealstage", "pipeline", "amount", "closedate", "hubspot_owner_id", "distributor_name", "gpo",
-        "source", "closed_lost_reason", "supplier_name", "nuance_deal_id", "nuance_last_synced_at", "hs_object_id"]
+        "source", "closed_lost_reason", "supplier_name", "nuance_deal_id", "nuance_last_synced_at", "hubspot_teams_nuance",
+        "hs_object_id"]
     supplier = reuse("deal_in", 7, name="MTMC: deal suppliers")
     supplier["filter"] = filt("Not already linked to Nuance (prevents duplicates and echoes of our handoffs)",
                               cond("{{4.properties.nuance_deal_id}}", "notexist"),
@@ -375,19 +386,24 @@ def build_deal_in():
             p["value"] = "{{ifempty(36.`Nuanca Deal ID`; \"%s\")}}" % NUANCE_MTMC_SYNC_DEFAULT_STAGE
         if p["key"] == "mtmc_deal_id":
             p["value"] = "{{4.id}}"
+        if p["key"] == "mtmc_team":   # ZIP-based team first, owner's team as fallback (see mtmc_update_body.js)
+            p["value"] = "{{ifempty(4.properties.hubspot_teams_nuance; 6.body.teams[].name)}}"
+    assert any(p["key"] == "target_product" for p in create["mapper"]["properties"]), "live module 14 sets Target Product"
     link = retry(reuse("deal_in", 17, name="MTMC: write Nuance Deal ID (prevents duplicates)"))
 
+    li_create = retry(reuse("deal_in", 16, name="Nuance: create line items"))
+    li_create["mapper"]["body"] = "{{303.result.body}}"
+    li_create["filter"] = filt("Has Nuance line items", cond("{{303.result.count}}", "number:greater", "0"))
     line_items = [
         reuse("deal_in", 8, name="MTMC: deal line items"),
-        code(301, "assoc_to_batch_read.js", [("assoc", "{{8.body}}"), ("properties", "name,quantity,price")], "Build line item read"),
+        code(301, "assoc_to_batch_read.js", [("assoc", "{{8.body}}"), ("properties", "name,quantity,price,hs_sku,vendor__name,vendor_name")],
+             "Build line item read"),
         api(302, MTMC, "POST", "/crm/v3/objects/line_items/batch/read", "MTMC: read line items", body="{{301.result.body}}",
             filter=filt("Deal has line items", cond("{{301.result.count}}", "number:greater", "0"))),
-        reuse("deal_in", 15, name="Build Nuance line items"),
+        code(303, "mtmc_line_items_body.js", [("lineItems", "{{302.body}}"), ("dealId", "{{14.id}}"), ("currency", "USD"),
+                                               ("vendor", LINE_ITEM_VENDOR)], "Build Nuance line items (Nuance vendor only)"),
+        li_create,
     ]
-    line_items[-1]["mapper"]["input"][0]["value"] = "{{302.body.results}}"
-    li_create = retry(reuse("deal_in", 16, name="Nuance: create line items"))
-    li_create["filter"] = filt("Has line items", cond("{{15.result.count}}", "number:greater", "0"))
-    line_items.append(li_create)
 
     contacts = [
         reuse("deal_in", 12, name="MTMC: deal contacts"),
@@ -396,30 +412,38 @@ def build_deal_in():
             filter=filt("Deal has contacts", cond("{{311.result.count}}", "number:greater", "0"))),
         code(313, "contacts_read_by_email_body.js", [("contacts", "{{312.body}}"), ("properties", "email,firstname,lastname,phone,jobtitle")], "Build Nuance email lookup"),
         api(314, NUANCE, "POST", "/crm/v3/objects/contacts/batch/read", "Nuance: existing contacts by email", body="{{313.result.body}}"),
-        code(315, "mtmc_contacts_upsert_body.js", [("contacts", "{{312.body}}"), ("existing", "{{314.body}}"), ("fillBlanksOnly", "false")],
-             "Build upsert (match by email)"),
-        retry(api(316, NUANCE, "POST", "/crm/v3/objects/contacts/batch/upsert", "Nuance: create / update contacts", body="{{315.result.body}}",
-                  filter=filt("Contacts with email", cond("{{315.result.count}}", "number:greater", "0")))),
-        code(317, "assoc_batch_body.js", [("records", "{{316.body}}"), ("toId", "{{14.id}}")], "Build contact links"),
-        retry(api(318, NUANCE, "POST", "/crm/v4/associations/contacts/deals/batch/associate/default", "Nuance: link contacts to deal",
-                  body="{{317.result.body}}", filter=filt("Has contacts", cond("{{317.result.count}}", "number:greater", "0")))),
+        code(315, "mtmc_contacts_upsert_body.js", [("contacts", "{{312.body}}"), ("existing", "{{314.body}}"), ("fillBlanksOnly", "true")],
+             "Build upsert (match by email, fill blanks only)"),
+        router(319,
+               [retry(api(316, NUANCE, "POST", "/crm/v3/objects/contacts/batch/upsert", "Nuance: create contacts / fill blanks",
+                          body="{{315.result.body}}", filter=filt("New or incomplete contacts", cond("{{315.result.count}}", "number:greater", "0")))),
+                code(317, "assoc_batch_body.js", [("records", "{{316.body}}"), ("toId", "{{14.id}}")], "Build contact links"),
+                retry(api(318, NUANCE, "POST", "/crm/v4/associations/contacts/deals/batch/associate/default", "Nuance: link contacts to deal",
+                          body="{{317.result.body}}", filter=filt("Has contacts", cond("{{317.result.count}}", "number:greater", "0"))))],
+               [code(341, "assoc_batch_body.js", [("records", "{{315.result.unchangedIds}}"), ("toId", "{{14.id}}")], "Build links (complete contacts)",
+                     filter=filt("Existing complete contacts", cond("{{315.result.unchangedCount}}", "number:greater", "0"))),
+                retry(api(342, NUANCE, "POST", "/crm/v4/associations/contacts/deals/batch/associate/default", "Nuance: link existing contacts",
+                          body="{{341.result.body}}"))]),
     ]
 
     company = [
         reuse("deal_in", 13, name="MTMC: deal companies"),
         code(321, "pick_primary_company.js", [("assoc", "{{13.body}}")], "Pick primary company"),
         api(322, MTMC, "GET", "/crm/v3/objects/companies/{{321.result.companyId}}", "MTMC: read company",
-            qs=[("properties", "name,domain,website")],
+            qs=[("properties", "name,domain,website,address,city,state,zip,country")],
             filter=filt("Deal has a company", cond("{{321.result.count}}", "number:greater", "0"))),
         code(323, "company_search_body.js", [("company", "{{322.body}}")], "Build Nuance company search"),
         api(324, NUANCE, "POST", "/crm/v3/objects/companies/search", "Nuance: search by domain / name", body="{{323.result.body}}",
             filter=filt("Has domain or name", cond("{{323.result.hasCriteria}}", "boolean:equal", "true"))),
-        code(325, "company_choose_match.js", [("search", "{{324.body}}"), ("domain", "{{323.result.domain}}"), ("name", "{{323.result.name}}")],
-             "Choose one company (domain first, then exact name)"),
+        code(325, "company_choose_match.js", [("search", "{{324.body}}"), ("domain", "{{323.result.domain}}"), ("name", "{{323.result.name}}"),
+                                              ("details", "{{323.result.details}}")],
+             "Choose one company (domain first, then name)"),
         router(326,
                [retry(api(327, NUANCE, "PUT", "/crm/v4/objects/companies/{{325.result.matchId}}/associations/default/deals/{{14.id}}",
-                          "Nuance: link matched company", filter=filt("Company matched", cond("{{325.result.matchId}}", "exist"))))],
-               [retry(api(328, NUANCE, "POST", "/crm/v3/objects/companies", "Nuance: create company (name + domain)",
+                          "Nuance: link matched company", filter=filt("Company matched", cond("{{325.result.matchId}}", "exist")))),
+                retry(api(343, NUANCE, "PATCH", "/crm/v3/objects/companies/{{325.result.matchId}}", "Nuance: fill blank company fields only",
+                          body="{{325.result.fillBody}}", filter=filt("Has blanks to fill", cond("{{325.result.fillCount}}", "number:greater", "0"))))],
+               [retry(api(328, NUANCE, "POST", "/crm/v3/objects/companies", "Nuance: create company (MTMC details)",
                           body="{{323.result.createBody}}", filter=filt("No match", cond("{{325.result.matchId}}", "notexist")))),
                 retry(api(329, NUANCE, "PUT", "/crm/v4/objects/companies/{{328.body.id}}/associations/default/deals/{{14.id}}",
                           "Nuance: link new company"))]),
@@ -452,7 +476,7 @@ def build_update_in():
     get_deal = reuse("update_in", 38, name="MTMC: get deal")
     get_deal["mapper"]["outputProperties"] = [
         "dealname", "dealstage", "amount", "closedate", "hubspot_owner_id", "distributor_name", "gpo", "source",
-        "closed_lost_reason", "notes_last_updated", "nuance_deal_id", "hs_object_id"]
+        "closed_lost_reason", "notes_last_updated", "nuance_deal_id", "hubspot_teams_nuance", "hs_object_id"]
     owner = reuse("update_in", 40, name="MTMC: deal owner")
     owner["filter"] = filt("Linked to a Nuance deal", cond("{{38.properties.nuance_deal_id}}", "exist"))
     stage = ds_get(36, DS_STAGE_MAP, "{{38.properties.dealstage}}", "Stage mapping")
@@ -474,15 +498,15 @@ def build_notes(src_conn, dst_conn, src_label, other_label, link_prop, pipelines
     src_key = "nuance" if src_conn == NUANCE else "mtmc"
     dst_key = "mtmc" if src_key == "nuance" else "nuance"
     search = reuse("notes_in", 2, name=f"{src_label}: notes created or edited since last run", conn=src_conn)
-    search["mapper"]["limit"] = "1000"
+    search["mapper"]["limit"] = 1000
     search["mapper"]["direction"] = "ASCENDING"
     search["mapper"]["propertyName"] = "hs_lastmodifieddate"
-    search["mapper"]["filter"] = [[{"a": "hs_lastmodifieddate", "b": since(500, 1, 1), "o": "GT"}]]
+    search["mapper"]["filter"] = [[{"a": "hs_lastmodifieddate", "b": since(500, NOTES_OVERLAP_MINUTES, 60), "o": "GT"}]]
 
     assoc = reuse("notes_in", 7, name="Note's deals", conn=src_conn)
     assoc["filter"] = filt("Not a copy from the other portal",
                            cond("{{2.properties.hs_body_preview}}", "text:notstartwith", f"[Note from {other_label} Team"))
-    assoc["mapper"]["limit"] = "50"
+    assoc["mapper"]["limit"] = 50
 
     def rep_lookup(mid):
         return api(mid, src_conn, "GET", "/crm/v3/owners/{{ifempty(2.properties.hubspot_owner_id; 512.result.dealOwnerId)}}",
@@ -533,10 +557,93 @@ def build_notes(src_conn, dst_conn, src_label, other_label, link_prop, pipelines
     return write(filename, title, flow, False)
 
 
+# ================================================================ 6. Backfill companies + contacts -> Nuance
+def build_backfill():
+    """Safety net for MTMC Sync deals that ended up without a company (and contacts).
+
+    Same rules as the live sync: companies match by domain first, then name, and are never
+    overwritten (blank fields are filled); contacts match by email and only blanks are filled.
+    """
+    search = reuse("backfill", 2, name="MTMC Sync deals missing a company")
+    search["mapper"]["limit"] = 100
+    get_deal = ignore(reuse("backfill", 4, name="MTMC: get deal"))
+    get_deal["filter"] = filt("Linked and not yet backfilled",
+                              cond("{{2.properties.mtmc_deal_id}}", "exist"),
+                              cond("{{2.properties.company_and_contact_backfilled}}", "notexist"))
+    mark = reuse("backfill", 56, name="Mark deal as backfilled")
+
+    def set_company_id(mid, company):
+        m = retry(reuse("backfill", 59, mid, "Nuance: remember company on deal"))
+        m["mapper"]["properties"] = [{"key": "company_id", "value": company}]
+        return m
+
+    company = [
+        api(601, MTMC, "GET", "/crm/v4/objects/deals/{{4.id}}/associations/companies", "MTMC: deal companies"),
+        code(602, "pick_primary_company.js", [("assoc", "{{601.body}}")], "Pick primary company"),
+        api(603, MTMC, "GET", "/crm/v3/objects/companies/{{602.result.companyId}}", "MTMC: read company",
+            qs=[("properties", "name,domain,website,address,city,state,zip,country")],
+            filter=filt("Deal has a company", cond("{{602.result.count}}", "number:greater", "0"))),
+        code(604, "company_search_body.js", [("company", "{{603.body}}")], "Build Nuance company search"),
+        api(605, NUANCE, "POST", "/crm/v3/objects/companies/search", "Nuance: search by domain / name", body="{{604.result.body}}",
+            filter=filt("Has domain or name", cond("{{604.result.hasCriteria}}", "boolean:equal", "true"))),
+        code(606, "company_choose_match.js", [("search", "{{605.body}}"), ("domain", "{{604.result.domain}}"), ("name", "{{604.result.name}}"),
+                                              ("details", "{{604.result.details}}")], "Choose one company (domain first, then name)"),
+        router(607,
+               [retry(api(608, NUANCE, "PUT", "/crm/v4/objects/companies/{{606.result.matchId}}/associations/default/deals/{{2.id}}",
+                          "Nuance: link matched company", filter=filt("Company matched", cond("{{606.result.matchId}}", "exist")))),
+                set_company_id(609, "{{606.result.matchId}}"),
+                retry(api(610, NUANCE, "PATCH", "/crm/v3/objects/companies/{{606.result.matchId}}", "Nuance: fill blank company fields only",
+                          body="{{606.result.fillBody}}", filter=filt("Has blanks to fill", cond("{{606.result.fillCount}}", "number:greater", "0"))))],
+               [retry(api(611, NUANCE, "POST", "/crm/v3/objects/companies", "Nuance: create company (MTMC details)",
+                          body="{{604.result.createBody}}", filter=filt("No match", cond("{{606.result.matchId}}", "notexist")))),
+                retry(api(612, NUANCE, "PUT", "/crm/v4/objects/companies/{{611.body.id}}/associations/default/deals/{{2.id}}",
+                          "Nuance: link new company")),
+                set_company_id(613, "{{611.body.id}}")]),
+    ]
+
+    def link_contacts(ids_mid, records, label, filter=None):
+        """Links contacts to the deal, and to the deal's company when it has one."""
+        return [
+            code(ids_mid, "assoc_batch_body.js", [("records", records), ("toId", "{{2.id}}")], f"Build deal links ({label})", filter=filter),
+            retry(api(ids_mid + 1, NUANCE, "POST", "/crm/v4/associations/contacts/deals/batch/associate/default",
+                      f"Nuance: link {label} contacts to deal", body=f"{{{{{ids_mid}.result.body}}}}",
+                      filter=filt("Has contacts", cond(f"{{{{{ids_mid}.result.count}}}}", "number:greater", "0")))),
+            code(ids_mid + 2, "assoc_batch_body.js", [("records", records), ("toId", "{{627.body.properties.company_id}}")],
+                 f"Build company links ({label})", filter=filt("Deal has a company", cond("{{627.body.properties.company_id}}", "exist"))),
+            retry(api(ids_mid + 3, NUANCE, "POST", "/crm/v4/associations/contacts/companies/batch/associate/default",
+                      f"Nuance: link {label} contacts to company", body=f"{{{{{ids_mid + 2}.result.body}}}}")),
+        ]
+
+    contacts = [
+        api(621, MTMC, "GET", "/crm/v4/objects/deals/{{4.id}}/associations/contacts", "MTMC: deal contacts",
+            filter=filt("Our deal has no contacts yet", cond("{{2.properties.num_associated_contacts}}", "number:equal", "0"))),
+        code(622, "assoc_to_batch_read.js", [("assoc", "{{621.body}}"), ("properties", "email,firstname,lastname,phone,jobtitle")], "Build contact read"),
+        api(623, MTMC, "POST", "/crm/v3/objects/contacts/batch/read", "MTMC: read contacts", body="{{622.result.body}}",
+            filter=filt("Deal has contacts", cond("{{622.result.count}}", "number:greater", "0"))),
+        code(624, "contacts_read_by_email_body.js", [("contacts", "{{623.body}}"), ("properties", "email,firstname,lastname,phone,jobtitle")],
+             "Build Nuance email lookup"),
+        api(625, NUANCE, "POST", "/crm/v3/objects/contacts/batch/read", "Nuance: existing contacts by email", body="{{624.result.body}}"),
+        code(626, "mtmc_contacts_upsert_body.js", [("contacts", "{{623.body}}"), ("existing", "{{625.body}}"), ("fillBlanksOnly", "true")],
+             "Build upsert (match by email, fill blanks only)"),
+        api(627, NUANCE, "GET", "/crm/v3/objects/deals/{{2.id}}", "Nuance: deal's company", qs=[("properties", "company_id")]),
+        router(628,
+               [retry(api(629, NUANCE, "POST", "/crm/v3/objects/contacts/batch/upsert", "Nuance: create contacts / fill blanks",
+                          body="{{626.result.body}}", filter=filt("New or incomplete contacts", cond("{{626.result.count}}", "number:greater", "0"))))]
+               + link_contacts(630, "{{629.body}}", "upserted"),
+               link_contacts(640, "{{626.result.unchangedIds}}", "complete",
+                             filter=filt("Existing complete contacts", cond("{{626.result.unchangedCount}}", "number:greater", "0")))),
+    ]
+
+    flow = [search, get_deal, mark, router(600, company, contacts)]
+    return write("6_mtmc_backfill_companies_contacts_to_nuance_v2.blueprint.json",
+                 "MTMC <> Nuance - Backfill Companies and Contacts to Nuance v2", flow, False)
+
+
 if __name__ == "__main__":
     build_deal_out()
     build_deal_in()
     build_update_in()
+    build_backfill()
     for args in [
         (MTMC, NUANCE, "MTMC", "Nuance", "nuance_deal_id", "", "mtmc_notes",
          "4_mtmc_notes_to_nuance_v2.blueprint.json", "MTMC Notes → Nuance (Create + Update) v2"),

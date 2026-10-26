@@ -26,6 +26,11 @@ def walk(flow, seen, ids, fname):
                 errors.append(f"{fname}: module {m['id']} ({m['module']}) references {r}, which hasn't run yet")
         for e in m.get("onerror") or []:
             ids.add(e["id"])
+            if e["module"] == "builtin:Break" and not all(isinstance(e["mapper"].get(k), int) for k in ("count", "interval")):
+                errors.append(f"{fname}: retry handler {e['id']} needs numeric count/interval (Make rejects text)")
+        lim = (m.get("mapper") or {}).get("limit")
+        if lim is not None and not isinstance(lim, int) and not str(lim).startswith("{{"):
+            errors.append(f"{fname}: module {m['id']} limit must be a number, got {lim!r}")
         seen.append(m["id"])
         for route in m.get("routes", []):
             walk(route["flow"], seen, ids, fname)

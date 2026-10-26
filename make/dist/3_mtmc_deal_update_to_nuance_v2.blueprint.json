@@ -3,18 +3,10 @@
     "flow": [
         {
             "id": 37,
+            "mapper": {},
             "module": "gateway:CustomWebHook",
             "version": 1,
-            "parameters": {
-                "hook": 2738415,
-                "maxResults": 1
-            },
-            "mapper": {},
             "metadata": {
-                "designer": {
-                    "x": 0,
-                    "y": 0
-                },
                 "restore": {
                     "parameters": {
                         "hook": {
@@ -25,19 +17,10 @@
                         }
                     }
                 },
-                "parameters": [
-                    {
-                        "name": "hook",
-                        "type": "hook:gateway-webhook",
-                        "label": "Webhook",
-                        "required": true
-                    },
-                    {
-                        "name": "maxResults",
-                        "type": "number",
-                        "label": "Maximum number of results"
-                    }
-                ],
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                },
                 "interface": [
                     {
                         "name": "portalId",
@@ -11833,16 +11816,28 @@
                         "name": "isDeleted",
                         "type": "boolean"
                     }
+                ],
+                "parameters": [
+                    {
+                        "name": "hook",
+                        "type": "hook:gateway-webhook",
+                        "label": "Webhook",
+                        "required": true
+                    },
+                    {
+                        "name": "maxResults",
+                        "type": "number",
+                        "label": "Maximum number of results"
+                    }
                 ]
+            },
+            "parameters": {
+                "hook": 2738415,
+                "maxResults": 1
             }
         },
         {
             "id": 38,
-            "module": "hubspotcrm:getDeal",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9423792
-            },
             "mapper": {
                 "dealId": "{{37.objectId}}",
                 "outputProperties": [
@@ -11857,55 +11852,14 @@
                     "closed_lost_reason",
                     "notes_last_updated",
                     "nuance_deal_id",
+                    "hubspot_teams_nuance",
                     "hs_object_id"
                 ],
                 "parseCustomFields": true
             },
+            "module": "hubspotcrm:getDeal",
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "x": 300,
-                    "y": 0,
-                    "name": "MTMC: get deal"
-                },
-                "restore": {
-                    "expect": {
-                        "dealId": {
-                            "mode": "edit"
-                        },
-                        "outputProperties": {
-                            "mode": "chose",
-                            "label": [
-                                "Deal Owner",
-                                "Nuance Deal ID",
-                                "Amount",
-                                "Close Date",
-                                "Deal Name",
-                                "Deal Stage",
-                                "Distributor Name"
-                            ]
-                        },
-                        "parseCustomFields": {
-                            "mode": "chose"
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "hubspotcrm"
-                            },
-                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:hubspotcrm",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "dealId",
@@ -11926,46 +11880,27 @@
                         "required": true
                     }
                 ],
-                "advanced": true
-            }
-        },
-        {
-            "id": 40,
-            "module": "hubspotcrm:MakeAPICall",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9423792
-            },
-            "mapper": {
-                "url": "/crm/v3/owners/{{38.properties.hubspot_owner_id}}",
-                "method": "GET",
-                "headers": [
-                    {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                    }
-                ]
-            },
-            "metadata": {
-                "designer": {
-                    "x": 600,
-                    "y": 0,
-                    "name": "MTMC: deal owner"
-                },
                 "restore": {
                     "expect": {
-                        "qs": {
-                            "mode": "chose"
+                        "dealId": {
+                            "mode": "edit"
                         },
-                        "method": {
+                        "outputProperties": {
                             "mode": "chose",
-                            "label": "GET"
-                        },
-                        "headers": {
-                            "mode": "chose",
-                            "items": [
-                                null
+                            "label": [
+                                "Deal Owner",
+                                "Nuance Deal ID",
+                                "Amount",
+                                "Close Date",
+                                "Deal Name",
+                                "Deal Stage",
+                                "Distributor Name",
+                                "Closed Lost Reason",
+                                "GPO"
                             ]
+                        },
+                        "parseCustomFields": {
+                            "mode": "chose"
                         }
                     },
                     "parameters": {
@@ -11978,6 +11913,12 @@
                         }
                     }
                 },
+                "advanced": true,
+                "designer": {
+                    "x": 300,
+                    "y": 0,
+                    "name": "MTMC: get deal"
+                },
                 "parameters": [
                     {
                         "name": "__IMTCONN__",
@@ -11986,6 +11927,34 @@
                         "required": true
                     }
                 ],
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "830167dcf8507e12"
+                }
+            },
+            "parameters": {
+                "__IMTCONN__": 9423792
+            }
+        },
+        {
+            "id": 40,
+            "mapper": {
+                "url": "/crm/v3/owners/{{38.properties.hubspot_owner_id}}",
+                "method": "GET",
+                "headers": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ]
+            },
+            "module": "hubspotcrm:MakeAPICall",
+            "version": 2,
+            "metadata": {
                 "expect": [
                     {
                         "name": "url",
@@ -12047,7 +12016,49 @@
                         "type": "any",
                         "label": "Body"
                     }
+                ],
+                "restore": {
+                    "expect": {
+                        "qs": {
+                            "mode": "chose"
+                        },
+                        "method": {
+                            "mode": "chose",
+                            "label": "GET"
+                        },
+                        "headers": {
+                            "mode": "chose",
+                            "items": [
+                                null
+                            ]
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "designer": {
+                    "x": 600,
+                    "y": 0,
+                    "name": "MTMC: deal owner"
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
                 ]
+            },
+            "parameters": {
+                "__IMTCONN__": 9423792
             },
             "filter": {
                 "name": "Linked to a Nuance deal",
@@ -12111,9 +12122,6 @@
         },
         {
             "id": 401,
-            "module": "code:ExecuteCode",
-            "version": 1,
-            "parameters": {},
             "mapper": {
                 "input": [
                     {
@@ -12136,33 +12144,11 @@
                 "language": "javascript",
                 "inputFormat": "editor",
                 "dependencies": [],
-                "codeEditorJavascript": "// --- shared helpers (prepended to every code module by build.py) ---\nconst arr = v => Array.isArray(v) ? v : (v && Array.isArray(v.results) ? v.results : []);\nconst clean = v => (v === null || v === undefined) ? \"\" : String(v).trim();\nconst normEmail = v => clean(v).toLowerCase();\nfunction normDomain(v) {\n    let s = clean(v).toLowerCase();\n    if (!s) return \"\";\n    s = s.replace(/^[a-z][a-z0-9+.-]*:\\/\\//, \"\").replace(/^www\\./, \"\");\n    return s.split(/[\\/?#:\\s]/)[0];\n}\nconst stripHtml = h => clean(h).replace(/<[^>]*>/g, \" \").replace(/&nbsp;/gi, \" \").replace(/&amp;/gi, \"&\").replace(/\\s+/g, \" \").trim();\nconst escHtml = s => clean(s).replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n// --- end helpers ---\n\n// MTMC -> Nuance update: builds the PATCH body for our MTMC Sync deal. Empty values are\n// left out so a blank at MTMC (or an unmapped stage) never wipes our data.\nconst d = (input.deal && (input.deal.properties || input.deal)) || {};\nconst owner = input.owner || {};\nconst teams = Array.isArray(owner.teams) ? owner.teams : [];\nconst team = teams.find(t => t.primary) || teams[0] || {};\nconst props = {\n    dealname: d.dealname,\n    amount: d.amount,\n    closedate: d.closedate,\n    dealstage: input.nuanceStage,\n    closed_lost_reason: d.closed_lost_reason,\n    distributor: d.distributor_name,\n    gpo: d.gpo,\n    lead_source: d.source,\n    mtmc_rep_full_name: [clean(owner.firstName), clean(owner.lastName)].filter(Boolean).join(\" \"),\n    mtmc_rep_email: owner.email,\n    mtmc_team: team.name,\n    last_synced_at: String(Date.now())\n};\n// Optional: MTMC's last activity date. Create the Nuance deal property first, then set\n// input.lastActivityProperty to its internal name (e.g. mtmc_last_activity_date).\nif (clean(input.lastActivityProperty)) props[clean(input.lastActivityProperty)] = d.notes_last_updated;\nconst properties = {};\nfor (const [k, v] of Object.entries(props)) if (clean(v)) properties[k] = clean(v);\nreturn { body: JSON.stringify({ properties }), fieldCount: Object.keys(properties).length };\n"
+                "codeEditorJavascript": "// --- shared helpers (prepended to every code module by build.py) ---\nconst arr = v => Array.isArray(v) ? v : (v && Array.isArray(v.results) ? v.results : []);\nconst clean = v => (v === null || v === undefined) ? \"\" : String(v).trim();\nconst normEmail = v => clean(v).toLowerCase();\nfunction normDomain(v) {\n    let s = clean(v).toLowerCase();\n    if (!s) return \"\";\n    s = s.replace(/^[a-z][a-z0-9+.-]*:\\/\\//, \"\").replace(/^www\\./, \"\");\n    return s.split(/[\\/?#:\\s]/)[0];\n}\nconst stripHtml = h => clean(h).replace(/<[^>]*>/g, \" \").replace(/&nbsp;/gi, \" \").replace(/&amp;/gi, \"&\").replace(/\\s+/g, \" \").trim();\nconst escHtml = s => clean(s).replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n// --- end helpers ---\n\n// MTMC -> Nuance update: builds the PATCH body for our MTMC Sync deal. Empty values are\n// left out so a blank at MTMC (or an unmapped stage) never wipes our data.\nconst d = (input.deal && (input.deal.properties || input.deal)) || {};\nconst owner = input.owner || {};\nconst teams = Array.isArray(owner.teams) ? owner.teams : [];\nconst ownerTeam = teams.find(t => t.primary) || teams[0] || {};\n// MTMC Team: the ZIP-based team MTMC assigned (hubspot_teams_nuance, set by the team-update\n// scenarios) wins; the deal owner's primary team is only the fallback, so the two never fight.\nconst team = { name: clean(d.hubspot_teams_nuance) || clean(ownerTeam.name) };\nconst props = {\n    dealname: d.dealname,\n    amount: d.amount,\n    closedate: d.closedate,\n    dealstage: input.nuanceStage,\n    closed_lost_reason: d.closed_lost_reason,\n    distributor: d.distributor_name,\n    gpo: d.gpo,\n    lead_source: d.source,\n    mtmc_rep_full_name: [clean(owner.firstName), clean(owner.lastName)].filter(Boolean).join(\" \"),\n    mtmc_rep_email: owner.email,\n    mtmc_team: team.name,\n    last_synced_at: String(Date.now())\n};\n// Optional: MTMC's last activity date. Create the Nuance deal property first, then set\n// input.lastActivityProperty to its internal name (e.g. mtmc_last_activity_date).\nif (clean(input.lastActivityProperty)) props[clean(input.lastActivityProperty)] = d.notes_last_updated;\nconst properties = {};\nfor (const [k, v] of Object.entries(props)) if (clean(v)) properties[k] = clean(v);\nreturn { body: JSON.stringify({ properties }), fieldCount: Object.keys(properties).length };\n"
             },
+            "module": "code:ExecuteCode",
+            "version": 1,
             "metadata": {
-                "designer": {
-                    "name": "Build update (skips blanks)",
-                    "x": 1200,
-                    "y": 0
-                },
-                "restore": {
-                    "expect": {
-                        "input": {
-                            "items": [
-                                null,
-                                null,
-                                null,
-                                null
-                            ]
-                        },
-                        "language": {
-                            "mode": "chose",
-                            "label": "JavaScript"
-                        },
-                        "inputFormat": {
-                            "label": "Code editor"
-                        }
-                    }
-                },
                 "expect": [
                     {
                         "name": "language",
@@ -12238,16 +12224,36 @@
                         "label": "Code",
                         "required": true
                     }
-                ]
-            }
+                ],
+                "restore": {
+                    "expect": {
+                        "input": {
+                            "items": [
+                                null,
+                                null,
+                                null,
+                                null
+                            ]
+                        },
+                        "language": {
+                            "mode": "chose",
+                            "label": "JavaScript"
+                        },
+                        "inputFormat": {
+                            "label": "Code editor"
+                        }
+                    }
+                },
+                "designer": {
+                    "name": "Build update (skips blanks)",
+                    "x": 1200,
+                    "y": 0
+                }
+            },
+            "parameters": {}
         },
         {
             "id": 402,
-            "module": "hubspotcrm:MakeAPICall",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9735744
-            },
             "mapper": {
                 "url": "/crm/v3/objects/deals/{{38.properties.nuance_deal_id}}",
                 "method": "PATCH",
@@ -12259,46 +12265,9 @@
                 ],
                 "body": "{{401.result.body}}"
             },
+            "module": "hubspotcrm:MakeAPICall",
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "name": "Nuance: update MTMC Sync deal",
-                    "x": 1500,
-                    "y": 0
-                },
-                "restore": {
-                    "expect": {
-                        "qs": {
-                            "mode": "chose"
-                        },
-                        "method": {
-                            "mode": "chose",
-                            "label": "PATCH"
-                        },
-                        "headers": {
-                            "mode": "chose",
-                            "items": [
-                                null
-                            ]
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "hubspotcrm"
-                            },
-                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:hubspotcrm",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "url",
@@ -12360,18 +12329,60 @@
                         "type": "any",
                         "label": "Body"
                     }
+                ],
+                "restore": {
+                    "expect": {
+                        "qs": {
+                            "mode": "chose"
+                        },
+                        "method": {
+                            "mode": "chose",
+                            "label": "PATCH"
+                        },
+                        "headers": {
+                            "mode": "chose",
+                            "items": [
+                                null
+                            ]
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "designer": {
+                    "name": "Nuance: update MTMC Sync deal",
+                    "x": 1500,
+                    "y": 0
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
                 ]
+            },
+            "parameters": {
+                "__IMTCONN__": 9735744
             },
             "onerror": [
                 {
-                    "id": 9020,
+                    "id": 9022,
                     "module": "builtin:Break",
                     "version": 1,
                     "parameters": {},
                     "mapper": {
-                        "count": "3",
+                        "count": 3,
                         "retry": true,
-                        "interval": "15"
+                        "interval": 15
                     },
                     "metadata": {
                         "designer": {

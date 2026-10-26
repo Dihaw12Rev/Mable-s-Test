@@ -118,18 +118,13 @@
         },
         {
             "id": 2,
-            "module": "hubspotcrm:searchForNotes",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9735744
-            },
             "mapper": {
-                "limit": "1000",
+                "limit": 1000,
                 "filter": [
                     [
                         {
                             "a": "hs_lastmodifieddate",
-                            "b": "{{if(500.last_run_at; formatDate(addHours(parseDate(500.last_run_at; \"x\"); -1); \"x\"); formatDate(addHours(now; -1); \"x\"))}}",
+                            "b": "{{if(500.last_run_at; formatDate(addMinutes(parseDate(500.last_run_at; \"x\"); -60); \"x\"); formatDate(addMinutes(now; -60); \"x\"))}}",
                             "o": "GT"
                         }
                     ]
@@ -159,67 +154,9 @@
                 ],
                 "parseCustomFields": true
             },
+            "module": "hubspotcrm:searchForNotes",
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "x": 600,
-                    "y": 0,
-                    "name": "Nuance: notes created or edited since last run"
-                },
-                "restore": {
-                    "expect": {
-                        "direction": {
-                            "label": "Descending"
-                        },
-                        "propertyName": {
-                            "mode": "chose",
-                            "label": "Create Date"
-                        },
-                        "outputProperties": {
-                            "mode": "chose",
-                            "label": [
-                                "hubspot_owner_id",
-                                "hs_created_by",
-                                "hs_timestamp",
-                                "hs_attachment_ids",
-                                "hs_body_preview",
-                                "hs_createdate",
-                                "hs_created_by_user_id",
-                                "hubspot_team_id",
-                                "hs_lastmodifieddate",
-                                "hs_merged_object_ids",
-                                "hs_note_body",
-                                "hs_object_id",
-                                "hs_object_source_label",
-                                "hs_object_source_detail_1",
-                                "hs_object_source_detail_2",
-                                "hs_object_source_detail_3",
-                                "hs_shared_team_ids",
-                                "hs_shared_user_ids",
-                                "hs_updated_by_user_id"
-                            ]
-                        },
-                        "parseCustomFields": {
-                            "mode": "chose"
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "hubspotcrm"
-                            },
-                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:hubspotcrm",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "outputProperties",
@@ -238,6 +175,14 @@
                         "label": "Filter search results",
                         "options": {
                             "store": [
+                                {
+                                    "label": "AI Generated Summary",
+                                    "value": "hs_ai_summary"
+                                },
+                                {
+                                    "label": "AI-generated Short Summary",
+                                    "value": "hs_ai_summary_short"
+                                },
                                 {
                                     "label": "Activity Assigned To",
                                     "value": "hubspot_owner_id"
@@ -409,6 +354,59 @@
                         "label": "Limit"
                     }
                 ],
+                "restore": {
+                    "expect": {
+                        "direction": {
+                            "label": "Descending"
+                        },
+                        "propertyName": {
+                            "mode": "chose",
+                            "label": "Create Date"
+                        },
+                        "outputProperties": {
+                            "mode": "chose",
+                            "label": [
+                                "hubspot_owner_id",
+                                "hs_created_by",
+                                "hs_timestamp",
+                                "hs_attachment_ids",
+                                "hs_body_preview",
+                                "hs_createdate",
+                                "hs_created_by_user_id",
+                                "hubspot_team_id",
+                                "hs_lastmodifieddate",
+                                "hs_merged_object_ids",
+                                "hs_note_body",
+                                "hs_object_id",
+                                "hs_object_source_label",
+                                "hs_object_source_detail_1",
+                                "hs_object_source_detail_2",
+                                "hs_object_source_detail_3",
+                                "hs_shared_team_ids",
+                                "hs_shared_user_ids",
+                                "hs_updated_by_user_id"
+                            ]
+                        },
+                        "parseCustomFields": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "advanced": true,
+                "designer": {
+                    "x": 600,
+                    "y": 0,
+                    "name": "Nuance: notes created or edited since last run"
+                },
                 "interface": [
                     {
                         "name": "__IMTLENGTH__",
@@ -556,52 +554,18 @@
                         "name": "archived",
                         "type": "boolean",
                         "label": "Archived"
+                    },
+                    {
+                        "name": "archivedAt",
+                        "type": "date",
+                        "label": "Archived At"
+                    },
+                    {
+                        "name": "url",
+                        "type": "url",
+                        "label": "URL"
                     }
                 ],
-                "advanced": true
-            }
-        },
-        {
-            "id": 7,
-            "module": "hubspotcrm:ListCRMObjectAssociation",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9735744
-            },
-            "mapper": {
-                "limit": "50",
-                "objectId": "{{2.id}}",
-                "objectType": "notes",
-                "toObjectType": [
-                    "deals"
-                ]
-            },
-            "metadata": {
-                "designer": {
-                    "x": 900,
-                    "y": 0,
-                    "name": "Note's deals"
-                },
-                "restore": {
-                    "expect": {
-                        "objectType": {
-                            "mode": "chose",
-                            "label": "Notes"
-                        },
-                        "toObjectType": {
-                            "mode": "chose"
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "hubspotcrm"
-                            },
-                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                        }
-                    }
-                },
                 "parameters": [
                     {
                         "name": "__IMTCONN__",
@@ -610,6 +574,32 @@
                         "required": true
                     }
                 ],
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "e66fba3a225caa4"
+                }
+            },
+            "parameters": {
+                "__IMTCONN__": 9735744
+            }
+        },
+        {
+            "id": 7,
+            "mapper": {
+                "limit": 50,
+                "objectId": "{{2.id}}",
+                "objectType": "notes",
+                "toObjectType": [
+                    "deals"
+                ]
+            },
+            "module": "hubspotcrm:ListCRMObjectAssociation",
+            "version": 2,
+            "metadata": {
                 "expect": [
                     {
                         "name": "objectType",
@@ -634,7 +624,43 @@
                         "type": "text",
                         "label": "Object ID"
                     }
+                ],
+                "restore": {
+                    "expect": {
+                        "objectType": {
+                            "mode": "chose",
+                            "label": "Notes"
+                        },
+                        "toObjectType": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "designer": {
+                    "x": 900,
+                    "y": 0,
+                    "name": "Note's deals"
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
                 ]
+            },
+            "parameters": {
+                "__IMTCONN__": 9735744
             },
             "filter": {
                 "name": "Not a copy from the other portal",
@@ -651,9 +677,6 @@
         },
         {
             "id": 510,
-            "module": "code:ExecuteCode",
-            "version": 1,
-            "parameters": {},
             "mapper": {
                 "input": [
                     {
@@ -670,29 +693,9 @@
                 "dependencies": [],
                 "codeEditorJavascript": "// --- shared helpers (prepended to every code module by build.py) ---\nconst arr = v => Array.isArray(v) ? v : (v && Array.isArray(v.results) ? v.results : []);\nconst clean = v => (v === null || v === undefined) ? \"\" : String(v).trim();\nconst normEmail = v => clean(v).toLowerCase();\nfunction normDomain(v) {\n    let s = clean(v).toLowerCase();\n    if (!s) return \"\";\n    s = s.replace(/^[a-z][a-z0-9+.-]*:\\/\\//, \"\").replace(/^www\\./, \"\");\n    return s.split(/[\\/?#:\\s]/)[0];\n}\nconst stripHtml = h => clean(h).replace(/<[^>]*>/g, \" \").replace(/&nbsp;/gi, \" \").replace(/&amp;/gi, \"&\").replace(/\\s+/g, \" \").trim();\nconst escHtml = s => clean(s).replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n// --- end helpers ---\n\n// Turns an association list into a batch-read body. Accepts a v4 association response\n// ({results:[{toObjectId}]}), the native \"List associations\" output ([{id, type}]) or plain IDs.\n// Inputs: assoc, properties (comma-separated).\nconst ids = [...new Set(arr(input.assoc).map(r => clean(r && typeof r === \"object\" ? (r.toObjectId || r.id) : r)).filter(Boolean))];\nconst properties = clean(input.properties).split(\",\").map(s => s.trim()).filter(Boolean);\nreturn {\n    body: JSON.stringify({ inputs: ids.map(id => ({ id })), properties }),\n    count: ids.length\n};\n"
             },
+            "module": "code:ExecuteCode",
+            "version": 1,
             "metadata": {
-                "designer": {
-                    "name": "Build deal read",
-                    "x": 1200,
-                    "y": 0
-                },
-                "restore": {
-                    "expect": {
-                        "input": {
-                            "items": [
-                                null,
-                                null
-                            ]
-                        },
-                        "language": {
-                            "mode": "chose",
-                            "label": "JavaScript"
-                        },
-                        "inputFormat": {
-                            "label": "Code editor"
-                        }
-                    }
-                },
                 "expect": [
                     {
                         "name": "language",
@@ -768,16 +771,34 @@
                         "label": "Code",
                         "required": true
                     }
-                ]
-            }
+                ],
+                "restore": {
+                    "expect": {
+                        "input": {
+                            "items": [
+                                null,
+                                null
+                            ]
+                        },
+                        "language": {
+                            "mode": "chose",
+                            "label": "JavaScript"
+                        },
+                        "inputFormat": {
+                            "label": "Code editor"
+                        }
+                    }
+                },
+                "designer": {
+                    "name": "Build deal read",
+                    "x": 1200,
+                    "y": 0
+                }
+            },
+            "parameters": {}
         },
         {
             "id": 511,
-            "module": "hubspotcrm:MakeAPICall",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9735744
-            },
             "mapper": {
                 "url": "/crm/v3/objects/deals/batch/read",
                 "method": "POST",
@@ -789,46 +810,9 @@
                 ],
                 "body": "{{510.result.body}}"
             },
+            "module": "hubspotcrm:MakeAPICall",
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "name": "Read note's deals",
-                    "x": 1500,
-                    "y": 0
-                },
-                "restore": {
-                    "expect": {
-                        "qs": {
-                            "mode": "chose"
-                        },
-                        "method": {
-                            "mode": "chose",
-                            "label": "POST"
-                        },
-                        "headers": {
-                            "mode": "chose",
-                            "items": [
-                                null
-                            ]
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "hubspotcrm"
-                            },
-                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:hubspotcrm",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "url",
@@ -890,7 +874,49 @@
                         "type": "any",
                         "label": "Body"
                     }
+                ],
+                "restore": {
+                    "expect": {
+                        "qs": {
+                            "mode": "chose"
+                        },
+                        "method": {
+                            "mode": "chose",
+                            "label": "POST"
+                        },
+                        "headers": {
+                            "mode": "chose",
+                            "items": [
+                                null
+                            ]
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "designer": {
+                    "name": "Read note's deals",
+                    "x": 1500,
+                    "y": 0
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
                 ]
+            },
+            "parameters": {
+                "__IMTCONN__": 9735744
             },
             "filter": {
                 "name": "Note is on a deal",
@@ -907,9 +933,6 @@
         },
         {
             "id": 512,
-            "module": "code:ExecuteCode",
-            "version": 1,
-            "parameters": {},
             "mapper": {
                 "input": [
                     {
@@ -930,30 +953,9 @@
                 "dependencies": [],
                 "codeEditorJavascript": "// --- shared helpers (prepended to every code module by build.py) ---\nconst arr = v => Array.isArray(v) ? v : (v && Array.isArray(v.results) ? v.results : []);\nconst clean = v => (v === null || v === undefined) ? \"\" : String(v).trim();\nconst normEmail = v => clean(v).toLowerCase();\nfunction normDomain(v) {\n    let s = clean(v).toLowerCase();\n    if (!s) return \"\";\n    s = s.replace(/^[a-z][a-z0-9+.-]*:\\/\\//, \"\").replace(/^www\\./, \"\");\n    return s.split(/[\\/?#:\\s]/)[0];\n}\nconst stripHtml = h => clean(h).replace(/<[^>]*>/g, \" \").replace(/&nbsp;/gi, \" \").replace(/&amp;/gi, \"&\").replace(/\\s+/g, \" \").trim();\nconst escHtml = s => clean(s).replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n// --- end helpers ---\n\n// Notes sync: from the deals a note is attached to, picks the first one that is linked\n// to the other portal. Inputs: deals (batch read body), linkProperty (\"mtmc_deal_id\" or\n// \"nuance_deal_id\"), pipelines (optional comma-separated allow-list).\nconst allowed = clean(input.pipelines).split(\",\").map(s => s.trim()).filter(Boolean);\nconst deals = arr(input.deals).slice().sort((a, b) => Number(a.id) - Number(b.id));\nconst hit = deals.find(d => {\n    const p = d.properties || {};\n    if (!clean(p[clean(input.linkProperty)])) return false;\n    return !allowed.length || allowed.includes(clean(p.pipeline));\n});\nconst p = hit ? (hit.properties || {}) : {};\nreturn {\n    dealId: hit ? clean(hit.id) : null,\n    linkedDealId: hit ? clean(p[clean(input.linkProperty)]) : null,\n    dealOwnerId: clean(p.hubspot_owner_id) || null\n};\n"
             },
+            "module": "code:ExecuteCode",
+            "version": 1,
             "metadata": {
-                "designer": {
-                    "name": "Pick the synced deal",
-                    "x": 1800,
-                    "y": 0
-                },
-                "restore": {
-                    "expect": {
-                        "input": {
-                            "items": [
-                                null,
-                                null,
-                                null
-                            ]
-                        },
-                        "language": {
-                            "mode": "chose",
-                            "label": "JavaScript"
-                        },
-                        "inputFormat": {
-                            "label": "Code editor"
-                        }
-                    }
-                },
                 "expect": [
                     {
                         "name": "language",
@@ -1029,8 +1031,32 @@
                         "label": "Code",
                         "required": true
                     }
-                ]
-            }
+                ],
+                "restore": {
+                    "expect": {
+                        "input": {
+                            "items": [
+                                null,
+                                null,
+                                null
+                            ]
+                        },
+                        "language": {
+                            "mode": "chose",
+                            "label": "JavaScript"
+                        },
+                        "inputFormat": {
+                            "label": "Code editor"
+                        }
+                    }
+                },
+                "designer": {
+                    "name": "Pick the synced deal",
+                    "x": 1800,
+                    "y": 0
+                }
+            },
+            "parameters": {}
         },
         {
             "id": 3,
@@ -1107,11 +1133,6 @@
                     "flow": [
                         {
                             "id": 13,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
                             "mapper": {
                                 "url": "/crm/v3/owners/{{ifempty(2.properties.hubspot_owner_id; 512.result.dealOwnerId)}}",
                                 "method": "GET",
@@ -1122,46 +1143,9 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "name": "Nuance: note author",
-                                    "x": 2700,
-                                    "y": 0
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "qs": {
-                                            "mode": "chose"
-                                        },
-                                        "method": {
-                                            "mode": "chose",
-                                            "label": "GET"
-                                        },
-                                        "headers": {
-                                            "mode": "chose",
-                                            "items": [
-                                                null
-                                            ]
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "url",
@@ -1223,7 +1207,49 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "GET"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "name": "Nuance: note author",
+                                    "x": 2700,
+                                    "y": 0
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             },
                             "filter": {
                                 "name": "New note",
@@ -1239,11 +1265,6 @@
                         },
                         {
                             "id": 6,
-                            "module": "hubspotcrm:createANote",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "associations": [
                                     {
@@ -1256,64 +1277,9 @@
                                 "hs_timestamp": "{{2.properties.hs_timestamp}}",
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:createANote",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 3000,
-                                    "y": 0,
-                                    "name": "MTMC: create note"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "associations": {
-                                            "mode": "chose",
-                                            "items": [
-                                                {
-                                                    "associationTypeId": {
-                                                        "mode": "chose",
-                                                        "label": "Note to deal"
-                                                    },
-                                                    "associationCategory": {
-                                                        "mode": "chose",
-                                                        "label": "Hubspot Defined"
-                                                    }
-                                                }
-                                            ]
-                                        },
-                                        "hubspot_owner_id": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "hs_attachment_ids": {
-                                            "mode": "chose"
-                                        },
-                                        "parseCustomFields": {
-                                            "mode": "chose"
-                                        },
-                                        "hs_shared_team_ids": {
-                                            "mode": "edit"
-                                        },
-                                        "hs_shared_user_ids": {
-                                            "mode": "edit"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "associations",
@@ -1507,6 +1473,56 @@
                                         "required": true
                                     }
                                 ],
+                                "restore": {
+                                    "expect": {
+                                        "associations": {
+                                            "mode": "chose",
+                                            "items": [
+                                                {
+                                                    "associationTypeId": {
+                                                        "mode": "chose",
+                                                        "label": "Note to deal"
+                                                    },
+                                                    "associationCategory": {
+                                                        "mode": "chose",
+                                                        "label": "Hubspot Defined"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "hubspot_owner_id": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_attachment_ids": {
+                                            "mode": "chose"
+                                        },
+                                        "parseCustomFields": {
+                                            "mode": "chose"
+                                        },
+                                        "hs_shared_team_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_shared_user_ids": {
+                                            "mode": "edit"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "advanced": true,
+                                "designer": {
+                                    "x": 3000,
+                                    "y": 0,
+                                    "name": "MTMC: create note"
+                                },
                                 "interface": [
                                     {
                                         "name": "id",
@@ -1821,18 +1837,28 @@
                                         "label": "Archived"
                                     }
                                 ],
-                                "advanced": true
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             },
                             "onerror": [
                                 {
-                                    "id": 9023,
+                                    "id": 9037,
                                     "module": "builtin:Break",
                                     "version": 1,
                                     "parameters": {},
                                     "mapper": {
-                                        "count": "3",
+                                        "count": 3,
                                         "retry": true,
-                                        "interval": "15"
+                                        "interval": 15
                                     },
                                     "metadata": {
                                         "designer": {
@@ -2058,11 +2084,6 @@
                     "flow": [
                         {
                             "id": 17,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
                             "mapper": {
                                 "url": "/crm/v3/owners/{{ifempty(2.properties.hubspot_owner_id; 512.result.dealOwnerId)}}",
                                 "method": "GET",
@@ -2073,46 +2094,9 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "name": "Nuance: note author",
-                                    "x": 2700,
-                                    "y": 300
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "qs": {
-                                            "mode": "chose"
-                                        },
-                                        "method": {
-                                            "mode": "chose",
-                                            "label": "GET"
-                                        },
-                                        "headers": {
-                                            "mode": "chose",
-                                            "items": [
-                                                null
-                                            ]
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "url",
@@ -2174,7 +2158,49 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "GET"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "name": "Nuance: note author",
+                                    "x": 2700,
+                                    "y": 300
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             },
                             "filter": {
                                 "name": "Edited since last sync (and written here)",
@@ -2196,59 +2222,14 @@
                         },
                         {
                             "id": 16,
-                            "module": "hubspotcrm:updateANote",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "noteId": "{{3.mtmc_note_id}}",
                                 "hs_note_body": "<p><strong>[Note from Nuance Team. Rep Name: {{17.body.firstName}} {{17.body.lastName}}]</strong></p>{{2.properties.hs_note_body}}",
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:updateANote",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 3000,
-                                    "y": 300,
-                                    "name": "MTMC: update note"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "hubspot_owner_id": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "hs_attachment_ids": {
-                                            "mode": "chose"
-                                        },
-                                        "parseCustomFields": {
-                                            "mode": "chose"
-                                        },
-                                        "hs_shared_team_ids": {
-                                            "mode": "edit"
-                                        },
-                                        "hs_shared_user_ids": {
-                                            "mode": "edit"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "noteId",
@@ -2299,6 +2280,40 @@
                                         "required": true
                                     }
                                 ],
+                                "restore": {
+                                    "expect": {
+                                        "hubspot_owner_id": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_attachment_ids": {
+                                            "mode": "chose"
+                                        },
+                                        "parseCustomFields": {
+                                            "mode": "chose"
+                                        },
+                                        "hs_shared_team_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_shared_user_ids": {
+                                            "mode": "edit"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 3000,
+                                    "y": 300,
+                                    "name": "MTMC: update note"
+                                },
                                 "interface": [
                                     {
                                         "name": "id",
@@ -2612,18 +2627,29 @@
                                         "type": "boolean",
                                         "label": "Archived"
                                     }
+                                ],
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             },
                             "onerror": [
                                 {
-                                    "id": 9024,
+                                    "id": 9038,
                                     "module": "builtin:Break",
                                     "version": 1,
                                     "parameters": {},
                                     "mapper": {
-                                        "count": "3",
+                                        "count": 3,
                                         "retry": true,
-                                        "interval": "15"
+                                        "interval": 15
                                     },
                                     "metadata": {
                                         "designer": {

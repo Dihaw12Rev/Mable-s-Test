@@ -1,20 +1,11 @@
 {
-    "name": "MTMC Deal Updated → Nuance (Update)",
     "flow": [
         {
             "id": 37,
+            "mapper": {},
             "module": "gateway:CustomWebHook",
             "version": 1,
-            "parameters": {
-                "hook": 2738415,
-                "maxResults": 1
-            },
-            "mapper": {},
             "metadata": {
-                "designer": {
-                    "x": 0,
-                    "y": 0
-                },
                 "restore": {
                     "parameters": {
                         "hook": {
@@ -25,19 +16,10 @@
                         }
                     }
                 },
-                "parameters": [
-                    {
-                        "name": "hook",
-                        "type": "hook:gateway-webhook",
-                        "label": "Webhook",
-                        "required": true
-                    },
-                    {
-                        "name": "maxResults",
-                        "type": "number",
-                        "label": "Maximum number of results"
-                    }
-                ],
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                },
                 "interface": [
                     {
                         "name": "portalId",
@@ -11833,16 +11815,28 @@
                         "name": "isDeleted",
                         "type": "boolean"
                     }
+                ],
+                "parameters": [
+                    {
+                        "name": "hook",
+                        "type": "hook:gateway-webhook",
+                        "label": "Webhook",
+                        "required": true
+                    },
+                    {
+                        "name": "maxResults",
+                        "type": "number",
+                        "label": "Maximum number of results"
+                    }
                 ]
+            },
+            "parameters": {
+                "hook": 2738415,
+                "maxResults": 1
             }
         },
         {
             "id": 38,
-            "module": "hubspotcrm:getDeal",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9423792
-            },
             "filter": null,
             "mapper": {
                 "dealId": "{{37.objectId}}",
@@ -11853,55 +11847,15 @@
                     "closedate",
                     "dealname",
                     "dealstage",
-                    "distributor_name"
+                    "distributor_name",
+                    "closed_lost_reason",
+                    "gpo"
                 ],
                 "parseCustomFields": true
             },
+            "module": "hubspotcrm:getDeal",
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "x": 300,
-                    "y": 0,
-                    "name": "Get MTMC Details"
-                },
-                "restore": {
-                    "expect": {
-                        "dealId": {
-                            "mode": "edit"
-                        },
-                        "outputProperties": {
-                            "mode": "chose",
-                            "label": [
-                                "Deal Owner",
-                                "Nuance Deal ID",
-                                "Amount",
-                                "Close Date",
-                                "Deal Name",
-                                "Deal Stage",
-                                "Distributor Name"
-                            ]
-                        },
-                        "parseCustomFields": {
-                            "mode": "chose"
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "hubspotcrm"
-                            },
-                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:hubspotcrm",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "dealId",
@@ -11922,47 +11876,27 @@
                         "required": true
                     }
                 ],
-                "advanced": true
-            }
-        },
-        {
-            "id": 40,
-            "module": "hubspotcrm:MakeAPICall",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9423792
-            },
-            "filter": null,
-            "mapper": {
-                "url": "/crm/v3/owners/{{38.properties.hubspot_owner_id}}",
-                "method": "GET",
-                "headers": [
-                    {
-                        "key": "Content-Type",
-                        "value": "application/json"
-                    }
-                ]
-            },
-            "metadata": {
-                "designer": {
-                    "x": 600,
-                    "y": 0,
-                    "name": "Get MTMC Deal Owner"
-                },
                 "restore": {
                     "expect": {
-                        "qs": {
-                            "mode": "chose"
+                        "dealId": {
+                            "mode": "edit"
                         },
-                        "method": {
+                        "outputProperties": {
                             "mode": "chose",
-                            "label": "GET"
-                        },
-                        "headers": {
-                            "mode": "chose",
-                            "items": [
-                                null
+                            "label": [
+                                "Deal Owner",
+                                "Nuance Deal ID",
+                                "Amount",
+                                "Close Date",
+                                "Deal Name",
+                                "Deal Stage",
+                                "Distributor Name",
+                                "Closed Lost Reason",
+                                "GPO"
                             ]
+                        },
+                        "parseCustomFields": {
+                            "mode": "chose"
                         }
                     },
                     "parameters": {
@@ -11975,6 +11909,12 @@
                         }
                     }
                 },
+                "advanced": true,
+                "designer": {
+                    "x": 300,
+                    "y": 0,
+                    "name": "Get MTMC Details"
+                },
                 "parameters": [
                     {
                         "name": "__IMTCONN__",
@@ -11983,6 +11923,35 @@
                         "required": true
                     }
                 ],
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "830167dcf8507e12"
+                }
+            },
+            "parameters": {
+                "__IMTCONN__": 9423792
+            }
+        },
+        {
+            "id": 40,
+            "filter": null,
+            "mapper": {
+                "url": "/crm/v3/owners/{{38.properties.hubspot_owner_id}}",
+                "method": "GET",
+                "headers": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ]
+            },
+            "module": "hubspotcrm:MakeAPICall",
+            "version": 2,
+            "metadata": {
                 "expect": [
                     {
                         "name": "url",
@@ -12044,40 +12013,60 @@
                         "type": "any",
                         "label": "Body"
                     }
+                ],
+                "restore": {
+                    "expect": {
+                        "qs": {
+                            "mode": "chose"
+                        },
+                        "method": {
+                            "mode": "chose",
+                            "label": "GET"
+                        },
+                        "headers": {
+                            "mode": "chose",
+                            "items": [
+                                null
+                            ]
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "designer": {
+                    "x": 600,
+                    "y": 0,
+                    "name": "Get MTMC Deal Owner"
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
                 ]
+            },
+            "parameters": {
+                "__IMTCONN__": 9423792
             }
         },
         {
             "id": 36,
-            "module": "datastore:GetRecord",
-            "version": 1,
-            "parameters": {
-                "datastore": 118696
-            },
             "mapper": {
                 "key": "{{37.properties.dealstage}}",
                 "returnWrapped": false
             },
+            "module": "datastore:GetRecord",
+            "version": 1,
             "metadata": {
-                "designer": {
-                    "x": 900,
-                    "y": 0
-                },
-                "restore": {
-                    "parameters": {
-                        "datastore": {
-                            "label": "Deal Stage Mapping (MTMC <> Nuance)"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "datastore",
-                        "type": "datastore",
-                        "label": "Data store",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "key",
@@ -12092,6 +12081,17 @@
                         "required": true
                     }
                 ],
+                "restore": {
+                    "parameters": {
+                        "datastore": {
+                            "label": "Deal Stage Mapping (MTMC <> Nuance)"
+                        }
+                    }
+                },
+                "designer": {
+                    "x": 900,
+                    "y": 0
+                },
                 "interface": [
                     {
                         "help": "",
@@ -12101,16 +12101,22 @@
                         "default": null,
                         "required": false
                     }
+                ],
+                "parameters": [
+                    {
+                        "name": "datastore",
+                        "type": "datastore",
+                        "label": "Data store",
+                        "required": true
+                    }
                 ]
+            },
+            "parameters": {
+                "datastore": 118696
             }
         },
         {
             "id": 27,
-            "module": "hubspotcrm:updateDeal",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9735744
-            },
             "mapper": {
                 "dealId": "{{38.properties.nuance_deal_id}}",
                 "_method": "compact",
@@ -12150,16 +12156,83 @@
                     {
                         "key": "mtmc_team",
                         "value": "{{40.body.teams[].name}}"
+                    },
+                    {
+                        "key": "gpo",
+                        "value": "{{38.properties.gpo}}"
+                    },
+                    {
+                        "key": "closed_lost_reason",
+                        "value": "{{38.properties.closed_lost_reason}}"
                     }
                 ],
                 "parseCustomFields": true
             },
+            "module": "hubspotcrm:updateDeal",
+            "onerror": [
+                {
+                    "id": 33,
+                    "filter": {
+                        "name": "Catch all",
+                        "conditions": []
+                    },
+                    "module": "builtin:Ignore",
+                    "version": 1,
+                    "metadata": {
+                        "designer": {
+                            "x": 1259,
+                            "y": 387
+                        }
+                    }
+                }
+            ],
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "x": 1200,
-                    "y": 0,
-                    "name": "Update HOM Deal"
-                },
+                "expect": [
+                    {
+                        "name": "dealId",
+                        "type": "uinteger",
+                        "label": "Deal ID",
+                        "required": true
+                    },
+                    {
+                        "name": "_method",
+                        "type": "select",
+                        "label": "View Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "compact",
+                                "all"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "parseCustomFields",
+                        "type": "boolean",
+                        "label": "Parse Custom Fields",
+                        "required": true
+                    },
+                    {
+                        "name": "properties",
+                        "spec": [
+                            {
+                                "name": "key",
+                                "type": "select",
+                                "label": "Key",
+                                "dynamic": true,
+                                "options": []
+                            },
+                            {
+                                "name": "value",
+                                "type": "any",
+                                "label": "Value"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Properties"
+                    }
+                ],
                 "restore": {
                     "expect": {
                         "_method": {
@@ -12222,6 +12295,18 @@
                                         "mode": "chose",
                                         "label": "MTMC Team"
                                     }
+                                },
+                                {
+                                    "key": {
+                                        "mode": "chose",
+                                        "label": "GPO"
+                                    }
+                                },
+                                {
+                                    "key": {
+                                        "mode": "chose",
+                                        "label": "Closed Lost Reason"
+                                    }
                                 }
                             ]
                         },
@@ -12239,6 +12324,11 @@
                         }
                     }
                 },
+                "designer": {
+                    "x": 1200,
+                    "y": 0,
+                    "name": "Update HOM Deal"
+                },
                 "parameters": [
                     {
                         "name": "__IMTCONN__",
@@ -12247,90 +12337,46 @@
                         "required": true
                     }
                 ],
-                "expect": [
-                    {
-                        "name": "dealId",
-                        "type": "uinteger",
-                        "label": "Deal ID",
-                        "required": true
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
                     },
-                    {
-                        "name": "_method",
-                        "type": "select",
-                        "label": "View Method",
-                        "required": true,
-                        "validate": {
-                            "enum": [
-                                "compact",
-                                "all"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "parseCustomFields",
-                        "type": "boolean",
-                        "label": "Parse Custom Fields",
-                        "required": true
-                    },
-                    {
-                        "name": "properties",
-                        "spec": [
-                            {
-                                "name": "key",
-                                "type": "select",
-                                "label": "Key",
-                                "dynamic": true,
-                                "options": []
-                            },
-                            {
-                                "name": "value",
-                                "type": "any",
-                                "label": "Value"
-                            }
-                        ],
-                        "type": "array",
-                        "label": "Properties"
-                    }
-                ]
-            },
-            "onerror": [
-                {
-                    "id": 33,
-                    "module": "builtin:Ignore",
                     "version": 1,
-                    "filter": {
-                        "name": "Catch all",
-                        "conditions": []
-                    },
-                    "metadata": {
-                        "designer": {
-                            "x": 1259,
-                            "y": 387
-                        }
-                    }
+                    "configuration": "3a60bae47cabbf63"
                 }
-            ]
+            },
+            "parameters": {
+                "__IMTCONN__": 9735744
+            }
         }
     ],
+    "name": "MTMC Deal Updated → Nuance (Update)",
     "metadata": {
         "instant": true,
         "version": 1,
-        "scenario": {
-            "roundtrips": 1,
-            "maxErrors": 3,
-            "autoCommit": true,
-            "autoCommitTriggerLast": true,
-            "sequential": false,
-            "slots": null,
-            "confidential": false,
-            "dataloss": false,
-            "dlq": false,
-            "freshVariables": false
-        },
         "designer": {
             "orphans": []
         },
-        "zone": "us2.make.com",
-        "notes": []
+        "scenario": {
+            "dlq": false,
+            "slots": null,
+            "dataloss": false,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "roundtrips": 1,
+            "sequential": false,
+            "confidential": false,
+            "freshVariables": false,
+            "autoCommitTriggerLast": true
+        }
+    },
+    "scheduling": {
+        "type": "immediately",
+        "maximum_runs_per_minute": 100
+    },
+    "interface": {
+        "input": [],
+        "output": []
     }
 }

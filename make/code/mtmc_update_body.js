@@ -3,7 +3,10 @@
 const d = (input.deal && (input.deal.properties || input.deal)) || {};
 const owner = input.owner || {};
 const teams = Array.isArray(owner.teams) ? owner.teams : [];
-const team = teams.find(t => t.primary) || teams[0] || {};
+const ownerTeam = teams.find(t => t.primary) || teams[0] || {};
+// MTMC Team: the ZIP-based team MTMC assigned (hubspot_teams_nuance, set by the team-update
+// scenarios) wins; the deal owner's primary team is only the fallback, so the two never fight.
+const team = { name: clean(d.hubspot_teams_nuance) || clean(ownerTeam.name) };
 const props = {
     dealname: d.dealname,
     amount: d.amount,

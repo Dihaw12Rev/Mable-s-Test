@@ -34,8 +34,38 @@ test("company_search_body normalizes domain / website and handles blanks", () =>
     assert.strictEqual(b.filterGroups[0].filters[0].value, "westchesterfoot.com");
     assert.strictEqual(b.filterGroups[1].filters[0].value, "Westchester Foot Care");
     assert.deepStrictEqual(JSON.parse(r.createBody), { properties: { name: "Westchester Foot Care", domain: "westchesterfoot.com" } });
+    r = run("company_search_body.js", { company: { properties: { name: "Acme", domain: "acme.com", city: "Rye", zip: "10580", state: "" } } });
+    assert.deepStrictEqual(r.details, { name: "Acme", domain: "acme.com", city: "Rye", zip: "10580" });
+    assert.deepStrictEqual(JSON.parse(r.createBody).properties, r.details);   // new company gets the full address
     r = run("company_search_body.js", { company: { properties: { name: "", domain: "" } } });
     assert.strictEqual(r.hasCriteria, false);   // blank company never matches a random record
+});
+
+test("company_choose_match: shared health-system domain prefers the name match", () => {
+    const search = { results: [
+        { id: "100", properties: { name: "NYU Langone Health", domain: "nyulangone.org" } },
+        { id: "200", properties: { name: "NYU Langone Orthopedics, Inc.", domain: "nyulangone.org", city: "" } }] };
+    let r = run("company_choose_match.js", { search, domain: "nyulangone.org", name: "NYU Langone Orthopedics" });
+    assert.strictEqual(r.matchId, "200");
+    assert.strictEqual(r.matchedBy, "domain+name");
+    assert.strictEqual(r.sharedDomain, 2);
+    r = run("company_choose_match.js", { search, domain: "nyulangone.org", name: "Some Other Clinic" });
+    assert.deepStrictEqual([r.matchId, r.matchedBy], ["100", "domain (shared, oldest)"]);
+});
+
+test("company_choose_match: name step ignores punctuation and Inc/LLC/PC", () => {
+    const search = { results: [{ id: "7", properties: { name: "Westchester Foot Care, P.C.", domain: "" } }] };
+    const r = run("company_choose_match.js", { search, domain: "", name: "westchester foot care pc" });
+    assert.deepStrictEqual([r.matchId, r.matchedBy], ["7", "name"]);
+});
+
+test("company_choose_match: only blank fields are filled on a matched company", () => {
+    const search = { results: [{ id: "9", properties: { name: "Acme", domain: "acme.com", address: "1 Main St", city: "", zip: null } }] };
+    const r = run("company_choose_match.js", { search, domain: "acme.com", name: "Acme",
+        details: { name: "ACME Podiatry", domain: "acme.com", address: "99 Other Rd", city: "Rye", zip: "10580" } });
+    assert.deepStrictEqual(JSON.parse(r.fillBody).properties, { city: "Rye", zip: "10580" });
+    assert.strictEqual(r.fillCount, 2);
+    assert.strictEqual(run("company_choose_match.js", { search, domain: "acme.com", name: "Acme" }).fillCount, 0);
 });
 
 test("company_choose_match: domain beats name, stable tie-break, no match", () => {
@@ -43,12 +73,19 @@ test("company_choose_match: domain beats name, stable tie-break, no match", () =
         { id: "900", properties: { name: "Acme Clinic", domain: "other.com" } },
         { id: "500", properties: { name: "Acme Podiatry", domain: "acme.com" } },
         { id: "300", properties: { name: "Acme Podiatry LLC", website: "http://www.acme.com" } }] };
+    const pick = r => [r.matchId, r.matchedBy];
+    // Domain beats a name match on another domain; two records share acme.com, so the oldest wins.
     let r = run("company_choose_match.js", { search, domain: "acme.com", name: "Acme Clinic" });
-    assert.deepStrictEqual(r, { matchId: "300", matchedBy: "domain" });
+    assert.deepStrictEqual(pick(r), ["300", "domain (shared, oldest)"]);
+    // ...unless one of them also matches the name (suffix-insensitive).
+    r = run("company_choose_match.js", { search, domain: "acme.com", name: "Acme Podiatry" });
+    assert.deepStrictEqual(pick(r), ["300", "domain+name"]);
+    r = run("company_choose_match.js", { search: { results: [search.results[1]] }, domain: "acme.com", name: "Whatever" });
+    assert.deepStrictEqual(pick(r), ["500", "domain"]);
     r = run("company_choose_match.js", { search, domain: "nomatch.com", name: "acme clinic" });
-    assert.deepStrictEqual(r, { matchId: "900", matchedBy: "name" });
+    assert.deepStrictEqual(pick(r), ["900", "name"]);
     r = run("company_choose_match.js", { search: { results: [] }, domain: "x.com", name: "X" });
-    assert.deepStrictEqual(r, { matchId: null, matchedBy: "none" });
+    assert.deepStrictEqual(pick(r), [null, "none"]);
 });
 
 test("contacts_read_by_email_body never sends an empty list", () => {
@@ -80,12 +117,41 @@ test("mtmc_contacts_upsert_body: skips no-email, never sends blanks, fill-blanks
     const contacts = { results: [
         { properties: { email: "A@x.com", firstname: "Ann", lastname: "", phone: "999" } },
         { properties: { email: "", firstname: "Ghost" } }] };
-    let r = run("mtmc_contacts_upsert_body.js", { contacts, existing: { results: [] }, fillBlanksOnly: "false" });
+    let r = run("mtmc_contacts_upsert_body.js", { contacts, existing: { results: [] } });
     assert.strictEqual(r.count, 1);
     assert.strictEqual(r.skippedNoEmail, 1);
     assert.deepStrictEqual(JSON.parse(r.body).inputs[0], { idProperty: "email", id: "a@x.com", properties: { email: "a@x.com", firstname: "Ann", phone: "999" } });
-    r = run("mtmc_contacts_upsert_body.js", { contacts, existing: { results: [{ properties: { email: "a@x.com", firstname: "Annie", phone: "" } }] }, fillBlanksOnly: "true" });
+    // Default is append-only: our first name stays, the blank phone is filled.
+    r = run("mtmc_contacts_upsert_body.js", { contacts, existing: { results: [{ id: "55", properties: { email: "a@x.com", firstname: "Annie", phone: "" } }] } });
     assert.deepStrictEqual(JSON.parse(r.body).inputs[0].properties, { email: "a@x.com", phone: "999" });
+    // Overwrite mode still available when explicitly asked for.
+    r = run("mtmc_contacts_upsert_body.js", { contacts, existing: { results: [{ id: "55", properties: { email: "a@x.com", firstname: "Annie" } }] }, fillBlanksOnly: "false" });
+    assert.strictEqual(JSON.parse(r.body).inputs[0].properties.firstname, "Ann");
+});
+
+test("mtmc_contacts_upsert_body: complete existing contacts are not updated but still linked", () => {
+    const r = run("mtmc_contacts_upsert_body.js", {
+        contacts: { results: [{ properties: { email: "full@x.com", firstname: "MTMC Name", phone: "111" } }] },
+        existing: { results: [{ id: "77", properties: { email: "full@x.com", firstname: "Ours", phone: "222" } }] },
+        fillBlanksOnly: "true" });
+    assert.strictEqual(r.count, 0);
+    assert.deepStrictEqual(r.unchangedIds, [{ id: "77" }]);
+    assert.strictEqual(r.unchangedCount, 1);
+    const links = run("assoc_batch_body.js", { records: r.unchangedIds, toId: 5 });
+    assert.deepStrictEqual(JSON.parse(links.body).inputs, [{ from: { id: "77" }, to: { id: "5" } }]);
+});
+
+test("mtmc_line_items_body: only Nuance-supplied items, numbers parsed, SKU kept", () => {
+    const r = run("mtmc_line_items_body.js", { dealId: 42, currency: "USD", vendor: "Nuance Medical", lineItems: { results: [
+        { properties: { name: "Cryodose TA", quantity: "2", price: "$24,000.00", hs_sku: "CTA-1", vendor__name: "Nuance Medical" } },
+        { properties: { name: "Other gadget", quantity: "1", price: "10", vendor__name: "Acme Devices" } },
+        { properties: { name: "", vendor__name: "Nuance Medical" } }] } });
+    assert.strictEqual(r.count, 1);
+    assert.strictEqual(r.skippedOtherVendor, 1);
+    const item = JSON.parse(r.body).inputs[0];
+    assert.deepStrictEqual(item.properties, { name: "Cryodose TA", hs_line_item_currency_code: "USD", quantity: 2, price: 24000, hs_sku: "CTA-1" });
+    assert.strictEqual(item.associations[0].to.id, "42");
+    assert.strictEqual(run("mtmc_line_items_body.js", { dealId: 42, vendor: "", lineItems: { results: [{ properties: { name: "Other", vendor__name: "Acme" } }] } }).count, 1);
 });
 
 test("assoc_batch_body", () => {
@@ -131,7 +197,7 @@ test("mtmc_update_body: all guide fields, blanks dropped, primary team", () => {
         nuanceStage: "", lastActivityProperty: ""
     });
     const p = JSON.parse(r.body).properties;
-    assert.strictEqual(p.mtmc_team, "West");
+    assert.strictEqual(p.mtmc_team, "West");   // no ZIP team -> owner's primary team
     assert.strictEqual(p.distributor, "Henry Schein");
     assert.strictEqual(p.gpo, "Vizient");
     assert.strictEqual(p.lead_source, "Trade show");
@@ -139,6 +205,8 @@ test("mtmc_update_body: all guide fields, blanks dropped, primary team", () => {
     assert.ok(!("dealstage" in p) && !("closed_lost_reason" in p) && !("mtmc_last_activity_date" in p));
     const r2 = run("mtmc_update_body.js", { deal: { properties: { notes_last_updated: "2026-10-20", closed_lost_reason: "Budget" } }, owner: {}, nuanceStage: "123", lastActivityProperty: "mtmc_last_activity_date" });
     const p2 = JSON.parse(r2.body).properties;
+    const r3 = run("mtmc_update_body.js", { deal: { hubspot_teams_nuance: "Northeast" }, owner: { teams: [{ name: "West", primary: true }] } });
+    assert.strictEqual(JSON.parse(r3.body).properties.mtmc_team, "Northeast");   // ZIP team wins
     assert.strictEqual(p2.dealstage, "123");
     assert.strictEqual(p2.closed_lost_reason, "Budget");
     assert.strictEqual(p2.mtmc_last_activity_date, "2026-10-20");

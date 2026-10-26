@@ -1,20 +1,14 @@
 {
-    "name": "MTMC > Nuance - Notes Sync (Create and Update) (Ready)",
     "flow": [
         {
             "id": 2,
-            "module": "hubspotcrm:searchForNotes",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9423792
-            },
             "mapper": {
                 "limit": "100",
                 "filter": [
                     [
                         {
                             "a": "hs_createdate",
-                            "b": "{{addHours(formatDate(now; \"x\"); -4)}}",
+                            "b": "{{addHours(formatDate(now; \"x\"); -7)}}",
                             "o": "GT"
                         },
                         {
@@ -49,67 +43,9 @@
                 ],
                 "parseCustomFields": true
             },
+            "module": "hubspotcrm:searchForNotes",
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "x": 0,
-                    "y": 150,
-                    "name": "HOM Notes Search"
-                },
-                "restore": {
-                    "expect": {
-                        "direction": {
-                            "label": "Descending"
-                        },
-                        "propertyName": {
-                            "mode": "chose",
-                            "label": "Create Date"
-                        },
-                        "outputProperties": {
-                            "mode": "chose",
-                            "label": [
-                                "hubspot_owner_id",
-                                "hs_created_by",
-                                "hs_timestamp",
-                                "hs_attachment_ids",
-                                "hs_body_preview",
-                                "hs_createdate",
-                                "hs_created_by_user_id",
-                                "hubspot_team_id",
-                                "hs_lastmodifieddate",
-                                "hs_merged_object_ids",
-                                "hs_note_body",
-                                "hs_object_id",
-                                "hs_object_source_label",
-                                "hs_object_source_detail_1",
-                                "hs_object_source_detail_2",
-                                "hs_object_source_detail_3",
-                                "hs_shared_team_ids",
-                                "hs_shared_user_ids",
-                                "hs_updated_by_user_id"
-                            ]
-                        },
-                        "parseCustomFields": {
-                            "mode": "chose"
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "hubspotcrm"
-                            },
-                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:hubspotcrm",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "outputProperties",
@@ -128,6 +64,14 @@
                         "label": "Filter search results",
                         "options": {
                             "store": [
+                                {
+                                    "label": "AI Generated Summary",
+                                    "value": "hs_ai_summary"
+                                },
+                                {
+                                    "label": "AI-generated Short Summary",
+                                    "value": "hs_ai_summary_short"
+                                },
                                 {
                                     "label": "Activity Assigned To",
                                     "value": "hubspot_owner_id"
@@ -299,6 +243,59 @@
                         "label": "Limit"
                     }
                 ],
+                "restore": {
+                    "expect": {
+                        "direction": {
+                            "label": "Descending"
+                        },
+                        "propertyName": {
+                            "mode": "chose",
+                            "label": "Create Date"
+                        },
+                        "outputProperties": {
+                            "mode": "chose",
+                            "label": [
+                                "hubspot_owner_id",
+                                "hs_created_by",
+                                "hs_timestamp",
+                                "hs_attachment_ids",
+                                "hs_body_preview",
+                                "hs_createdate",
+                                "hs_created_by_user_id",
+                                "hubspot_team_id",
+                                "hs_lastmodifieddate",
+                                "hs_merged_object_ids",
+                                "hs_note_body",
+                                "hs_object_id",
+                                "hs_object_source_label",
+                                "hs_object_source_detail_1",
+                                "hs_object_source_detail_2",
+                                "hs_object_source_detail_3",
+                                "hs_shared_team_ids",
+                                "hs_shared_user_ids",
+                                "hs_updated_by_user_id"
+                            ]
+                        },
+                        "parseCustomFields": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "advanced": true,
+                "designer": {
+                    "x": 0,
+                    "y": 150,
+                    "name": "MTMC Notes Search"
+                },
                 "interface": [
                     {
                         "name": "__IMTLENGTH__",
@@ -446,18 +443,41 @@
                         "name": "archived",
                         "type": "boolean",
                         "label": "Archived"
+                    },
+                    {
+                        "name": "archivedAt",
+                        "type": "date",
+                        "label": "Archived At"
+                    },
+                    {
+                        "name": "url",
+                        "type": "url",
+                        "label": "URL"
                     }
                 ],
-                "advanced": true
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "e66fba3a225caa4"
+                }
+            },
+            "parameters": {
+                "__IMTCONN__": 9423792
             }
         },
         {
             "id": 7,
-            "module": "hubspotcrm:ListCRMObjectAssociation",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9423792
-            },
             "filter": {
                 "name": "Not a Sync Note",
                 "conditions": [
@@ -487,39 +507,9 @@
                     "deals"
                 ]
             },
+            "module": "hubspotcrm:ListCRMObjectAssociation",
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "x": 300,
-                    "y": 150
-                },
-                "restore": {
-                    "expect": {
-                        "objectType": {
-                            "mode": "chose",
-                            "label": "Notes"
-                        },
-                        "toObjectType": {
-                            "mode": "chose"
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "hubspotcrm"
-                            },
-                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:hubspotcrm",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "objectType",
@@ -544,16 +534,46 @@
                         "type": "text",
                         "label": "Object ID"
                     }
+                ],
+                "restore": {
+                    "expect": {
+                        "objectType": {
+                            "mode": "chose",
+                            "label": "Notes"
+                        },
+                        "toObjectType": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "designer": {
+                    "x": 300,
+                    "y": 150
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
                 ]
+            },
+            "parameters": {
+                "__IMTCONN__": 9423792
             }
         },
         {
-            "id": 8,
-            "module": "hubspotcrm:getDeal",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9423792
-            },
+            "id": 21,
             "filter": {
                 "name": "Deal Found",
                 "conditions": [
@@ -566,18 +586,75 @@
                 ]
             },
             "mapper": {
-                "dealId": "{{7.associations.deals[].id}}",
+                "array": "{{7.associations.deals[].id}}"
+            },
+            "module": "builtin:BasicFeeder",
+            "version": 1,
+            "metadata": {
+                "expect": [
+                    {
+                        "mode": "edit",
+                        "name": "array",
+                        "spec": [],
+                        "type": "array",
+                        "label": "Array"
+                    }
+                ],
+                "restore": {
+                    "expect": {
+                        "array": {
+                            "mode": "edit"
+                        }
+                    }
+                },
+                "designer": {
+                    "x": 600,
+                    "y": 150
+                },
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "bbacb976c923cd67"
+                }
+            },
+            "parameters": {}
+        },
+        {
+            "id": 8,
+            "mapper": {
+                "dealId": "{{21.value}}",
                 "outputProperties": [
                     "hubspot_owner_id",
                     "nuance_deal_id"
                 ],
                 "parseCustomFields": true
             },
+            "module": "hubspotcrm:getDeal",
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "x": 600,
-                    "y": 150
-                },
+                "expect": [
+                    {
+                        "name": "dealId",
+                        "type": "select",
+                        "label": "Deal ID",
+                        "required": true
+                    },
+                    {
+                        "name": "outputProperties",
+                        "type": "select",
+                        "label": "Output Properties",
+                        "multiple": true
+                    },
+                    {
+                        "name": "parseCustomFields",
+                        "type": "boolean",
+                        "label": "Parse Custom Fields",
+                        "required": true
+                    }
+                ],
                 "restore": {
                     "expect": {
                         "dealId": {
@@ -604,6 +681,11 @@
                         }
                     }
                 },
+                "advanced": true,
+                "designer": {
+                    "x": 900,
+                    "y": 150
+                },
                 "parameters": [
                     {
                         "name": "__IMTCONN__",
@@ -612,38 +694,23 @@
                         "required": true
                     }
                 ],
-                "expect": [
-                    {
-                        "name": "dealId",
-                        "type": "select",
-                        "label": "Deal ID",
-                        "required": true
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
                     },
-                    {
-                        "name": "outputProperties",
-                        "type": "select",
-                        "label": "Output Properties",
-                        "multiple": true
-                    },
-                    {
-                        "name": "parseCustomFields",
-                        "type": "boolean",
-                        "label": "Parse Custom Fields",
-                        "required": true
-                    }
-                ],
-                "advanced": true
+                    "version": 1,
+                    "configuration": "e82d1e0f17bb48cb"
+                }
+            },
+            "parameters": {
+                "__IMTCONN__": 9423792
             }
         },
         {
             "id": 3,
-            "module": "datastore:GetRecord",
-            "version": 1,
-            "parameters": {
-                "datastore": 138595
-            },
             "filter": {
-                "name": "HOM Deal Found",
+                "name": "MTMC and Pipeline Found",
                 "conditions": [
                     [
                         {
@@ -657,26 +724,9 @@
                 "key": "{{2.id}}",
                 "returnWrapped": true
             },
+            "module": "datastore:GetRecord",
+            "version": 1,
             "metadata": {
-                "designer": {
-                    "x": 900,
-                    "y": 150
-                },
-                "restore": {
-                    "parameters": {
-                        "datastore": {
-                            "label": "Nuance <> MTMC - Notes Sync"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "datastore",
-                        "type": "datastore",
-                        "label": "Data store",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "key",
@@ -691,6 +741,18 @@
                         "required": true
                     }
                 ],
+                "restore": {
+                    "parameters": {
+                        "datastore": {
+                            "label": "MTMC Notes to MTMC"
+                        }
+                    }
+                },
+                "advanced": true,
+                "designer": {
+                    "x": 1200,
+                    "y": 150
+                },
                 "interface": [
                     {
                         "name": "key",
@@ -700,13 +762,6 @@
                     {
                         "name": "data",
                         "spec": [
-                            {
-                                "help": "",
-                                "name": "last synced at",
-                                "type": "date",
-                                "label": null,
-                                "required": false
-                            },
                             {
                                 "help": "",
                                 "name": "MTMC Note ID",
@@ -728,40 +783,42 @@
                         "label": "Record"
                     }
                 ],
-                "advanced": true
+                "parameters": [
+                    {
+                        "name": "datastore",
+                        "type": "datastore",
+                        "label": "Data store",
+                        "required": true
+                    }
+                ],
+                "setupValidation": {
+                    "result": {
+                        "valid": true,
+                        "fields": []
+                    },
+                    "version": 1,
+                    "configuration": "8255597d272d4a5a"
+                }
+            },
+            "parameters": {
+                "datastore": 181067
             }
         },
         {
             "id": 5,
-            "module": "builtin:BasicRouter",
-            "version": 1,
             "mapper": null,
-            "metadata": {
-                "designer": {
-                    "x": 1200,
-                    "y": 150
-                }
-            },
+            "module": "builtin:BasicRouter",
             "routes": [
                 {
                     "flow": [
                         {
                             "id": 15,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "filter": {
                                 "name": "Note ID Found (Update)",
                                 "conditions": [
                                     [
                                         {
-                                            "a": "{{3.data.last_synced_at}}",
-                                            "o": "exist"
-                                        },
-                                        {
-                                            "a": "{{3.data.`MTMC Note ID`}}",
+                                            "a": "{{3.data.`Nuance Note ID`}}",
                                             "o": "exist"
                                         }
                                     ]
@@ -777,45 +834,9 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 1500,
-                                    "y": 0
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "qs": {
-                                            "mode": "chose"
-                                        },
-                                        "method": {
-                                            "mode": "chose",
-                                            "label": "GET"
-                                        },
-                                        "headers": {
-                                            "mode": "chose",
-                                            "items": [
-                                                null
-                                            ]
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "url",
@@ -877,43 +898,21 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
-                                ]
-                            }
-                        },
-                        {
-                            "id": 16,
-                            "module": "hubspotcrm:updateANote",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
-                            "mapper": {
-                                "noteId": "{{3.data.`MTMC Note ID`}}",
-                                "hs_note_body": "[Note from Nuance Team. Rep Name: {{15.body.firstName}} {{15.body.lastName}}]\n{{newline}}\n{{2.properties.hs_note_body}}",
-                                "parseCustomFields": true
-                            },
-                            "metadata": {
-                                "designer": {
-                                    "x": 1800,
-                                    "y": 0
-                                },
+                                ],
                                 "restore": {
                                     "expect": {
-                                        "hubspot_owner_id": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
                                             "mode": "chose",
-                                            "label": "Empty"
+                                            "label": "GET"
                                         },
-                                        "hs_attachment_ids": {
-                                            "mode": "chose"
-                                        },
-                                        "parseCustomFields": {
-                                            "mode": "chose"
-                                        },
-                                        "hs_shared_team_ids": {
-                                            "mode": "edit"
-                                        },
-                                        "hs_shared_user_ids": {
-                                            "mode": "edit"
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
                                         }
                                     },
                                     "parameters": {
@@ -922,9 +921,13 @@
                                                 "scoped": "true",
                                                 "connection": "hubspotcrm"
                                             },
-                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
                                         }
                                     }
+                                },
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 0
                                 },
                                 "parameters": [
                                     {
@@ -933,7 +936,22 @@
                                         "label": "Connection",
                                         "required": true
                                     }
-                                ],
+                                ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
+                            }
+                        },
+                        {
+                            "id": 16,
+                            "mapper": {
+                                "noteId": "{{3.data.`MTMC Note ID`}}",
+                                "hs_note_body": "[Note from Nuance Team. Rep Name: {{15.body.firstName}} {{15.body.lastName}}]\n{{newline}}\n{{2.properties.hs_note_body}}",
+                                "parseCustomFields": true
+                            },
+                            "module": "hubspotcrm:updateANote",
+                            "version": 2,
+                            "metadata": {
                                 "expect": [
                                     {
                                         "name": "noteId",
@@ -984,6 +1002,39 @@
                                         "required": true
                                     }
                                 ],
+                                "restore": {
+                                    "expect": {
+                                        "hubspot_owner_id": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_attachment_ids": {
+                                            "mode": "chose"
+                                        },
+                                        "parseCustomFields": {
+                                            "mode": "chose"
+                                        },
+                                        "hs_shared_team_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_shared_user_ids": {
+                                            "mode": "edit"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 0
+                                },
                                 "interface": [
                                     {
                                         "name": "id",
@@ -1297,16 +1348,22 @@
                                         "type": "boolean",
                                         "label": "Archived"
                                     }
+                                ],
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             }
                         },
                         {
                             "id": 4,
-                            "module": "datastore:AddRecord",
-                            "version": 1,
-                            "parameters": {
-                                "datastore": 120619
-                            },
                             "mapper": {
                                 "key": "{{2.id}}",
                                 "data": {
@@ -1316,31 +1373,9 @@
                                 },
                                 "overwrite": true
                             },
+                            "module": "datastore:AddRecord",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 2100,
-                                    "y": 0
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "overwrite": {
-                                            "mode": "chose"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "datastore": {
-                                            "label": "MTMC <> HOM Note IDs (Sync)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "datastore",
-                                        "type": "datastore",
-                                        "label": "Data store",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "key",
@@ -1375,7 +1410,34 @@
                                         "type": "collection",
                                         "label": "Record"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "overwrite": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "datastore": {
+                                            "label": "MTMC <> HOM Note IDs (Sync)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 2400,
+                                    "y": 0
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "datastore",
+                                        "type": "datastore",
+                                        "label": "Data store",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "datastore": 120619
                             }
                         }
                     ]
@@ -1384,17 +1446,12 @@
                     "flow": [
                         {
                             "id": 13,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "filter": {
                                 "name": "Note ID Not Found (Create)",
                                 "conditions": [
                                     [
                                         {
-                                            "a": "{{3.data.last_synced_at}}",
+                                            "a": "{{3.data.`Nuance Note ID`}}",
                                             "o": "notexist"
                                         }
                                     ]
@@ -1410,45 +1467,9 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 1500,
-                                    "y": 300
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "qs": {
-                                            "mode": "chose"
-                                        },
-                                        "method": {
-                                            "mode": "chose",
-                                            "label": "GET"
-                                        },
-                                        "headers": {
-                                            "mode": "chose",
-                                            "items": [
-                                                null
-                                            ]
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "url",
@@ -1510,16 +1531,52 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "GET"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 300
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             }
                         },
                         {
                             "id": 6,
-                            "module": "hubspotcrm:createANote",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
                             "mapper": {
                                 "associations": [
                                     {
@@ -1532,63 +1589,9 @@
                                 "hs_timestamp": "{{2.properties.hs_timestamp}}",
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:createANote",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 1800,
-                                    "y": 300
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "associations": {
-                                            "mode": "chose",
-                                            "items": [
-                                                {
-                                                    "associationTypeId": {
-                                                        "mode": "chose",
-                                                        "label": "Note to deal"
-                                                    },
-                                                    "associationCategory": {
-                                                        "mode": "chose",
-                                                        "label": "Hubspot Defined"
-                                                    }
-                                                }
-                                            ]
-                                        },
-                                        "hubspot_owner_id": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "hs_attachment_ids": {
-                                            "mode": "chose"
-                                        },
-                                        "parseCustomFields": {
-                                            "mode": "chose"
-                                        },
-                                        "hs_shared_team_ids": {
-                                            "mode": "edit"
-                                        },
-                                        "hs_shared_user_ids": {
-                                            "mode": "edit"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "associations",
@@ -1782,6 +1785,55 @@
                                         "required": true
                                     }
                                 ],
+                                "restore": {
+                                    "expect": {
+                                        "associations": {
+                                            "mode": "chose",
+                                            "items": [
+                                                {
+                                                    "associationTypeId": {
+                                                        "mode": "chose",
+                                                        "label": "Note to deal"
+                                                    },
+                                                    "associationCategory": {
+                                                        "mode": "chose",
+                                                        "label": "Hubspot Defined"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "hubspot_owner_id": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_attachment_ids": {
+                                            "mode": "chose"
+                                        },
+                                        "parseCustomFields": {
+                                            "mode": "chose"
+                                        },
+                                        "hs_shared_team_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_shared_user_ids": {
+                                            "mode": "edit"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "advanced": true,
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 300
+                                },
                                 "interface": [
                                     {
                                         "name": "id",
@@ -2096,50 +2148,32 @@
                                         "label": "Archived"
                                     }
                                 ],
-                                "advanced": true
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             }
                         },
                         {
                             "id": 14,
-                            "module": "datastore:AddRecord",
-                            "version": 1,
-                            "parameters": {
-                                "datastore": 120619
-                            },
                             "mapper": {
                                 "key": "{{2.id}}",
                                 "data": {
-                                    "MTMC Note ID": "{{6.id}}",
-                                    "Nuance Note ID": "{{2.id}}",
-                                    "last_synced_at": "{{formatDate(now; \"x\")}}"
+                                    "MTMC Note ID": "{{2.id}}",
+                                    "Nuance Note ID": "{{6.id}}"
                                 },
                                 "overwrite": true
                             },
+                            "module": "datastore:AddRecord",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 2100,
-                                    "y": 300
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "overwrite": {
-                                            "mode": "chose"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "datastore": {
-                                            "label": "MTMC <> HOM Note IDs (Sync)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "datastore",
-                                        "type": "datastore",
-                                        "label": "Data store",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "key",
@@ -2156,11 +2190,6 @@
                                         "name": "data",
                                         "spec": [
                                             {
-                                                "name": "last_synced_at",
-                                                "type": "date",
-                                                "label": null
-                                            },
-                                            {
                                                 "name": "MTMC Note ID",
                                                 "type": "number",
                                                 "label": null
@@ -2174,33 +2203,82 @@
                                         "type": "collection",
                                         "label": "Record"
                                     }
-                                ]
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "overwrite": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "datastore": {
+                                            "label": "MTMC Notes to MTMC"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 2400,
+                                    "y": 300
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "datastore",
+                                        "type": "datastore",
+                                        "label": "Data store",
+                                        "required": true
+                                    }
+                                ],
+                                "setupValidation": {
+                                    "result": {
+                                        "valid": true,
+                                        "fields": []
+                                    },
+                                    "version": 1,
+                                    "configuration": "d5666813c9d60588"
+                                }
+                            },
+                            "parameters": {
+                                "datastore": 181067
                             }
                         }
                     ]
                 }
-            ]
+            ],
+            "version": 1,
+            "metadata": {
+                "designer": {
+                    "x": 1500,
+                    "y": 150
+                }
+            }
         }
     ],
+    "name": "MTMC > Nuance - Notes Sync (Create and Update) (Ready)",
     "metadata": {
         "instant": false,
         "version": 1,
-        "scenario": {
-            "roundtrips": 1,
-            "maxErrors": 3,
-            "autoCommit": true,
-            "autoCommitTriggerLast": true,
-            "sequential": false,
-            "slots": null,
-            "confidential": false,
-            "dataloss": false,
-            "dlq": false,
-            "freshVariables": false
-        },
         "designer": {
             "orphans": []
         },
-        "zone": "us2.make.com",
-        "notes": []
+        "scenario": {
+            "dlq": false,
+            "slots": null,
+            "dataloss": false,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "roundtrips": 1,
+            "sequential": false,
+            "confidential": false,
+            "freshVariables": false,
+            "autoCommitTriggerLast": true
+        }
+    },
+    "scheduling": {
+        "type": "indefinitely",
+        "interval": 21600
+    },
+    "interface": {
+        "input": [],
+        "output": []
     }
 }

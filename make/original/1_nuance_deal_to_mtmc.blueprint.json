@@ -1,13 +1,7 @@
 {
-    "name": "Nuance Deal to MTMC Sync (Create and Update) READY",
     "flow": [
         {
             "id": 12,
-            "module": "hubspotcrm:searchDeals",
-            "version": 2,
-            "parameters": {
-                "__IMTCONN__": 9735744
-            },
             "mapper": {
                 "limit": "50",
                 "filter": [
@@ -67,62 +61,9 @@
                 ],
                 "parseCustomFields": true
             },
+            "module": "hubspotcrm:searchDeals",
+            "version": 2,
             "metadata": {
-                "designer": {
-                    "x": 0,
-                    "y": 300
-                },
-                "restore": {
-                    "expect": {
-                        "direction": {
-                            "label": "Descending"
-                        },
-                        "propertyName": {
-                            "mode": "chose",
-                            "label": "Date Entered \"Ready For MTMC (Cryodose Initial Approach)\""
-                        },
-                        "outputProperties": {
-                            "mode": "chose",
-                            "label": [
-                                "amount",
-                                "hs_v2_date_entered_260719393",
-                                "dealname",
-                                "hubspot_owner_id",
-                                "dealstage",
-                                "local_mtmc_rep",
-                                "mtmc_avp",
-                                "mtmc_deal_id",
-                                "mtmc_rep_email",
-                                "mtmc_rep_full_name",
-                                "mtmc_representative",
-                                "mtmc_team_lead",
-                                "closedate",
-                                "hs_object_id",
-                                "postal_code"
-                            ]
-                        },
-                        "parseCustomFields": {
-                            "mode": "chose"
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "hubspotcrm"
-                            },
-                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:hubspotcrm",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
                 "expect": [
                     {
                         "name": "outputProperties",
@@ -2160,28 +2101,76 @@
                         "label": "Limit"
                     }
                 ],
-                "advanced": true
+                "restore": {
+                    "expect": {
+                        "direction": {
+                            "label": "Descending"
+                        },
+                        "propertyName": {
+                            "mode": "chose",
+                            "label": "Date Entered \"Ready For MTMC (Cryodose Initial Approach)\""
+                        },
+                        "outputProperties": {
+                            "mode": "chose",
+                            "label": [
+                                "amount",
+                                "hs_v2_date_entered_260719393",
+                                "dealname",
+                                "hubspot_owner_id",
+                                "dealstage",
+                                "local_mtmc_rep",
+                                "mtmc_avp",
+                                "mtmc_deal_id",
+                                "mtmc_rep_email",
+                                "mtmc_rep_full_name",
+                                "mtmc_representative",
+                                "mtmc_team_lead",
+                                "closedate",
+                                "hs_object_id",
+                                "postal_code"
+                            ]
+                        },
+                        "parseCustomFields": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "hubspotcrm"
+                            },
+                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                        }
+                    }
+                },
+                "advanced": true,
+                "designer": {
+                    "x": 0,
+                    "y": 300
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:hubspotcrm",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ]
+            },
+            "parameters": {
+                "__IMTCONN__": 9735744
             }
         },
         {
             "id": 10,
-            "module": "builtin:BasicRouter",
-            "version": 1,
             "mapper": null,
-            "metadata": {
-                "designer": {
-                    "x": 300,
-                    "y": 300
-                }
-            },
+            "module": "builtin:BasicRouter",
             "routes": [
                 {
                     "flow": [
                         {
                             "id": 13,
-                            "module": "builtin:BasicFeeder",
-                            "version": 1,
-                            "parameters": {},
                             "filter": {
                                 "name": "Create",
                                 "conditions": [
@@ -2196,18 +2185,9 @@
                             "mapper": {
                                 "array": "{{12.properties}}"
                             },
+                            "module": "builtin:BasicFeeder",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 600,
-                                    "y": 150
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "array": {
-                                            "mode": "edit"
-                                        }
-                                    }
-                                },
                                 "expect": [
                                     {
                                         "mode": "edit",
@@ -2216,16 +2196,23 @@
                                         "type": "array",
                                         "label": "Array"
                                     }
-                                ]
-                            }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "array": {
+                                            "mode": "edit"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 600,
+                                    "y": 150
+                                }
+                            },
+                            "parameters": {}
                         },
                         {
                             "id": 21,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
                             "mapper": {
                                 "url": "/crm/v3/owners/{{13.hubspot_owner_id}}",
                                 "method": "GET",
@@ -2236,46 +2223,9 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 900,
-                                    "y": 150,
-                                    "name": "Get Deal Owner Data"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "qs": {
-                                            "mode": "chose"
-                                        },
-                                        "method": {
-                                            "mode": "chose",
-                                            "label": "GET"
-                                        },
-                                        "headers": {
-                                            "mode": "chose",
-                                            "items": [
-                                                null
-                                            ]
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "url",
@@ -2337,16 +2287,53 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "GET"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 900,
+                                    "y": 150,
+                                    "name": "Get Deal Owner Data"
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             }
                         },
                         {
                             "id": 18,
-                            "module": "hubspotcrm:createDeal",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "_method": "compact",
                                 "properties": [
@@ -2389,12 +2376,48 @@
                                 ],
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:createDeal",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 1200,
-                                    "y": 150,
-                                    "name": "Create New Deal on MTMC"
-                                },
+                                "expect": [
+                                    {
+                                        "name": "_method",
+                                        "type": "select",
+                                        "label": "View Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "compact",
+                                                "all"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "parseCustomFields",
+                                        "type": "boolean",
+                                        "label": "Parse Custom Fields",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "properties",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "select",
+                                                "label": "Key",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "any",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Properties"
+                                    }
+                                ],
                                 "restore": {
                                     "expect": {
                                         "_method": {
@@ -2474,6 +2497,11 @@
                                         }
                                     }
                                 },
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 150,
+                                    "name": "Create New Deal on MTMC"
+                                },
                                 "parameters": [
                                     {
                                         "name": "__IMTCONN__",
@@ -2481,55 +2509,14 @@
                                         "label": "Connection",
                                         "required": true
                                     }
-                                ],
-                                "expect": [
-                                    {
-                                        "name": "_method",
-                                        "type": "select",
-                                        "label": "View Method",
-                                        "required": true,
-                                        "validate": {
-                                            "enum": [
-                                                "compact",
-                                                "all"
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        "name": "parseCustomFields",
-                                        "type": "boolean",
-                                        "label": "Parse Custom Fields",
-                                        "required": true
-                                    },
-                                    {
-                                        "name": "properties",
-                                        "spec": [
-                                            {
-                                                "name": "key",
-                                                "type": "select",
-                                                "label": "Key",
-                                                "dynamic": true,
-                                                "options": []
-                                            },
-                                            {
-                                                "name": "value",
-                                                "type": "any",
-                                                "label": "Value"
-                                            }
-                                        ],
-                                        "type": "array",
-                                        "label": "Properties"
-                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             }
                         },
                         {
                             "id": 84,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "filter": null,
                             "mapper": {
                                 "url": "/crm/v3/objects/line_items",
@@ -2542,46 +2529,9 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 1500,
-                                    "y": 150,
-                                    "name": "Create Cryodote TA Line Item"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "qs": {
-                                            "mode": "chose"
-                                        },
-                                        "method": {
-                                            "mode": "chose",
-                                            "label": "POST"
-                                        },
-                                        "headers": {
-                                            "mode": "chose",
-                                            "items": [
-                                                null
-                                            ]
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "url",
@@ -2643,16 +2593,53 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "POST"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 150,
+                                    "name": "Create Cryodote TA Line Item"
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             }
                         },
                         {
                             "id": 23,
-                            "module": "hubspotcrm:updateDeal",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
                             "mapper": {
                                 "dealId": "{{13.hs_object_id}}",
                                 "_method": "compact",
@@ -2668,57 +2655,9 @@
                                 ],
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:updateDeal",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 1800,
-                                    "y": 150,
-                                    "name": "MTMC ID Back to Nuance Deal"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "_method": {
-                                            "mode": "chose",
-                                            "label": "Compact"
-                                        },
-                                        "properties": {
-                                            "mode": "chose",
-                                            "items": [
-                                                {
-                                                    "key": {
-                                                        "mode": "chose",
-                                                        "label": "MTMC Deal ID"
-                                                    }
-                                                },
-                                                {
-                                                    "key": {
-                                                        "mode": "chose",
-                                                        "label": "Last Synced At"
-                                                    }
-                                                }
-                                            ]
-                                        },
-                                        "parseCustomFields": {
-                                            "mode": "chose"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "dealId",
@@ -2763,38 +2702,31 @@
                                         "type": "array",
                                         "label": "Properties"
                                     }
-                                ]
-                            }
-                        },
-                        {
-                            "id": 26,
-                            "module": "hubspotcrm:ListCRMObjectAssociation",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
-                            "mapper": {
-                                "limit": "10",
-                                "objectId": "{{13.hs_object_id}}",
-                                "objectType": "deals",
-                                "toObjectType": [
-                                    "contacts",
-                                    "companies"
-                                ]
-                            },
-                            "metadata": {
-                                "designer": {
-                                    "x": 2100,
-                                    "y": 150,
-                                    "name": "HubSpot (Nuance) — Get associated records"
-                                },
+                                ],
                                 "restore": {
                                     "expect": {
-                                        "objectType": {
+                                        "_method": {
                                             "mode": "chose",
-                                            "label": "Deal"
+                                            "label": "Compact"
                                         },
-                                        "toObjectType": {
+                                        "properties": {
+                                            "mode": "chose",
+                                            "items": [
+                                                {
+                                                    "key": {
+                                                        "mode": "chose",
+                                                        "label": "MTMC Deal ID"
+                                                    }
+                                                },
+                                                {
+                                                    "key": {
+                                                        "mode": "chose",
+                                                        "label": "Last Synced At"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "parseCustomFields": {
                                             "mode": "chose"
                                         }
                                     },
@@ -2808,6 +2740,11 @@
                                         }
                                     }
                                 },
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 150,
+                                    "name": "MTMC ID Back to Nuance Deal"
+                                },
                                 "parameters": [
                                     {
                                         "name": "__IMTCONN__",
@@ -2815,7 +2752,26 @@
                                         "label": "Connection",
                                         "required": true
                                     }
-                                ],
+                                ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
+                            }
+                        },
+                        {
+                            "id": 26,
+                            "mapper": {
+                                "limit": "10",
+                                "objectId": "{{13.hs_object_id}}",
+                                "objectType": "deals",
+                                "toObjectType": [
+                                    "contacts",
+                                    "companies"
+                                ]
+                            },
+                            "module": "hubspotcrm:ListCRMObjectAssociation",
+                            "version": 2,
+                            "metadata": {
                                 "expect": [
                                     {
                                         "name": "objectType",
@@ -2840,29 +2796,53 @@
                                         "type": "text",
                                         "label": "Object ID"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "objectType": {
+                                            "mode": "chose",
+                                            "label": "Deal"
+                                        },
+                                        "toObjectType": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 150,
+                                    "name": "HubSpot (Nuance) — Get associated records"
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             }
                         },
                         {
                             "id": 27,
-                            "module": "builtin:BasicFeeder",
-                            "version": 1,
-                            "parameters": {},
                             "mapper": {
                                 "array": "{{26.associations.contacts}}"
                             },
+                            "module": "builtin:BasicFeeder",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 2400,
-                                    "y": 150
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "array": {
-                                            "mode": "edit"
-                                        }
-                                    }
-                                },
                                 "expect": [
                                     {
                                         "mode": "edit",
@@ -2871,16 +2851,23 @@
                                         "type": "array",
                                         "label": "Array"
                                     }
-                                ]
-                            }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "array": {
+                                            "mode": "edit"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 2400,
+                                    "y": 150
+                                }
+                            },
+                            "parameters": {}
                         },
                         {
                             "id": 28,
-                            "module": "hubspotcrm:getContact",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
                             "filter": {
                                 "name": "Only one Association per contact",
                                 "conditions": [
@@ -2904,12 +2891,29 @@
                                 ],
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:getContact",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 2700,
-                                    "y": 150,
-                                    "name": "HubSpot (Nuance) — Get a Contact"
-                                },
+                                "expect": [
+                                    {
+                                        "name": "contactId",
+                                        "type": "select",
+                                        "label": "Contact ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "outputProperties",
+                                        "type": "select",
+                                        "label": "Output Properties",
+                                        "multiple": true
+                                    },
+                                    {
+                                        "name": "parseCustomFields",
+                                        "type": "boolean",
+                                        "label": "Parse Custom Fields",
+                                        "required": true
+                                    }
+                                ],
                                 "restore": {
                                     "expect": {
                                         "contactId": {
@@ -2939,6 +2943,12 @@
                                         }
                                     }
                                 },
+                                "advanced": true,
+                                "designer": {
+                                    "x": 2700,
+                                    "y": 150,
+                                    "name": "HubSpot (Nuance) — Get a Contact"
+                                },
                                 "parameters": [
                                     {
                                         "name": "__IMTCONN__",
@@ -2946,46 +2956,21 @@
                                         "label": "Connection",
                                         "required": true
                                     }
-                                ],
-                                "expect": [
-                                    {
-                                        "name": "contactId",
-                                        "type": "select",
-                                        "label": "Contact ID",
-                                        "required": true
-                                    },
-                                    {
-                                        "name": "outputProperties",
-                                        "type": "select",
-                                        "label": "Output Properties",
-                                        "multiple": true
-                                    },
-                                    {
-                                        "name": "parseCustomFields",
-                                        "type": "boolean",
-                                        "label": "Parse Custom Fields",
-                                        "required": true
-                                    }
-                                ],
-                                "advanced": true
+                                ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             }
                         },
                         {
                             "id": 29,
-                            "module": "builtin:BasicAggregator",
-                            "version": 1,
-                            "parameters": {
-                                "feeder": 28
-                            },
                             "mapper": {
                                 "id": "{{28.id}}",
                                 "properties": "{{28.properties}}"
                             },
+                            "module": "builtin:BasicAggregator",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 3000,
-                                    "y": 150
-                                },
                                 "restore": {
                                     "extra": {
                                         "feeder": {
@@ -2995,14 +2980,18 @@
                                             "label": "Custom"
                                         }
                                     }
+                                },
+                                "designer": {
+                                    "x": 3000,
+                                    "y": 150
                                 }
+                            },
+                            "parameters": {
+                                "feeder": 28
                             }
                         },
                         {
                             "id": 30,
-                            "module": "code:ExecuteCode",
-                            "version": 1,
-                            "parameters": {},
                             "mapper": {
                                 "input": [
                                     {
@@ -3015,27 +3004,9 @@
                                 "dependencies": [],
                                 "codeEditorJavascript": "const contacts = Array.isArray(input.contacts) ? input.contacts : [];\n\n// Only include contacts that actually have an email — we can't look up by email if there isn't one\nconst withEmail = contacts.filter(c => {\n    const props = c && c.properties ? c.properties : c; // handles nested OR flat, just in case\n    return props && props.email && String(props.email).trim() !== \"\";\n});\n\nconst inputs = withEmail.map(c => {\n    const props = c.properties ? c.properties : c;\n    return { id: String(props.email).trim().toLowerCase() };\n});\n\nreturn {\n    bodyString: JSON.stringify({ idProperty: \"email\", inputs: inputs }),\n    count: inputs.length\n};"
                             },
+                            "module": "code:ExecuteCode",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 3300,
-                                    "y": 150
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "input": {
-                                            "items": [
-                                                null
-                                            ]
-                                        },
-                                        "language": {
-                                            "mode": "chose",
-                                            "label": "JavaScript"
-                                        },
-                                        "inputFormat": {
-                                            "label": "Code editor"
-                                        }
-                                    }
-                                },
                                 "expect": [
                                     {
                                         "name": "language",
@@ -3111,16 +3082,32 @@
                                         "label": "Code",
                                         "required": true
                                     }
-                                ]
-                            }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "input": {
+                                            "items": [
+                                                null
+                                            ]
+                                        },
+                                        "language": {
+                                            "mode": "chose",
+                                            "label": "JavaScript"
+                                        },
+                                        "inputFormat": {
+                                            "label": "Code editor"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 3300,
+                                    "y": 150
+                                }
+                            },
+                            "parameters": {}
                         },
                         {
                             "id": 31,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "url": "/crm/v3/objects/contacts/batch/read",
                                 "body": "{{30.result.bodyString}}",
@@ -3132,46 +3119,9 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 3600,
-                                    "y": 150,
-                                    "name": "HubSpot (MTMC) > API call — batch read contacts by"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "qs": {
-                                            "mode": "chose"
-                                        },
-                                        "method": {
-                                            "mode": "chose",
-                                            "label": "POST"
-                                        },
-                                        "headers": {
-                                            "mode": "chose",
-                                            "items": [
-                                                null
-                                            ]
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "url",
@@ -3233,14 +3183,53 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "POST"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 3600,
+                                    "y": 150,
+                                    "name": "HubSpot (MTMC) > API call — batch read contacts by"
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             }
                         },
                         {
                             "id": 33,
-                            "module": "code:ExecuteCode",
-                            "version": 1,
-                            "parameters": {},
                             "mapper": {
                                 "input": [
                                     {
@@ -3257,11 +3246,85 @@
                                 "dependencies": [],
                                 "codeEditorJavascript": "const contacts = Array.isArray(input.contacts) ? input.contacts : [];\nconst existingResults = (input.existingRead && Array.isArray(input.existingRead.results))\n    ? input.existingRead.results : [];\n\n// Build a lookup: email -> MTMC contact ID, for anyone MTMC already has\nconst existingByEmail = {};\nfor (const r of existingResults) {\n    const em = (r.properties && r.properties.email ? r.properties.email : \"\").toLowerCase().trim();\n    if (em) existingByEmail[em] = r.id;\n}\n\nconst toCreate = [];     // brand new contacts\nconst toAssociate = [];  // MTMC IDs of contacts that already exist\n\nfor (const c of contacts) {\n    const props = c && c.properties ? c.properties : c; // handles nested OR flat\n    const email = (props.email ? String(props.email) : \"\").toLowerCase().trim();\n\n    if (email && existingByEmail[email]) {\n        // Already exists on MTMC — just remember the ID to link later\n        toAssociate.push(existingByEmail[email]);\n        continue;\n    }\n\n    // New contact (or no email at all) — needs to be created\n    const properties = {};\n    if (email) properties.email = email;\n    if (props.firstname) properties.firstname = String(props.firstname).trim();\n    if (props.lastname) properties.lastname = String(props.lastname).trim();\n    if (props.phone) properties.phone = String(props.phone);\n    if (props.mobilephone) properties.mobilephone = String(props.mobilephone);\n    if (props.jobtitle) properties.jobtitle = String(props.jobtitle);\n\n    toCreate.push({ properties: properties });\n}\n\nreturn {\n    createBodyString: JSON.stringify({ inputs: toCreate }),\n    createCount: toCreate.length,\n    associateIds: toAssociate,\n    associateCount: toAssociate.length\n};"
                             },
+                            "module": "code:ExecuteCode",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 3900,
-                                    "y": 150
-                                },
+                                "expect": [
+                                    {
+                                        "name": "language",
+                                        "type": "select",
+                                        "label": "Language",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "javascript",
+                                                "python"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "input",
+                                        "spec": {
+                                            "name": "value",
+                                            "spec": [
+                                                {
+                                                    "name": "name",
+                                                    "type": "text",
+                                                    "label": "Name",
+                                                    "required": true,
+                                                    "validate": {
+                                                        "max": 32,
+                                                        "min": 1,
+                                                        "pattern": "^[a-zA-Z0-9_]{1,32}$"
+                                                    }
+                                                },
+                                                {
+                                                    "name": "value",
+                                                    "type": "any",
+                                                    "label": "Value"
+                                                }
+                                            ],
+                                            "type": "collection",
+                                            "label": "Variable"
+                                        },
+                                        "type": "array",
+                                        "label": "Input"
+                                    },
+                                    {
+                                        "name": "dependencies",
+                                        "spec": {
+                                            "name": "value",
+                                            "type": "text",
+                                            "label": "Dependency",
+                                            "required": true,
+                                            "validate": {
+                                                "max": 214,
+                                                "min": 1,
+                                                "pattern": "^[A-Za-z0-9_@\\./<>=!~\\^+-]{1,214}$"
+                                            }
+                                        },
+                                        "type": "array",
+                                        "label": "Additional dependencies (Enterprise plans only)"
+                                    },
+                                    {
+                                        "name": "inputFormat",
+                                        "type": "select",
+                                        "label": "Input format",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "editor",
+                                                "string"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "codeEditorJavascript",
+                                        "type": "editor",
+                                        "label": "Code",
+                                        "required": true
+                                    }
+                                ],
                                 "restore": {
                                     "expect": {
                                         "input": {
@@ -3279,91 +3342,15 @@
                                         }
                                     }
                                 },
-                                "expect": [
-                                    {
-                                        "name": "language",
-                                        "type": "select",
-                                        "label": "Language",
-                                        "required": true,
-                                        "validate": {
-                                            "enum": [
-                                                "javascript",
-                                                "python"
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        "name": "input",
-                                        "spec": {
-                                            "name": "value",
-                                            "spec": [
-                                                {
-                                                    "name": "name",
-                                                    "type": "text",
-                                                    "label": "Name",
-                                                    "required": true,
-                                                    "validate": {
-                                                        "max": 32,
-                                                        "min": 1,
-                                                        "pattern": "^[a-zA-Z0-9_]{1,32}$"
-                                                    }
-                                                },
-                                                {
-                                                    "name": "value",
-                                                    "type": "any",
-                                                    "label": "Value"
-                                                }
-                                            ],
-                                            "type": "collection",
-                                            "label": "Variable"
-                                        },
-                                        "type": "array",
-                                        "label": "Input"
-                                    },
-                                    {
-                                        "name": "dependencies",
-                                        "spec": {
-                                            "name": "value",
-                                            "type": "text",
-                                            "label": "Dependency",
-                                            "required": true,
-                                            "validate": {
-                                                "max": 214,
-                                                "min": 1,
-                                                "pattern": "^[A-Za-z0-9_@\\./<>=!~\\^+-]{1,214}$"
-                                            }
-                                        },
-                                        "type": "array",
-                                        "label": "Additional dependencies (Enterprise plans only)"
-                                    },
-                                    {
-                                        "name": "inputFormat",
-                                        "type": "select",
-                                        "label": "Input format",
-                                        "required": true,
-                                        "validate": {
-                                            "enum": [
-                                                "editor",
-                                                "string"
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        "name": "codeEditorJavascript",
-                                        "type": "editor",
-                                        "label": "Code",
-                                        "required": true
-                                    }
-                                ]
-                            }
+                                "designer": {
+                                    "x": 3900,
+                                    "y": 150
+                                }
+                            },
+                            "parameters": {}
                         },
                         {
                             "id": 34,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "url": "/crm/v3/objects/contacts/batch/create",
                                 "body": "{{33.result.createBodyString}}",
@@ -3375,46 +3362,9 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 4200,
-                                    "y": 150,
-                                    "name": "HubSpot (MTMC) > batch create new contacts"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "qs": {
-                                            "mode": "chose"
-                                        },
-                                        "method": {
-                                            "mode": "chose",
-                                            "label": "POST"
-                                        },
-                                        "headers": {
-                                            "mode": "chose",
-                                            "items": [
-                                                null
-                                            ]
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "url",
@@ -3476,14 +3426,53 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "POST"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 4200,
+                                    "y": 150,
+                                    "name": "HubSpot (MTMC) > batch create new contacts"
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             }
                         },
                         {
                             "id": 45,
-                            "module": "code:ExecuteCode",
-                            "version": 1,
-                            "parameters": {},
                             "filter": null,
                             "mapper": {
                                 "input": [
@@ -3501,28 +3490,9 @@
                                 "dependencies": [],
                                 "codeEditorJavascript": "const rawCreated = input.createdContacts;\nconst created = Array.isArray(rawCreated)\n    ? rawCreated\n    : (rawCreated && Array.isArray(rawCreated.results) ? rawCreated.results : []);\n\nconst existing = Array.isArray(input.existingIds) ? input.existingIds : [];\n\nconst createdIds = created.map(c => c.id);\n\nconst merged = [...new Set([...createdIds, ...existing])];\n\nreturn {\n    allContactIds: merged,\n    count: merged.length\n};"
                             },
+                            "module": "code:ExecuteCode",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 4500,
-                                    "y": 150
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "input": {
-                                            "items": [
-                                                null,
-                                                null
-                                            ]
-                                        },
-                                        "language": {
-                                            "mode": "chose",
-                                            "label": "JavaScript"
-                                        },
-                                        "inputFormat": {
-                                            "label": "Code editor"
-                                        }
-                                    }
-                                },
                                 "expect": [
                                     {
                                         "name": "language",
@@ -3598,29 +3568,39 @@
                                         "label": "Code",
                                         "required": true
                                     }
-                                ]
-                            }
-                        },
-                        {
-                            "id": 42,
-                            "module": "builtin:BasicFeeder",
-                            "version": 1,
-                            "parameters": {},
-                            "mapper": {
-                                "array": "{{45.result.allContactIds}}"
-                            },
-                            "metadata": {
-                                "designer": {
-                                    "x": 4800,
-                                    "y": 150
-                                },
+                                ],
                                 "restore": {
                                     "expect": {
-                                        "array": {
-                                            "mode": "edit"
+                                        "input": {
+                                            "items": [
+                                                null,
+                                                null
+                                            ]
+                                        },
+                                        "language": {
+                                            "mode": "chose",
+                                            "label": "JavaScript"
+                                        },
+                                        "inputFormat": {
+                                            "label": "Code editor"
                                         }
                                     }
                                 },
+                                "designer": {
+                                    "x": 4500,
+                                    "y": 150
+                                }
+                            },
+                            "parameters": {}
+                        },
+                        {
+                            "id": 42,
+                            "mapper": {
+                                "array": "{{45.result.allContactIds}}"
+                            },
+                            "module": "builtin:BasicFeeder",
+                            "version": 1,
+                            "metadata": {
                                 "expect": [
                                     {
                                         "mode": "edit",
@@ -3629,16 +3609,23 @@
                                         "type": "array",
                                         "label": "Array"
                                     }
-                                ]
-                            }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "array": {
+                                            "mode": "edit"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 4800,
+                                    "y": 150
+                                }
+                            },
+                            "parameters": {}
                         },
                         {
                             "id": 44,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "url": "/crm/v4/objects/contacts/{{42.value}}/associations/default/deals/{{18.id}}",
                                 "method": "PUT",
@@ -3649,11 +3636,71 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 5100,
-                                    "y": 150
-                                },
+                                "expect": [
+                                    {
+                                        "name": "url",
+                                        "type": "text",
+                                        "label": "URL",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "method",
+                                        "type": "select",
+                                        "label": "Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "GET",
+                                                "POST",
+                                                "PUT",
+                                                "PATCH",
+                                                "DELETE"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Headers"
+                                    },
+                                    {
+                                        "name": "qs",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Query String"
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "any",
+                                        "label": "Body"
+                                    }
+                                ],
                                 "restore": {
                                     "expect": {
                                         "qs": {
@@ -3680,6 +3727,10 @@
                                         }
                                     }
                                 },
+                                "designer": {
+                                    "x": 5100,
+                                    "y": 150
+                                },
                                 "parameters": [
                                     {
                                         "name": "__IMTCONN__",
@@ -3687,86 +3738,20 @@
                                         "label": "Connection",
                                         "required": true
                                     }
-                                ],
-                                "expect": [
-                                    {
-                                        "name": "url",
-                                        "type": "text",
-                                        "label": "URL",
-                                        "required": true
-                                    },
-                                    {
-                                        "name": "method",
-                                        "type": "select",
-                                        "label": "Method",
-                                        "required": true,
-                                        "validate": {
-                                            "enum": [
-                                                "GET",
-                                                "POST",
-                                                "PUT",
-                                                "PATCH",
-                                                "DELETE"
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        "name": "headers",
-                                        "spec": [
-                                            {
-                                                "name": "key",
-                                                "type": "text",
-                                                "label": "Key"
-                                            },
-                                            {
-                                                "name": "value",
-                                                "type": "text",
-                                                "label": "Value"
-                                            }
-                                        ],
-                                        "type": "array",
-                                        "label": "Headers"
-                                    },
-                                    {
-                                        "name": "qs",
-                                        "spec": [
-                                            {
-                                                "name": "key",
-                                                "type": "text",
-                                                "label": "Key"
-                                            },
-                                            {
-                                                "name": "value",
-                                                "type": "text",
-                                                "label": "Value"
-                                            }
-                                        ],
-                                        "type": "array",
-                                        "label": "Query String"
-                                    },
-                                    {
-                                        "name": "body",
-                                        "type": "any",
-                                        "label": "Body"
-                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             }
                         },
                         {
                             "id": 46,
-                            "module": "builtin:BasicAggregator",
-                            "version": 1,
-                            "parameters": {
-                                "feeder": 42
-                            },
                             "mapper": {
                                 "body": "{{44.body}}"
                             },
+                            "module": "builtin:BasicAggregator",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 5400,
-                                    "y": 150
-                                },
                                 "restore": {
                                     "extra": {
                                         "feeder": {
@@ -3776,16 +3761,18 @@
                                             "label": "Custom"
                                         }
                                     }
+                                },
+                                "designer": {
+                                    "x": 5400,
+                                    "y": 150
                                 }
+                            },
+                            "parameters": {
+                                "feeder": 42
                             }
                         },
                         {
                             "id": 48,
-                            "module": "hubspotcrm:ListCRMObjectAssociation",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
                             "mapper": {
                                 "limit": "10",
                                 "objectId": "{{13.hs_object_id}}",
@@ -3794,40 +3781,9 @@
                                     "companies"
                                 ]
                             },
+                            "module": "hubspotcrm:ListCRMObjectAssociation",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 5700,
-                                    "y": 150,
-                                    "name": "Get Associated Companies"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "objectType": {
-                                            "mode": "chose",
-                                            "label": "Deal"
-                                        },
-                                        "toObjectType": {
-                                            "mode": "chose"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "objectType",
@@ -3852,29 +3808,53 @@
                                         "type": "text",
                                         "label": "Object ID"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "objectType": {
+                                            "mode": "chose",
+                                            "label": "Deal"
+                                        },
+                                        "toObjectType": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 5700,
+                                    "y": 150,
+                                    "name": "Get Associated Companies"
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             }
                         },
                         {
                             "id": 49,
-                            "module": "builtin:BasicFeeder",
-                            "version": 1,
-                            "parameters": {},
                             "mapper": {
                                 "array": "{{48.associations.companies[].id}}"
                             },
+                            "module": "builtin:BasicFeeder",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 6000,
-                                    "y": 150
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "array": {
-                                            "mode": "edit"
-                                        }
-                                    }
-                                },
                                 "expect": [
                                     {
                                         "mode": "edit",
@@ -3883,16 +3863,23 @@
                                         "type": "array",
                                         "label": "Array"
                                     }
-                                ]
-                            }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "array": {
+                                            "mode": "edit"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 6000,
+                                    "y": 150
+                                }
+                            },
+                            "parameters": {}
                         },
                         {
                             "id": 50,
-                            "module": "hubspotcrm:getCompany",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
                             "mapper": {
                                 "companyId": "{{49.value}}",
                                 "outputProperties": [
@@ -3906,11 +3893,29 @@
                                 ],
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:getCompany",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 6300,
-                                    "y": 150
-                                },
+                                "expect": [
+                                    {
+                                        "name": "companyId",
+                                        "type": "select",
+                                        "label": "Company ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "outputProperties",
+                                        "type": "select",
+                                        "label": "Output Properties",
+                                        "multiple": true
+                                    },
+                                    {
+                                        "name": "parseCustomFields",
+                                        "type": "boolean",
+                                        "label": "Parse Custom Fields",
+                                        "required": true
+                                    }
+                                ],
                                 "restore": {
                                     "expect": {
                                         "companyId": {
@@ -3942,6 +3947,11 @@
                                         }
                                     }
                                 },
+                                "advanced": true,
+                                "designer": {
+                                    "x": 6300,
+                                    "y": 150
+                                },
                                 "parameters": [
                                     {
                                         "name": "__IMTCONN__",
@@ -3949,81 +3959,23 @@
                                         "label": "Connection",
                                         "required": true
                                     }
-                                ],
-                                "expect": [
-                                    {
-                                        "name": "companyId",
-                                        "type": "select",
-                                        "label": "Company ID",
-                                        "required": true
-                                    },
-                                    {
-                                        "name": "outputProperties",
-                                        "type": "select",
-                                        "label": "Output Properties",
-                                        "multiple": true
-                                    },
-                                    {
-                                        "name": "parseCustomFields",
-                                        "type": "boolean",
-                                        "label": "Parse Custom Fields",
-                                        "required": true
-                                    }
-                                ],
-                                "advanced": true
+                                ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             }
                         },
                         {
                             "id": 60,
-                            "module": "hubspotcrm:searchCompanies",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "limit": "10",
                                 "query": "{{50.properties.domain}}",
                                 "direction": "DESCENDING",
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:searchCompanies",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 6600,
-                                    "y": 150
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "direction": {
-                                            "label": "Descending"
-                                        },
-                                        "propertyName": {
-                                            "mode": "chose"
-                                        },
-                                        "outputProperties": {
-                                            "mode": "chose"
-                                        },
-                                        "parseCustomFields": {
-                                            "mode": "chose"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "outputProperties",
@@ -4904,42 +4856,86 @@
                                         "type": "uinteger",
                                         "label": "Limit"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "direction": {
+                                            "label": "Descending"
+                                        },
+                                        "propertyName": {
+                                            "mode": "chose"
+                                        },
+                                        "outputProperties": {
+                                            "mode": "chose"
+                                        },
+                                        "parseCustomFields": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 6600,
+                                    "y": 150
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             }
                         },
                         {
                             "id": 51,
+                            "mapper": null,
                             "module": "builtin:BasicIfElse",
                             "version": 1,
-                            "mapper": null,
-                            "metadata": {
-                                "designer": {
-                                    "x": 6900,
-                                    "y": 150
-                                }
-                            },
                             "branches": [
                                 {
-                                    "merge": true,
-                                    "label": "Get Company",
-                                    "type": "condition",
                                     "flow": [
                                         {
                                             "id": 62,
-                                            "module": "hubspotcrm:getCompany",
-                                            "version": 2,
-                                            "parameters": {
-                                                "__IMTCONN__": 9423792
-                                            },
                                             "mapper": {
                                                 "companyId": "{{60.id}}",
                                                 "parseCustomFields": true
                                             },
+                                            "module": "hubspotcrm:getCompany",
+                                            "version": 2,
                                             "metadata": {
-                                                "designer": {
-                                                    "x": 7200,
-                                                    "y": 0
-                                                },
+                                                "expect": [
+                                                    {
+                                                        "name": "companyId",
+                                                        "type": "select",
+                                                        "label": "Company ID",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "outputProperties",
+                                                        "type": "select",
+                                                        "label": "Output Properties",
+                                                        "multiple": true
+                                                    },
+                                                    {
+                                                        "name": "parseCustomFields",
+                                                        "type": "boolean",
+                                                        "label": "Parse Custom Fields",
+                                                        "required": true
+                                                    }
+                                                ],
                                                 "restore": {
                                                     "expect": {
                                                         "companyId": {
@@ -4962,6 +4958,10 @@
                                                         }
                                                     }
                                                 },
+                                                "designer": {
+                                                    "x": 7200,
+                                                    "y": 0
+                                                },
                                                 "parameters": [
                                                     {
                                                         "name": "__IMTCONN__",
@@ -4969,30 +4969,16 @@
                                                         "label": "Connection",
                                                         "required": true
                                                     }
-                                                ],
-                                                "expect": [
-                                                    {
-                                                        "name": "companyId",
-                                                        "type": "select",
-                                                        "label": "Company ID",
-                                                        "required": true
-                                                    },
-                                                    {
-                                                        "name": "outputProperties",
-                                                        "type": "select",
-                                                        "label": "Output Properties",
-                                                        "multiple": true
-                                                    },
-                                                    {
-                                                        "name": "parseCustomFields",
-                                                        "type": "boolean",
-                                                        "label": "Parse Custom Fields",
-                                                        "required": true
-                                                    }
                                                 ]
+                                            },
+                                            "parameters": {
+                                                "__IMTCONN__": 9423792
                                             }
                                         }
                                     ],
+                                    "type": "condition",
+                                    "label": "Get Company",
+                                    "merge": true,
                                     "conditions": [
                                         [
                                             {
@@ -5003,18 +4989,9 @@
                                     ]
                                 },
                                 {
-                                    "merge": true,
-                                    "disabled": false,
-                                    "label": "",
-                                    "type": "else",
                                     "flow": [
                                         {
                                             "id": 77,
-                                            "module": "hubspotcrm:CreateTicket",
-                                            "version": 2,
-                                            "parameters": {
-                                                "__IMTCONN__": 9423792
-                                            },
                                             "filter": {
                                                 "name": "Create Company"
                                             },
@@ -5057,109 +5034,9 @@
                                                 "hs_pipeline_stage": "1",
                                                 "parseCustomFields": true
                                             },
+                                            "module": "hubspotcrm:CreateTicket",
+                                            "version": 2,
                                             "metadata": {
-                                                "designer": {
-                                                    "x": 7200,
-                                                    "y": 300
-                                                },
-                                                "restore": {
-                                                    "expect": {
-                                                        "_method": {
-                                                            "mode": "chose",
-                                                            "label": "Compact"
-                                                        },
-                                                        "properties": {
-                                                            "mode": "chose",
-                                                            "items": [
-                                                                {
-                                                                    "key": {
-                                                                        "mode": "chose",
-                                                                        "label": "Company Name"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "key": {
-                                                                        "mode": "chose",
-                                                                        "label": "Company Domain Name"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "key": {
-                                                                        "mode": "chose",
-                                                                        "label": "Company Address"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "key": {
-                                                                        "mode": "chose",
-                                                                        "label": "Company City"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "key": {
-                                                                        "mode": "chose",
-                                                                        "label": "Company Zip"
-                                                                    }
-                                                                },
-                                                                {
-                                                                    "key": {
-                                                                        "mode": "chose",
-                                                                        "label": "Ticket Description"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        },
-                                                        "hs_pipeline": {
-                                                            "mode": "chose",
-                                                            "label": "Company Creation Requests",
-                                                            "nested": [
-                                                                {
-                                                                    "help": "The ticket's status.",
-                                                                    "name": "hs_pipeline_stage",
-                                                                    "type": "select",
-                                                                    "label": "Pipeline Stage",
-                                                                    "options": "rpc://hubspotcrm/2/pipelineStages?objectType=tickets",
-                                                                    "required": true
-                                                                }
-                                                            ]
-                                                        },
-                                                        "associations": {
-                                                            "mode": "chose",
-                                                            "items": [
-                                                                {
-                                                                    "typeId": {
-                                                                        "mode": "chose",
-                                                                        "label": "Ticket to Deal"
-                                                                    }
-                                                                }
-                                                            ]
-                                                        },
-                                                        "hs_pipeline_stage": {
-                                                            "mode": "chose",
-                                                            "label": "New"
-                                                        },
-                                                        "parseCustomFields": {
-                                                            "mode": "chose"
-                                                        }
-                                                    },
-                                                    "parameters": {
-                                                        "__IMTCONN__": {
-                                                            "data": {
-                                                                "scoped": "true",
-                                                                "connection": "hubspotcrm"
-                                                            },
-                                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                                        }
-                                                    }
-                                                },
-                                                "parameters": [
-                                                    {
-                                                        "name": "__IMTCONN__",
-                                                        "type": "account:hubspotcrm",
-                                                        "label": "Connection",
-                                                        "required": true
-                                                    }
-                                                ],
                                                 "expect": [
                                                     {
                                                         "name": "_method",
@@ -5253,24 +5130,136 @@
                                                         "label": "Pipeline Stage",
                                                         "required": true
                                                     }
+                                                ],
+                                                "restore": {
+                                                    "expect": {
+                                                        "_method": {
+                                                            "mode": "chose",
+                                                            "label": "Compact"
+                                                        },
+                                                        "properties": {
+                                                            "mode": "chose",
+                                                            "items": [
+                                                                {
+                                                                    "key": {
+                                                                        "mode": "chose",
+                                                                        "label": "Company Name"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": {
+                                                                        "mode": "chose",
+                                                                        "label": "Company Domain Name"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": {
+                                                                        "mode": "chose",
+                                                                        "label": "Company Address"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": {
+                                                                        "mode": "chose",
+                                                                        "label": "Company City"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": {
+                                                                        "mode": "chose",
+                                                                        "label": "Company Zip"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "key": {
+                                                                        "mode": "chose",
+                                                                        "label": "Ticket Description"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        "hs_pipeline": {
+                                                            "mode": "chose",
+                                                            "label": "Company Creation Requests",
+                                                            "nested": [
+                                                                {
+                                                                    "help": "The ticket's status.",
+                                                                    "name": "hs_pipeline_stage",
+                                                                    "type": "select",
+                                                                    "label": "Pipeline Stage",
+                                                                    "options": "rpc://hubspotcrm/2/pipelineStages?objectType=tickets",
+                                                                    "required": true
+                                                                }
+                                                            ]
+                                                        },
+                                                        "associations": {
+                                                            "mode": "chose",
+                                                            "items": [
+                                                                {
+                                                                    "typeId": {
+                                                                        "mode": "chose",
+                                                                        "label": "Ticket to Deal"
+                                                                    }
+                                                                }
+                                                            ]
+                                                        },
+                                                        "hs_pipeline_stage": {
+                                                            "mode": "chose",
+                                                            "label": "New"
+                                                        },
+                                                        "parseCustomFields": {
+                                                            "mode": "chose"
+                                                        }
+                                                    },
+                                                    "parameters": {
+                                                        "__IMTCONN__": {
+                                                            "data": {
+                                                                "scoped": "true",
+                                                                "connection": "hubspotcrm"
+                                                            },
+                                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                                        }
+                                                    }
+                                                },
+                                                "designer": {
+                                                    "x": 7200,
+                                                    "y": 300
+                                                },
+                                                "parameters": [
+                                                    {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:hubspotcrm",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                    }
                                                 ]
+                                            },
+                                            "parameters": {
+                                                "__IMTCONN__": 9423792
                                             }
                                         }
-                                    ]
+                                    ],
+                                    "type": "else",
+                                    "label": "",
+                                    "merge": true,
+                                    "disabled": false
                                 }
-                            ]
+                            ],
+                            "metadata": {
+                                "designer": {
+                                    "x": 6900,
+                                    "y": 150
+                                }
+                            }
                         },
                         {
                             "id": 56,
-                            "module": "builtin:BasicMerge",
-                            "version": 1,
                             "mapper": null,
-                            "metadata": {
-                                "designer": {
-                                    "x": 7500,
-                                    "y": 150
-                                }
-                            },
+                            "module": "builtin:BasicMerge",
+                            "filters": [
+                                null,
+                                null
+                            ],
                             "outputs": [
                                 {
                                     "name": "Company ID",
@@ -5280,18 +5269,16 @@
                                     ]
                                 }
                             ],
-                            "filters": [
-                                null,
-                                null
-                            ]
+                            "version": 1,
+                            "metadata": {
+                                "designer": {
+                                    "x": 7500,
+                                    "y": 150
+                                }
+                            }
                         },
                         {
                             "id": 63,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "url": "/crm/v4/objects/companies/{{56.`Company ID`}}/associations/default/deals/{{18.id}}",
                                 "method": "PUT",
@@ -5302,46 +5289,25 @@
                                     }
                                 ]
                             },
-                            "metadata": {
-                                "designer": {
-                                    "x": 7800,
-                                    "y": 150,
-                                    "name": "Associate Company with Deal (MTMC)"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "qs": {
-                                            "mode": "chose"
-                                        },
-                                        "method": {
-                                            "mode": "chose",
-                                            "label": "PUT"
-                                        },
-                                        "headers": {
-                                            "mode": "chose",
-                                            "items": [
-                                                null
-                                            ]
+                            "module": "hubspotcrm:MakeAPICall",
+                            "onerror": [
+                                {
+                                    "id": 79,
+                                    "mapper": {},
+                                    "module": "builtin:Ignore",
+                                    "version": 1,
+                                    "metadata": {
+                                        "restore": {},
+                                        "designer": {
+                                            "x": 8100,
+                                            "y": 300
                                         }
                                     },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
+                                    "parameters": {}
+                                }
+                            ],
+                            "version": 2,
+                            "metadata": {
                                 "expect": [
                                     {
                                         "name": "url",
@@ -5403,39 +5369,58 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "PUT"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null
+                                            ]
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 7800,
+                                    "y": 150,
+                                    "name": "Associate Company with Deal (MTMC)"
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
                             },
-                            "onerror": [
-                                {
-                                    "id": 79,
-                                    "module": "builtin:Ignore",
-                                    "version": 1,
-                                    "parameters": {},
-                                    "mapper": {},
-                                    "metadata": {
-                                        "designer": {
-                                            "x": 8100,
-                                            "y": 300
-                                        },
-                                        "restore": {}
-                                    }
-                                }
-                            ]
+                            "parameters": {
+                                "__IMTCONN__": 9423792
+                            }
                         },
                         {
                             "id": 73,
-                            "module": "builtin:BasicAggregator",
-                            "version": 1,
-                            "parameters": {
-                                "feeder": 49
-                            },
                             "filter": null,
                             "mapper": {},
+                            "module": "builtin:BasicAggregator",
+                            "version": 1,
                             "metadata": {
-                                "designer": {
-                                    "x": 8100,
-                                    "y": 0
-                                },
                                 "restore": {
                                     "extra": {
                                         "feeder": {
@@ -5445,16 +5430,18 @@
                                             "label": "Custom"
                                         }
                                     }
+                                },
+                                "designer": {
+                                    "x": 8100,
+                                    "y": 0
                                 }
+                            },
+                            "parameters": {
+                                "feeder": 49
                             }
                         },
                         {
                             "id": 64,
-                            "module": "hubspotcrm:createDeal",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
                             "mapper": {
                                 "amount": "{{12.properties.amount}}",
                                 "_method": "all",
@@ -5482,206 +5469,9 @@
                                 "mtmc_deal_source": "Nuance",
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:createDeal",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 8400,
-                                    "y": 0,
-                                    "name": "Create Deal 3 on MTMC Sync (Nuance)"
-                                },
-                                "setupValidation": {
-                                    "result": {
-                                        "valid": true,
-                                        "fields": []
-                                    },
-                                    "version": 1,
-                                    "configuration": "26b61560f2cf4ace"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "gpo": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "pds": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "_method": {
-                                            "mode": "chose",
-                                            "label": "All Fields"
-                                        },
-                                        "product": {
-                                            "mode": "chose"
-                                        },
-                                        "dealtype": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "pipeline": {
-                                            "mode": "edit"
-                                        },
-                                        "dealstage": {
-                                            "mode": "edit"
-                                        },
-                                        "promo_sale": {
-                                            "mode": "chose"
-                                        },
-                                        "distributor": {
-                                            "mode": "edit"
-                                        },
-                                        "hs_priority": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "associations": {
-                                            "mode": "chose",
-                                            "items": [
-                                                {
-                                                    "associationTypeId": {
-                                                        "mode": "chose",
-                                                        "label": "Deal to deal"
-                                                    },
-                                                    "associationCategory": {
-                                                        "mode": "chose",
-                                                        "label": "Hubspot Defined"
-                                                    }
-                                                }
-                                            ]
-                                        },
-                                        "skip_approval": {
-                                            "mode": "chose"
-                                        },
-                                        "private_label_": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "sample_sent_to": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "target_product": {
-                                            "mode": "chose"
-                                        },
-                                        "field_sales_rep": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "cryodose_product": {
-                                            "mode": "chose",
-                                            "label": "TA"
-                                        },
-                                        "hubspot_owner_id": {
-                                            "mode": "edit"
-                                        },
-                                        "mtmc_deal_source": {
-                                            "mode": "chose",
-                                            "label": "Nuance"
-                                        },
-                                        "send_deal_to_tpl": {
-                                            "mode": "chose"
-                                        },
-                                        "legacy_deal_owner": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "legacy_deal_stage": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "parseCustomFields": {
-                                            "mode": "chose"
-                                        },
-                                        "request_approval_": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "closed_lost_reason": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "deal_currency_code": {
-                                            "mode": "edit"
-                                        },
-                                        "hs_shared_team_ids": {
-                                            "mode": "edit"
-                                        },
-                                        "hs_shared_user_ids": {
-                                            "mode": "edit"
-                                        },
-                                        "hs_analytics_source": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "hs_partner_tech_win": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "legacy_deal_pipeline": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "line_items_backfilled": {
-                                            "mode": "chose"
-                                        },
-                                        "hs_is_active_shared_deal": {
-                                            "mode": "chose"
-                                        },
-                                        "stock_and_sell_deal_type": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "hs_manual_forecast_category": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "hs_all_collaborator_owner_ids": {
-                                            "mode": "edit"
-                                        },
-                                        "company_and_contact_backfilled": {
-                                            "mode": "chose"
-                                        },
-                                        "deal_sent_back_to_pre_approval_": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "field_sales_approver___dropdown": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "internal__private_label_checker": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "hs_all_assigned_business_unit_ids": {
-                                            "mode": "edit"
-                                        },
-                                        "notifications__field_sales_approver": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        },
-                                        "has_the_deal_handover_been_approved_": {
-                                            "mode": "chose",
-                                            "label": "Empty"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "_method",
@@ -6710,16 +6500,213 @@
                                         "type": "array",
                                         "label": "Associations"
                                     }
-                                ]
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "gpo": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "pds": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "_method": {
+                                            "mode": "chose",
+                                            "label": "All Fields"
+                                        },
+                                        "product": {
+                                            "mode": "chose"
+                                        },
+                                        "dealtype": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "pipeline": {
+                                            "mode": "edit"
+                                        },
+                                        "dealstage": {
+                                            "mode": "edit"
+                                        },
+                                        "promo_sale": {
+                                            "mode": "chose"
+                                        },
+                                        "distributor": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_priority": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "associations": {
+                                            "mode": "chose",
+                                            "items": [
+                                                {
+                                                    "associationTypeId": {
+                                                        "mode": "chose",
+                                                        "label": "Deal to deal"
+                                                    },
+                                                    "associationCategory": {
+                                                        "mode": "chose",
+                                                        "label": "Hubspot Defined"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "skip_approval": {
+                                            "mode": "chose"
+                                        },
+                                        "private_label_": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "sample_sent_to": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "target_product": {
+                                            "mode": "chose"
+                                        },
+                                        "field_sales_rep": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "cryodose_product": {
+                                            "mode": "chose",
+                                            "label": "TA"
+                                        },
+                                        "hubspot_owner_id": {
+                                            "mode": "edit"
+                                        },
+                                        "mtmc_deal_source": {
+                                            "mode": "chose",
+                                            "label": "Nuance"
+                                        },
+                                        "send_deal_to_tpl": {
+                                            "mode": "chose"
+                                        },
+                                        "legacy_deal_owner": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "legacy_deal_stage": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "parseCustomFields": {
+                                            "mode": "chose"
+                                        },
+                                        "request_approval_": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "closed_lost_reason": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "deal_currency_code": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_shared_team_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_shared_user_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "hs_analytics_source": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_partner_tech_win": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "legacy_deal_pipeline": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "line_items_backfilled": {
+                                            "mode": "chose"
+                                        },
+                                        "hs_is_active_shared_deal": {
+                                            "mode": "chose"
+                                        },
+                                        "stock_and_sell_deal_type": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_manual_forecast_category": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_all_collaborator_owner_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "company_and_contact_backfilled": {
+                                            "mode": "chose"
+                                        },
+                                        "deal_sent_back_to_pre_approval_": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "field_sales_approver___dropdown": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "internal__private_label_checker": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "hs_all_assigned_business_unit_ids": {
+                                            "mode": "edit"
+                                        },
+                                        "notifications__field_sales_approver": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        },
+                                        "has_the_deal_handover_been_approved_": {
+                                            "mode": "chose",
+                                            "label": "Empty"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 8400,
+                                    "y": 0,
+                                    "name": "Create Deal 3 on MTMC Sync (Nuance)"
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "setupValidation": {
+                                    "result": {
+                                        "valid": true,
+                                        "fields": []
+                                    },
+                                    "version": 1,
+                                    "configuration": "26b61560f2cf4ace"
+                                }
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             }
                         },
                         {
                             "id": 65,
-                            "module": "hubspotcrm:updateDeal",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "dealId": "{{18.id}}",
                                 "_method": "compact",
@@ -6731,51 +6718,9 @@
                                 ],
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:updateDeal",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 8700,
-                                    "y": 0,
-                                    "name": "HubSpot (MTMC) — Update a Deal"
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "_method": {
-                                            "mode": "chose",
-                                            "label": "Compact"
-                                        },
-                                        "properties": {
-                                            "mode": "chose",
-                                            "items": [
-                                                {
-                                                    "key": {
-                                                        "mode": "chose",
-                                                        "label": "Nuance Deal ID"
-                                                    }
-                                                }
-                                            ]
-                                        },
-                                        "parseCustomFields": {
-                                            "mode": "chose"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "__IMTCONN__": {
-                                            "data": {
-                                                "scoped": "true",
-                                                "connection": "hubspotcrm"
-                                            },
-                                            "label": "MTMC HubSpot (admin@revgravy.com)"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "__IMTCONN__",
-                                        "type": "account:hubspotcrm",
-                                        "label": "Connection",
-                                        "required": true
-                                    }
-                                ],
                                 "expect": [
                                     {
                                         "name": "dealId",
@@ -6820,16 +6765,58 @@
                                         "type": "array",
                                         "label": "Properties"
                                     }
+                                ],
+                                "restore": {
+                                    "expect": {
+                                        "_method": {
+                                            "mode": "chose",
+                                            "label": "Compact"
+                                        },
+                                        "properties": {
+                                            "mode": "chose",
+                                            "items": [
+                                                {
+                                                    "key": {
+                                                        "mode": "chose",
+                                                        "label": "Nuance Deal ID"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "parseCustomFields": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "hubspotcrm"
+                                            },
+                                            "label": "MTMC HubSpot (admin@revgravy.com)"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 8700,
+                                    "y": 0,
+                                    "name": "HubSpot (MTMC) — Update a Deal"
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:hubspotcrm",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
                             }
                         },
                         {
                             "id": 76,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "url": "/crm/v4/objects/2-56805751/47591994658/associations/default/deals/{{18.id}}",
                                 "method": "PUT",
@@ -6840,12 +6827,71 @@
                                     }
                                 ]
                             },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 9000,
-                                    "y": 0,
-                                    "name": "Associate Deal with Nuance Supplier"
-                                },
+                                "expect": [
+                                    {
+                                        "name": "url",
+                                        "type": "text",
+                                        "label": "URL",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "method",
+                                        "type": "select",
+                                        "label": "Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "GET",
+                                                "POST",
+                                                "PUT",
+                                                "PATCH",
+                                                "DELETE"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Headers"
+                                    },
+                                    {
+                                        "name": "qs",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Query String"
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "any",
+                                        "label": "Body"
+                                    }
+                                ],
                                 "restore": {
                                     "expect": {
                                         "qs": {
@@ -6872,6 +6918,11 @@
                                         }
                                     }
                                 },
+                                "designer": {
+                                    "x": 9000,
+                                    "y": 0,
+                                    "name": "Associate Deal with Nuance Supplier"
+                                },
                                 "parameters": [
                                     {
                                         "name": "__IMTCONN__",
@@ -6879,7 +6930,108 @@
                                         "label": "Connection",
                                         "required": true
                                     }
+                                ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9423792
+                            }
+                        },
+                        {
+                            "id": 74,
+                            "mapper": {
+                                "key": "nuance_handoff",
+                                "data": {
+                                    "last_run_at": "{{formatDate(now; \"x\")}}"
+                                },
+                                "overwrite": true
+                            },
+                            "module": "datastore:AddRecord",
+                            "version": 1,
+                            "metadata": {
+                                "expect": [
+                                    {
+                                        "name": "key",
+                                        "type": "text",
+                                        "label": "Key"
+                                    },
+                                    {
+                                        "name": "overwrite",
+                                        "type": "boolean",
+                                        "label": "Overwrite an existing record",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "data",
+                                        "spec": [
+                                            {
+                                                "name": "last_run_at",
+                                                "type": "text",
+                                                "label": null
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
                                 ],
+                                "restore": {
+                                    "expect": {
+                                        "overwrite": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "datastore": {
+                                            "label": "sync_watermarks"
+                                        }
+                                    }
+                                },
+                                "designer": {
+                                    "x": 9300,
+                                    "y": 0
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "datastore",
+                                        "type": "datastore",
+                                        "label": "Data store",
+                                        "required": true
+                                    }
+                                ]
+                            },
+                            "parameters": {
+                                "datastore": 114187
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 87,
+                            "filter": {
+                                "name": "Update",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{12.properties.mtmc_deal_id}}",
+                                            "o": "exist"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "url": "/crm/v3/owners/{{12.properties.hubspot_owner_id}}",
+                                "method": "GET",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ]
+                            },
+                            "module": "hubspotcrm:MakeAPICall",
+                            "version": 2,
+                            "metadata": {
                                 "expect": [
                                     {
                                         "name": "url",
@@ -6941,113 +7093,7 @@
                                         "type": "any",
                                         "label": "Body"
                                     }
-                                ]
-                            }
-                        },
-                        {
-                            "id": 74,
-                            "module": "datastore:AddRecord",
-                            "version": 1,
-                            "parameters": {
-                                "datastore": 114187
-                            },
-                            "mapper": {
-                                "key": "nuance_handoff",
-                                "data": {
-                                    "last_run_at": "{{formatDate(now; \"x\")}}"
-                                },
-                                "overwrite": true
-                            },
-                            "metadata": {
-                                "designer": {
-                                    "x": 9300,
-                                    "y": 0
-                                },
-                                "restore": {
-                                    "expect": {
-                                        "overwrite": {
-                                            "mode": "chose"
-                                        }
-                                    },
-                                    "parameters": {
-                                        "datastore": {
-                                            "label": "sync_watermarks"
-                                        }
-                                    }
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "datastore",
-                                        "type": "datastore",
-                                        "label": "Data store",
-                                        "required": true
-                                    }
                                 ],
-                                "expect": [
-                                    {
-                                        "name": "key",
-                                        "type": "text",
-                                        "label": "Key"
-                                    },
-                                    {
-                                        "name": "overwrite",
-                                        "type": "boolean",
-                                        "label": "Overwrite an existing record",
-                                        "required": true
-                                    },
-                                    {
-                                        "name": "data",
-                                        "spec": [
-                                            {
-                                                "name": "last_run_at",
-                                                "type": "text",
-                                                "label": null
-                                            }
-                                        ],
-                                        "type": "collection",
-                                        "label": "Record"
-                                    }
-                                ]
-                            }
-                        }
-                    ]
-                },
-                {
-                    "flow": [
-                        {
-                            "id": 87,
-                            "module": "hubspotcrm:MakeAPICall",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9735744
-                            },
-                            "filter": {
-                                "name": "Update",
-                                "conditions": [
-                                    [
-                                        {
-                                            "a": "{{12.properties.mtmc_deal_id}}",
-                                            "o": "exist"
-                                        }
-                                    ]
-                                ]
-                            },
-                            "mapper": {
-                                "url": "/crm/v3/owners/{{12.properties.hubspot_owner_id}}",
-                                "method": "GET",
-                                "headers": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ]
-                            },
-                            "metadata": {
-                                "designer": {
-                                    "x": 600,
-                                    "y": 600,
-                                    "name": "Get Deal Owner Data"
-                                },
                                 "restore": {
                                     "expect": {
                                         "qs": {
@@ -7074,6 +7120,11 @@
                                         }
                                     }
                                 },
+                                "designer": {
+                                    "x": 600,
+                                    "y": 600,
+                                    "name": "Get Deal Owner Data"
+                                },
                                 "parameters": [
                                     {
                                         "name": "__IMTCONN__",
@@ -7081,78 +7132,14 @@
                                         "label": "Connection",
                                         "required": true
                                     }
-                                ],
-                                "expect": [
-                                    {
-                                        "name": "url",
-                                        "type": "text",
-                                        "label": "URL",
-                                        "required": true
-                                    },
-                                    {
-                                        "name": "method",
-                                        "type": "select",
-                                        "label": "Method",
-                                        "required": true,
-                                        "validate": {
-                                            "enum": [
-                                                "GET",
-                                                "POST",
-                                                "PUT",
-                                                "PATCH",
-                                                "DELETE"
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        "name": "headers",
-                                        "spec": [
-                                            {
-                                                "name": "key",
-                                                "type": "text",
-                                                "label": "Key"
-                                            },
-                                            {
-                                                "name": "value",
-                                                "type": "text",
-                                                "label": "Value"
-                                            }
-                                        ],
-                                        "type": "array",
-                                        "label": "Headers"
-                                    },
-                                    {
-                                        "name": "qs",
-                                        "spec": [
-                                            {
-                                                "name": "key",
-                                                "type": "text",
-                                                "label": "Key"
-                                            },
-                                            {
-                                                "name": "value",
-                                                "type": "text",
-                                                "label": "Value"
-                                            }
-                                        ],
-                                        "type": "array",
-                                        "label": "Query String"
-                                    },
-                                    {
-                                        "name": "body",
-                                        "type": "any",
-                                        "label": "Body"
-                                    }
                                 ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 9735744
                             }
                         },
                         {
                             "id": 86,
-                            "module": "hubspotcrm:updateDeal",
-                            "version": 2,
-                            "parameters": {
-                                "__IMTCONN__": 9423792
-                            },
                             "mapper": {
                                 "dealId": "{{12.properties.mtmc_deal_id}}",
                                 "_method": "compact",
@@ -7184,12 +7171,71 @@
                                 ],
                                 "parseCustomFields": true
                             },
+                            "module": "hubspotcrm:updateDeal",
+                            "onerror": [
+                                {
+                                    "id": 95,
+                                    "filter": {
+                                        "name": "Catch all",
+                                        "conditions": []
+                                    },
+                                    "module": "builtin:Ignore",
+                                    "version": 1,
+                                    "metadata": {
+                                        "designer": {
+                                            "x": 1200,
+                                            "y": 600
+                                        }
+                                    }
+                                }
+                            ],
+                            "version": 2,
                             "metadata": {
-                                "designer": {
-                                    "x": 900,
-                                    "y": 600,
-                                    "name": "Update MTMC Deal"
-                                },
+                                "expect": [
+                                    {
+                                        "name": "dealId",
+                                        "type": "uinteger",
+                                        "label": "Deal ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "_method",
+                                        "type": "select",
+                                        "label": "View Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "compact",
+                                                "all"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "parseCustomFields",
+                                        "type": "boolean",
+                                        "label": "Parse Custom Fields",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "properties",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "select",
+                                                "label": "Key",
+                                                "dynamic": true,
+                                                "options": []
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "any",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Properties"
+                                    }
+                                ],
                                 "restore": {
                                     "expect": {
                                         "_method": {
@@ -7251,6 +7297,11 @@
                                         }
                                     }
                                 },
+                                "designer": {
+                                    "x": 900,
+                                    "y": 600,
+                                    "name": "Update MTMC Deal"
+                                },
                                 "parameters": [
                                     {
                                         "name": "__IMTCONN__",
@@ -7258,95 +7309,50 @@
                                         "label": "Connection",
                                         "required": true
                                     }
-                                ],
-                                "expect": [
-                                    {
-                                        "name": "dealId",
-                                        "type": "uinteger",
-                                        "label": "Deal ID",
-                                        "required": true
-                                    },
-                                    {
-                                        "name": "_method",
-                                        "type": "select",
-                                        "label": "View Method",
-                                        "required": true,
-                                        "validate": {
-                                            "enum": [
-                                                "compact",
-                                                "all"
-                                            ]
-                                        }
-                                    },
-                                    {
-                                        "name": "parseCustomFields",
-                                        "type": "boolean",
-                                        "label": "Parse Custom Fields",
-                                        "required": true
-                                    },
-                                    {
-                                        "name": "properties",
-                                        "spec": [
-                                            {
-                                                "name": "key",
-                                                "type": "select",
-                                                "label": "Key",
-                                                "dynamic": true,
-                                                "options": []
-                                            },
-                                            {
-                                                "name": "value",
-                                                "type": "any",
-                                                "label": "Value"
-                                            }
-                                        ],
-                                        "type": "array",
-                                        "label": "Properties"
-                                    }
                                 ]
                             },
-                            "onerror": [
-                                {
-                                    "id": 95,
-                                    "module": "builtin:Ignore",
-                                    "version": 1,
-                                    "filter": {
-                                        "name": "Catch all",
-                                        "conditions": []
-                                    },
-                                    "metadata": {
-                                        "designer": {
-                                            "x": 1200,
-                                            "y": 600
-                                        }
-                                    }
-                                }
-                            ]
+                            "parameters": {
+                                "__IMTCONN__": 9423792
+                            }
                         }
                     ]
                 }
-            ]
+            ],
+            "version": 1,
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 300
+                }
+            }
         }
     ],
+    "name": "Nuance Deal to MTMC Sync (Create and Update) READY",
     "metadata": {
         "instant": false,
         "version": 1,
-        "scenario": {
-            "roundtrips": 1,
-            "maxErrors": 3,
-            "autoCommit": true,
-            "autoCommitTriggerLast": true,
-            "sequential": false,
-            "slots": null,
-            "confidential": false,
-            "dataloss": false,
-            "dlq": false,
-            "freshVariables": false
-        },
         "designer": {
             "orphans": []
         },
-        "zone": "us2.make.com",
-        "notes": []
+        "scenario": {
+            "dlq": false,
+            "slots": null,
+            "dataloss": false,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "roundtrips": 1,
+            "sequential": false,
+            "confidential": false,
+            "freshVariables": false,
+            "autoCommitTriggerLast": true
+        }
+    },
+    "scheduling": {
+        "type": "indefinitely",
+        "interval": 10800
+    },
+    "interface": {
+        "input": [],
+        "output": []
     }
 }
