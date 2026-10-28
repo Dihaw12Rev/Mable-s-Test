@@ -45,7 +45,7 @@ test("company_choose_match: shared health-system domain prefers the name match",
     const search = { results: [
         { id: "100", properties: { name: "NYU Langone Health", domain: "nyulangone.org" } },
         { id: "200", properties: { name: "NYU Langone Orthopedics, Inc.", domain: "nyulangone.org", city: "" } }] };
-    let r = run("company_choose_match.js", { search, domain: "nyulangone.org", name: "NYU Langone Orthopedics" });
+    let r = run("company_choose_match.js", { search, domain: "nyulangone.org", name: "nyu langone orthopedics, inc." });
     assert.strictEqual(r.matchId, "200");
     assert.strictEqual(r.matchedBy, "domain+name");
     assert.strictEqual(r.sharedDomain, 2);
@@ -53,19 +53,19 @@ test("company_choose_match: shared health-system domain prefers the name match",
     assert.deepStrictEqual([r.matchId, r.matchedBy], ["100", "domain (shared, oldest)"]);
 });
 
-test("company_choose_match: name step ignores punctuation and Inc/LLC/PC", () => {
-    const search = { results: [{ id: "7", properties: { name: "Westchester Foot Care, P.C.", domain: "" } }] };
-    const r = run("company_choose_match.js", { search, domain: "", name: "westchester foot care pc" });
+test("company_choose_match: name step is exact (case and spacing only), as agreed", () => {
+    const search = { results: [{ id: "7", properties: { name: "Westchester  Foot Care", domain: "" } },
+                               { id: "8", properties: { name: "Westchester Foot Care, P.C.", domain: "" } }] };
+    let r = run("company_choose_match.js", { search, domain: "", name: " westchester foot care " });
     assert.deepStrictEqual([r.matchId, r.matchedBy], ["7", "name"]);
+    r = run("company_choose_match.js", { search: { results: [search.results[1]] }, domain: "", name: "Westchester Foot Care PC" });
+    assert.deepStrictEqual([r.matchId, r.matchedBy], [null, "none"]);   // different punctuation = no match -> create
 });
 
-test("company_choose_match: only blank fields are filled on a matched company", () => {
-    const search = { results: [{ id: "9", properties: { name: "Acme", domain: "acme.com", address: "1 Main St", city: "", zip: null } }] };
-    const r = run("company_choose_match.js", { search, domain: "acme.com", name: "Acme",
-        details: { name: "ACME Podiatry", domain: "acme.com", address: "99 Other Rd", city: "Rye", zip: "10580" } });
-    assert.deepStrictEqual(JSON.parse(r.fillBody).properties, { city: "Rye", zip: "10580" });
-    assert.strictEqual(r.fillCount, 2);
-    assert.strictEqual(run("company_choose_match.js", { search, domain: "acme.com", name: "Acme" }).fillCount, 0);
+test("company_choose_match: matched companies are only linked (no edit fields returned)", () => {
+    const r = run("company_choose_match.js", { search: { results: [{ id: "9", properties: { name: "Acme", domain: "acme.com" } }] },
+        domain: "acme.com", name: "Acme", details: { city: "Rye" } });
+    assert.deepStrictEqual(Object.keys(r).sort(), ["matchId", "matchedBy", "sharedDomain"]);
 });
 
 test("company_choose_match: domain beats name, stable tie-break, no match", () => {
@@ -77,9 +77,11 @@ test("company_choose_match: domain beats name, stable tie-break, no match", () =
     // Domain beats a name match on another domain; two records share acme.com, so the oldest wins.
     let r = run("company_choose_match.js", { search, domain: "acme.com", name: "Acme Clinic" });
     assert.deepStrictEqual(pick(r), ["300", "domain (shared, oldest)"]);
-    // ...unless one of them also matches the name (suffix-insensitive).
-    r = run("company_choose_match.js", { search, domain: "acme.com", name: "Acme Podiatry" });
+    // ...unless one of them also matches the name exactly.
+    r = run("company_choose_match.js", { search, domain: "acme.com", name: "Acme Podiatry LLC" });
     assert.deepStrictEqual(pick(r), ["300", "domain+name"]);
+    r = run("company_choose_match.js", { search, domain: "acme.com", name: "acme podiatry" });
+    assert.deepStrictEqual(pick(r), ["500", "domain+name"]);
     r = run("company_choose_match.js", { search: { results: [search.results[1]] }, domain: "acme.com", name: "Whatever" });
     assert.deepStrictEqual(pick(r), ["500", "domain"]);
     r = run("company_choose_match.js", { search, domain: "nomatch.com", name: "acme clinic" });

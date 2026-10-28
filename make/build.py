@@ -241,7 +241,7 @@ def write(filename, name, flow, instant):
                                     "sequential": instant, "slots": None, "confidential": False, "dataloss": False,
                                     "dlq": True, "freshVariables": False},
                        "designer": {"orphans": []}, "zone": "us2.make.com", "notes": []}}
-    DIST.mkdir(exist_ok=True)
+    (DIST / filename).parent.mkdir(parents=True, exist_ok=True)
     (DIST / filename).write_text(json.dumps(bp, indent=4, ensure_ascii=False) + "\n")
     return bp
 
@@ -364,14 +364,18 @@ def build_deal_out():
 
 
 # ================================================================ 2. MTMC new deal -> Nuance
-def build_deal_in():
+def build_deal_in(phase1=False):
+    """phase1=True: only the Nuance-approved rules (company domain -> exact name -> create; contacts fill
+    blanks only) plus the duplicate / blocking fixes. Stage sheet, line items, MTMC Team and notes stay
+    exactly as the live scenario does them; those changes wait for Phase 2."""
     hook = reuse("deal_in", 2)
     sleep = reuse("deal_in", 3)
     get_deal = ignore(reuse("deal_in", 4, name="MTMC: get deal"))
     get_deal["mapper"]["outputProperties"] = [
         "dealname", "dealstage", "pipeline", "amount", "closedate", "hubspot_owner_id", "distributor_name", "gpo",
-        "source", "closed_lost_reason", "supplier_name", "nuance_deal_id", "nuance_last_synced_at", "hubspot_teams_nuance",
-        "hs_object_id"]
+        "source", "closed_lost_reason", "supplier_name", "nuance_deal_id", "nuance_last_synced_at", "hs_object_id"]
+    if not phase1:
+        get_deal["mapper"]["outputProperties"].insert(-1, "hubspot_teams_nuance")
     supplier = reuse("deal_in", 7, name="MTMC: deal suppliers")
     supplier["filter"] = filt("Not already linked to Nuance (prevents duplicates and echoes of our handoffs)",
                               cond("{{4.properties.nuance_deal_id}}", "notexist"),
@@ -379,9 +383,16 @@ def build_deal_in():
     owner = reuse("deal_in", 6, name="MTMC: deal owner")
     owner["filter"] = filt("Nuance Medical is a supplier",
                            cond('{{join(map(7.body.results; "toObjectId"); ",")}}', "text:contain", MTMC_NUANCE_SUPPLIER_ID))
-    stage = ds_get(36, DS_STAGE_MAP, "{{4.properties.dealstage}}", "Stage mapping")
+    if phase1:   # live Google Sheet lookup, unchanged
+        stage = reuse("deal_in", 30, name="Stage mapping (Deal Stage Sync sheet)")
+    else:
+        stage = ds_get(36, DS_STAGE_MAP, "{{4.properties.dealstage}}", "Stage mapping")
     create = retry(reuse("deal_in", 14, name="Nuance: create MTMC Sync deal"))
     for p in create["mapper"]["properties"]:
+        if phase1:
+            if p["key"] == "mtmc_deal_id":
+                p["value"] = "{{4.id}}"
+            continue
         if p["key"] == "dealstage":
             p["value"] = "{{ifempty(36.`Nuanca Deal ID`; \"%s\")}}" % NUANCE_MTMC_SYNC_DEFAULT_STAGE
         if p["key"] == "mtmc_deal_id":
@@ -393,7 +404,7 @@ def build_deal_in():
 
     li_create = retry(reuse("deal_in", 16, name="Nuance: create line items"))
     li_create["mapper"]["body"] = "{{303.result.body}}"
-    li_create["filter"] = filt("Has Nuance line items", cond("{{303.result.count}}", "number:greater", "0"))
+    li_create["filter"] = filt("Has line items" if phase1 else "Has Nuance line items", cond("{{303.result.count}}", "number:greater", "0"))
     line_items = [
         reuse("deal_in", 8, name="MTMC: deal line items"),
         code(301, "assoc_to_batch_read.js", [("assoc", "{{8.body}}"), ("properties", "name,quantity,price,hs_sku,vendor__name,vendor_name")],
@@ -401,7 +412,8 @@ def build_deal_in():
         api(302, MTMC, "POST", "/crm/v3/objects/line_items/batch/read", "MTMC: read line items", body="{{301.result.body}}",
             filter=filt("Deal has line items", cond("{{301.result.count}}", "number:greater", "0"))),
         code(303, "mtmc_line_items_body.js", [("lineItems", "{{302.body}}"), ("dealId", "{{14.id}}"), ("currency", "USD"),
-                                               ("vendor", LINE_ITEM_VENDOR)], "Build Nuance line items (Nuance vendor only)"),
+                                               ("vendor", "" if phase1 else LINE_ITEM_VENDOR)],
+             "Build Nuance line items" + ("" if phase1 else " (Nuance vendor only)")),
         li_create,
     ]
 
@@ -430,20 +442,17 @@ def build_deal_in():
         reuse("deal_in", 13, name="MTMC: deal companies"),
         code(321, "pick_primary_company.js", [("assoc", "{{13.body}}")], "Pick primary company"),
         api(322, MTMC, "GET", "/crm/v3/objects/companies/{{321.result.companyId}}", "MTMC: read company",
-            qs=[("properties", "name,domain,website,address,city,state,zip,country")],
+            qs=[("properties", "name,domain,website")],
             filter=filt("Deal has a company", cond("{{321.result.count}}", "number:greater", "0"))),
         code(323, "company_search_body.js", [("company", "{{322.body}}")], "Build Nuance company search"),
         api(324, NUANCE, "POST", "/crm/v3/objects/companies/search", "Nuance: search by domain / name", body="{{323.result.body}}",
             filter=filt("Has domain or name", cond("{{323.result.hasCriteria}}", "boolean:equal", "true"))),
-        code(325, "company_choose_match.js", [("search", "{{324.body}}"), ("domain", "{{323.result.domain}}"), ("name", "{{323.result.name}}"),
-                                              ("details", "{{323.result.details}}")],
-             "Choose one company (domain first, then name)"),
+        code(325, "company_choose_match.js", [("search", "{{324.body}}"), ("domain", "{{323.result.domain}}"), ("name", "{{323.result.name}}")],
+             "Choose one company (domain, then exact name)"),
         router(326,
                [retry(api(327, NUANCE, "PUT", "/crm/v4/objects/companies/{{325.result.matchId}}/associations/default/deals/{{14.id}}",
-                          "Nuance: link matched company", filter=filt("Company matched", cond("{{325.result.matchId}}", "exist")))),
-                retry(api(343, NUANCE, "PATCH", "/crm/v3/objects/companies/{{325.result.matchId}}", "Nuance: fill blank company fields only",
-                          body="{{325.result.fillBody}}", filter=filt("Has blanks to fill", cond("{{325.result.fillCount}}", "number:greater", "0"))))],
-               [retry(api(328, NUANCE, "POST", "/crm/v3/objects/companies", "Nuance: create company (MTMC details)",
+                          "Nuance: link matched company (never edited)", filter=filt("Company matched", cond("{{325.result.matchId}}", "exist"))))],
+               [retry(api(328, NUANCE, "POST", "/crm/v3/objects/companies", "Nuance: create company (name + domain)",
                           body="{{323.result.createBody}}", filter=filt("No match", cond("{{325.result.matchId}}", "notexist")))),
                 retry(api(329, NUANCE, "PUT", "/crm/v4/objects/companies/{{328.body.id}}/associations/default/deals/{{14.id}}",
                           "Nuance: link new company"))]),
@@ -466,6 +475,10 @@ def build_deal_in():
         ds_add(340, DS_NOTE_MAP, "nuance:{{338.id}}", note_record("mtmc", "{{338.id}}", "{{336.id}}", "{{336.modified}}"), "Remember note (Nuance side)"),
     ]
 
+    if phase1:
+        flow = [hook, sleep, get_deal, supplier, owner, stage, create, link, router(300, line_items, contacts, company)]
+        return write("phase1/2_mtmc_deal_create_to_nuance_phase1.blueprint.json",
+                     "MTMC <> Nuance - Create Deals from MTMC to Nuance v2 (Phase 1)", flow, True)
     flow = [hook, sleep, get_deal, supplier, owner, stage, create, link, router(300, line_items, contacts, company, notes)]
     return write("2_mtmc_deal_create_to_nuance_v2.blueprint.json", "MTMC New Deal → Nuance (Create) v2", flow, True)
 
@@ -558,11 +571,13 @@ def build_notes(src_conn, dst_conn, src_label, other_label, link_prop, pipelines
 
 
 # ================================================================ 6. Backfill companies + contacts -> Nuance
-def build_backfill():
+def build_backfill(filename="6_mtmc_backfill_companies_contacts_to_nuance_v2.blueprint.json",
+                   title="MTMC <> Nuance - Backfill Companies and Contacts to Nuance v2"):
     """Safety net for MTMC Sync deals that ended up without a company (and contacts).
 
-    Same rules as the live sync: companies match by domain first, then name, and are never
-    overwritten (blank fields are filled); contacts match by email and only blanks are filled.
+    Same rules as the sync (agreed with Nuance): companies match by domain, then exact name, then a new
+    company is created; matched companies are only linked, never edited. Contacts match by email and
+    only fields blank on our side are filled.
     """
     search = reuse("backfill", 2, name="MTMC Sync deals missing a company")
     search["mapper"]["limit"] = 100
@@ -586,14 +601,12 @@ def build_backfill():
         code(604, "company_search_body.js", [("company", "{{603.body}}")], "Build Nuance company search"),
         api(605, NUANCE, "POST", "/crm/v3/objects/companies/search", "Nuance: search by domain / name", body="{{604.result.body}}",
             filter=filt("Has domain or name", cond("{{604.result.hasCriteria}}", "boolean:equal", "true"))),
-        code(606, "company_choose_match.js", [("search", "{{605.body}}"), ("domain", "{{604.result.domain}}"), ("name", "{{604.result.name}}"),
-                                              ("details", "{{604.result.details}}")], "Choose one company (domain first, then name)"),
+        code(606, "company_choose_match.js", [("search", "{{605.body}}"), ("domain", "{{604.result.domain}}"), ("name", "{{604.result.name}}")],
+             "Choose one company (domain, then exact name)"),
         router(607,
                [retry(api(608, NUANCE, "PUT", "/crm/v4/objects/companies/{{606.result.matchId}}/associations/default/deals/{{2.id}}",
-                          "Nuance: link matched company", filter=filt("Company matched", cond("{{606.result.matchId}}", "exist")))),
-                set_company_id(609, "{{606.result.matchId}}"),
-                retry(api(610, NUANCE, "PATCH", "/crm/v3/objects/companies/{{606.result.matchId}}", "Nuance: fill blank company fields only",
-                          body="{{606.result.fillBody}}", filter=filt("Has blanks to fill", cond("{{606.result.fillCount}}", "number:greater", "0"))))],
+                          "Nuance: link matched company (never edited)", filter=filt("Company matched", cond("{{606.result.matchId}}", "exist")))),
+                set_company_id(609, "{{606.result.matchId}}")],
                [retry(api(611, NUANCE, "POST", "/crm/v3/objects/companies", "Nuance: create company (MTMC details)",
                           body="{{604.result.createBody}}", filter=filt("No match", cond("{{606.result.matchId}}", "notexist")))),
                 retry(api(612, NUANCE, "PUT", "/crm/v4/objects/companies/{{611.body.id}}/associations/default/deals/{{2.id}}",
@@ -635,8 +648,7 @@ def build_backfill():
     ]
 
     flow = [search, get_deal, mark, router(600, company, contacts)]
-    return write("6_mtmc_backfill_companies_contacts_to_nuance_v2.blueprint.json",
-                 "MTMC <> Nuance - Backfill Companies and Contacts to Nuance v2", flow, False)
+    return write(filename, title, flow, False)
 
 
 if __name__ == "__main__":
@@ -644,6 +656,10 @@ if __name__ == "__main__":
     build_deal_in()
     build_update_in()
     build_backfill()
+    # Phase 1: only the two scenarios that carry the Nuance-approved rules.
+    build_deal_in(phase1=True)
+    build_backfill("phase1/6_mtmc_backfill_companies_contacts_to_nuance_phase1.blueprint.json",
+                   "MTMC <> Nuance - Backfill Companies and Contacts to Nuance v2 (Phase 1)")
     for args in [
         (MTMC, NUANCE, "MTMC", "Nuance", "nuance_deal_id", "", "mtmc_notes",
          "4_mtmc_notes_to_nuance_v2.blueprint.json", "MTMC Notes → Nuance (Create + Update) v2"),
@@ -651,4 +667,4 @@ if __name__ == "__main__":
          "5_nuance_notes_to_mtmc_v2.blueprint.json", "Nuance Notes → MTMC (Create + Update) v2"),
     ]:
         build_notes(*args)
-    print("\n".join(sorted(p.name for p in DIST.glob("*.json"))))
+    print("\n".join(sorted(str(p.relative_to(DIST)) for p in DIST.rglob("*.json"))))

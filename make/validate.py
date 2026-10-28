@@ -42,7 +42,7 @@ def walk(flow, seen, ids, fname):
             if r.returncode:
                 errors.append(f"{fname}: code module {m['id']} does not parse: {r.stderr.strip()[:300]}")
 
-for p in sorted(DIST.glob("*.json")):
+for p in sorted(DIST.rglob("*.json")):
     bp = json.loads(p.read_text())
     walk(bp["flow"], [], set(), p.name)
     print(f"checked {p.name}")

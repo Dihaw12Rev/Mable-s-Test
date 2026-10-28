@@ -14732,7 +14732,7 @@
                                 "qs": [
                                     {
                                         "key": "properties",
-                                        "value": "name,domain,website,address,city,state,zip,country"
+                                        "value": "name,domain,website"
                                     }
                                 ]
                             },
@@ -15123,16 +15123,12 @@
                                     {
                                         "name": "name",
                                         "value": "{{323.result.name}}"
-                                    },
-                                    {
-                                        "name": "details",
-                                        "value": "{{323.result.details}}"
                                     }
                                 ],
                                 "language": "javascript",
                                 "inputFormat": "editor",
                                 "dependencies": [],
-                                "codeEditorJavascript": "// --- shared helpers (prepended to every code module by build.py) ---\nconst arr = v => Array.isArray(v) ? v : (v && Array.isArray(v.results) ? v.results : []);\nconst clean = v => (v === null || v === undefined) ? \"\" : String(v).trim();\nconst normEmail = v => clean(v).toLowerCase();\nfunction normDomain(v) {\n    let s = clean(v).toLowerCase();\n    if (!s) return \"\";\n    s = s.replace(/^[a-z][a-z0-9+.-]*:\\/\\//, \"\").replace(/^www\\./, \"\");\n    return s.split(/[\\/?#:\\s]/)[0];\n}\nconst stripHtml = h => clean(h).replace(/<[^>]*>/g, \" \").replace(/&nbsp;/gi, \" \").replace(/&amp;/gi, \"&\").replace(/\\s+/g, \" \").trim();\nconst escHtml = s => clean(s).replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n// --- end helpers ---\n\n// Chooses ONE company from the search results.\n//   1. Domain match. If several companies share the domain (e.g. facilities of one health\n//      system), the one whose name also matches wins; otherwise the oldest record.\n//   2. Otherwise an exact name match (ignoring case, punctuation and Inc/LLC/PC-style suffixes).\n// Optional: details (the other portal's company fields). When given, fillBody holds only the\n// fields that are BLANK on the matched company, so existing data is never overwritten.\nconst SUFFIXES = new Set([\"inc\", \"incorporated\", \"llc\", \"pllc\", \"llp\", \"lp\", \"pc\", \"pa\", \"corp\", \"corporation\",\n    \"co\", \"company\", \"ltd\", \"limited\", \"the\"]);\nconst normName = v => clean(v).toLowerCase().replace(/\\./g, \"\").replace(/&/g, \" and \").replace(/[^a-z0-9 ]+/g, \" \")\n    .split(/\\s+/).filter(w => w && !SUFFIXES.has(w)).join(\" \");\nconst results = arr(input.search).slice().sort((a, b) => Number(a.id) - Number(b.id));\nconst domain = normDomain(input.domain);\nconst name = normName(input.name);\nconst nameOf = r => normName((r.properties || {}).name);\n\nlet match = null, matchedBy = \"none\", sharedDomain = 0;\nif (domain) {\n    const byDomain = results.filter(r => {\n        const pr = r.properties || {};\n        return normDomain(pr.domain) === domain || normDomain(pr.website) === domain;\n    });\n    sharedDomain = byDomain.length;\n    if (byDomain.length === 1) { match = byDomain[0]; matchedBy = \"domain\"; }\n    else if (byDomain.length > 1) {\n        match = (name && byDomain.find(r => nameOf(r) === name)) || null;\n        matchedBy = match ? \"domain+name\" : \"domain (shared, oldest)\";\n        if (!match) match = byDomain[0];\n    }\n}\nif (!match && name) {\n    match = results.find(r => nameOf(r) === name) || null;\n    if (match) matchedBy = \"name\";\n}\n\nconst fill = {};\nconst details = input.details && typeof input.details === \"object\" ? input.details : {};\nif (match) {\n    const ours = match.properties || {};\n    for (const k of [\"domain\", \"address\", \"city\", \"state\", \"zip\", \"country\"]) {\n        if (clean(details[k]) && !clean(ours[k])) fill[k] = clean(details[k]);\n    }\n}\nreturn {\n    matchId: match ? clean(match.id) : null,\n    matchedBy,\n    sharedDomain,\n    fillBody: JSON.stringify({ properties: fill }),\n    fillCount: Object.keys(fill).length\n};\n"
+                                "codeEditorJavascript": "// --- shared helpers (prepended to every code module by build.py) ---\nconst arr = v => Array.isArray(v) ? v : (v && Array.isArray(v.results) ? v.results : []);\nconst clean = v => (v === null || v === undefined) ? \"\" : String(v).trim();\nconst normEmail = v => clean(v).toLowerCase();\nfunction normDomain(v) {\n    let s = clean(v).toLowerCase();\n    if (!s) return \"\";\n    s = s.replace(/^[a-z][a-z0-9+.-]*:\\/\\//, \"\").replace(/^www\\./, \"\");\n    return s.split(/[\\/?#:\\s]/)[0];\n}\nconst stripHtml = h => clean(h).replace(/<[^>]*>/g, \" \").replace(/&nbsp;/gi, \" \").replace(/&amp;/gi, \"&\").replace(/\\s+/g, \" \").trim();\nconst escHtml = s => clean(s).replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n// --- end helpers ---\n\n// Chooses ONE company from the search results (rule agreed with Nuance):\n//   1. Domain match. If several companies share the domain (e.g. facilities of one health\n//      system), the one whose name also matches wins; otherwise the oldest record.\n//   2. Otherwise an exact company name match (case-insensitive, extra spaces ignored).\n//   3. No match: matchId is null and the caller creates a new company.\n// A matched company is only linked; it is never edited.\nconst exactName = v => clean(v).toLowerCase().replace(/\\s+/g, \" \");\nconst results = arr(input.search).slice().sort((a, b) => Number(a.id) - Number(b.id));\nconst domain = normDomain(input.domain);\nconst name = exactName(input.name);\nconst nameOf = r => exactName((r.properties || {}).name);\n\nlet match = null, matchedBy = \"none\", sharedDomain = 0;\nif (domain) {\n    const byDomain = results.filter(r => {\n        const pr = r.properties || {};\n        return normDomain(pr.domain) === domain || normDomain(pr.website) === domain;\n    });\n    sharedDomain = byDomain.length;\n    if (byDomain.length === 1) { match = byDomain[0]; matchedBy = \"domain\"; }\n    else if (byDomain.length > 1) {\n        match = (name && byDomain.find(r => nameOf(r) === name)) || null;\n        matchedBy = match ? \"domain+name\" : \"domain (shared, oldest)\";\n        if (!match) match = byDomain[0];\n    }\n}\nif (!match && name) {\n    match = results.find(r => nameOf(r) === name) || null;\n    if (match) matchedBy = \"name\";\n}\nreturn { matchId: match ? clean(match.id) : null, matchedBy, sharedDomain };\n"
                             },
                             "module": "code:ExecuteCode",
                             "version": 1,
@@ -15219,7 +15215,6 @@
                                             "items": [
                                                 null,
                                                 null,
-                                                null,
                                                 null
                                             ]
                                         },
@@ -15233,7 +15228,7 @@
                                     }
                                 },
                                 "designer": {
-                                    "name": "Choose one company (domain first, then name)",
+                                    "name": "Choose one company (domain, then exact name)",
                                     "x": 4200,
                                     "y": 900
                                 }
@@ -15358,7 +15353,7 @@
                                                     }
                                                 },
                                                 "designer": {
-                                                    "name": "Nuance: link matched company",
+                                                    "name": "Nuance: link matched company (never edited)",
                                                     "x": 4800,
                                                     "y": 900
                                                 },
@@ -15399,186 +15394,6 @@
                                                     "metadata": {
                                                         "designer": {
                                                             "x": 4950,
-                                                            "y": 1050
-                                                        },
-                                                        "restore": {
-                                                            "expect": {
-                                                                "retry": {
-                                                                    "mode": "chose"
-                                                                }
-                                                            }
-                                                        },
-                                                        "expect": [
-                                                            {
-                                                                "name": "retry",
-                                                                "type": "boolean",
-                                                                "label": "Automatically complete execution",
-                                                                "required": true
-                                                            },
-                                                            {
-                                                                "name": "count",
-                                                                "type": "integer",
-                                                                "label": "Number of attempts",
-                                                                "required": true
-                                                            },
-                                                            {
-                                                                "name": "interval",
-                                                                "type": "integer",
-                                                                "label": "Interval between attempts",
-                                                                "required": true
-                                                            }
-                                                        ]
-                                                    }
-                                                }
-                                            ]
-                                        },
-                                        {
-                                            "id": 343,
-                                            "mapper": {
-                                                "url": "/crm/v3/objects/companies/{{325.result.matchId}}",
-                                                "method": "PATCH",
-                                                "headers": [
-                                                    {
-                                                        "key": "Content-Type",
-                                                        "value": "application/json"
-                                                    }
-                                                ],
-                                                "body": "{{325.result.fillBody}}"
-                                            },
-                                            "module": "hubspotcrm:MakeAPICall",
-                                            "version": 2,
-                                            "metadata": {
-                                                "expect": [
-                                                    {
-                                                        "name": "url",
-                                                        "type": "text",
-                                                        "label": "URL",
-                                                        "required": true
-                                                    },
-                                                    {
-                                                        "name": "method",
-                                                        "type": "select",
-                                                        "label": "Method",
-                                                        "required": true,
-                                                        "validate": {
-                                                            "enum": [
-                                                                "GET",
-                                                                "POST",
-                                                                "PUT",
-                                                                "PATCH",
-                                                                "DELETE"
-                                                            ]
-                                                        }
-                                                    },
-                                                    {
-                                                        "name": "headers",
-                                                        "spec": [
-                                                            {
-                                                                "name": "key",
-                                                                "type": "text",
-                                                                "label": "Key"
-                                                            },
-                                                            {
-                                                                "name": "value",
-                                                                "type": "text",
-                                                                "label": "Value"
-                                                            }
-                                                        ],
-                                                        "type": "array",
-                                                        "label": "Headers"
-                                                    },
-                                                    {
-                                                        "name": "qs",
-                                                        "spec": [
-                                                            {
-                                                                "name": "key",
-                                                                "type": "text",
-                                                                "label": "Key"
-                                                            },
-                                                            {
-                                                                "name": "value",
-                                                                "type": "text",
-                                                                "label": "Value"
-                                                            }
-                                                        ],
-                                                        "type": "array",
-                                                        "label": "Query String"
-                                                    },
-                                                    {
-                                                        "name": "body",
-                                                        "type": "any",
-                                                        "label": "Body"
-                                                    }
-                                                ],
-                                                "restore": {
-                                                    "expect": {
-                                                        "qs": {
-                                                            "mode": "chose"
-                                                        },
-                                                        "method": {
-                                                            "mode": "chose",
-                                                            "label": "PATCH"
-                                                        },
-                                                        "headers": {
-                                                            "mode": "chose",
-                                                            "items": [
-                                                                null
-                                                            ]
-                                                        }
-                                                    },
-                                                    "parameters": {
-                                                        "__IMTCONN__": {
-                                                            "data": {
-                                                                "scoped": "true",
-                                                                "connection": "hubspotcrm"
-                                                            },
-                                                            "label": "Nuance HubSpot (admin@revgravy.com)"
-                                                        }
-                                                    }
-                                                },
-                                                "designer": {
-                                                    "name": "Nuance: fill blank company fields only",
-                                                    "x": 5100,
-                                                    "y": 900
-                                                },
-                                                "parameters": [
-                                                    {
-                                                        "name": "__IMTCONN__",
-                                                        "type": "account:hubspotcrm",
-                                                        "label": "Connection",
-                                                        "required": true
-                                                    }
-                                                ]
-                                            },
-                                            "parameters": {
-                                                "__IMTCONN__": 9735744
-                                            },
-                                            "filter": {
-                                                "name": "Has blanks to fill",
-                                                "conditions": [
-                                                    [
-                                                        {
-                                                            "a": "{{325.result.fillCount}}",
-                                                            "o": "number:greater",
-                                                            "b": "0"
-                                                        }
-                                                    ]
-                                                ]
-                                            },
-                                            "onerror": [
-                                                {
-                                                    "id": 9019,
-                                                    "module": "builtin:Break",
-                                                    "version": 1,
-                                                    "parameters": {},
-                                                    "mapper": {
-                                                        "count": 3,
-                                                        "retry": true,
-                                                        "interval": 15
-                                                    },
-                                                    "metadata": {
-                                                        "designer": {
-                                                            "x": 5250,
                                                             "y": 1050
                                                         },
                                                         "restore": {
@@ -15721,7 +15536,7 @@
                                                     }
                                                 },
                                                 "designer": {
-                                                    "name": "Nuance: create company (MTMC details)",
+                                                    "name": "Nuance: create company (name + domain)",
                                                     "x": 4800,
                                                     "y": 1200
                                                 },
@@ -15750,7 +15565,7 @@
                                             },
                                             "onerror": [
                                                 {
-                                                    "id": 9020,
+                                                    "id": 9019,
                                                     "module": "builtin:Break",
                                                     "version": 1,
                                                     "parameters": {},
@@ -15917,7 +15732,7 @@
                                             },
                                             "onerror": [
                                                 {
-                                                    "id": 9021,
+                                                    "id": 9020,
                                                     "module": "builtin:Break",
                                                     "version": 1,
                                                     "parameters": {},
