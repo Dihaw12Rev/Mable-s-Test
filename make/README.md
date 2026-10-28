@@ -26,6 +26,23 @@ The originals are off and moved to the ARCHIVED folder:
 
 Never run both backfills at the same time.
 
+**Phase 2 status (created 2026-10-28, folder "MTMC to Nuance Sync", all inactive, originals still running):**
+
+| New scenario | ID | Replaces (live) | Trigger |
+|---|---|---|---|
+| Nuance Deal → MTMC (Create + Update) v2 (Phase 2) | 6813004 | 5563815 | Every 1 h (was 3 h); shares watermark `nuance_handoff` |
+| MTMC Deal Updated → Nuance (Update) v2 (Phase 2) | 6812939 | 5563819 | New webhook 2994549 (`…/lxywn1ub3v86hbnatvyddgxkrpm8rhxf`) |
+| MTMC Notes → Nuance (Create + Update) v2 (Phase 2) | 6812950 | 6056956 | Every 1 h (was 6 h) |
+| Nuance Notes → MTMC (Create + Update) v2 (Phase 2) | 6812969 | 6056834 | Every 1 h (was 6 h) |
+
+Before switching each one:
+- **Deal update:** add MTMC stage 1296904841 to the stage map data store (118696). Then point the MTMC "deal updated" workflow at the new webhook URL.
+- **Notes:** the live notes scenarios keep their history in data store 181066 (and in 181067, which is empty). v2 uses 138595. So, in this order:
+  1. Copy each 181066 record into 138595 under the keys `nuance:<id>` and `mtmc:<id>`.
+  2. Set the `mtmc_notes` / `nuance_notes` watermarks in 114187 to the originals' last run.
+  3. Swap the scenarios.
+- **Nuance → MTMC notes** also copies notes from the MTMC Sync pipeline (915661656). That still needs Nuance's OK; until then, set the pipelines input on module 512 to `31457678` only.
+
 | File in `dist/` | Replaces (live scenario) | Trigger |
 |---|---|---|
 | `1_nuance_deal_to_mtmc_v2` | Nuance Deal to MTMC Sync (Create and Update) READY | Schedule, **every 1 h** (was 3 h) |
