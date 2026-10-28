@@ -1,357 +1,424 @@
-"""Single source of truth for the RevGravy Marketing Hub Onboarding process.
+"""Single source of truth for the RevGravy Marketing Hub Onboarding process (v2).
 
-Both build_workbook.py (the sheet) and build_roadmap.py (the visual roadmap)
-read from this file, so edit the process here and re-run both scripts.
+build_workbook.py (the sheet), build_roadmap.py (the visual roadmap) and
+build_prompt.py (the HubSpot Work prompt) all read from this file, so edit the
+process here and re-run all three.
 
 Day offsets are counted from Day 0 = deal reaches "Start Payment Received"
-(the closed-won stage of the Sales Pipeline). The program targets 90 days
-(confirmed); some customers may run longer, so treat offsets as targets.
+(the closed-won stage of the Sales Pipeline). The plan is laid out for the
+longest program (90 days). Customers on a shorter program (60–90 days) get
+their later due dates compressed with scaled_due().
 """
 
-PROGRAM_DAYS = 90
+PROGRAM_DAYS = 90        # the plan below is laid out for this length
+PROGRAM_MIN_DAYS = 60    # shortest program we sell
+FIXED_UNTIL_DAY = 10     # week-one tasks (welcome, access, kickoff) never compress
+
+
+def scaled_due(phase, due, program_days):
+    """Due day for a customer whose program is program_days long."""
+    if phase == "P0" or due <= FIXED_UNTIL_DAY:
+        return due
+    if phase == "P9":                       # post-program: counted from the program's end
+        return due - PROGRAM_DAYS + program_days
+    return int(due * program_days / PROGRAM_DAYS + 0.5)   # half-up, same as Excel ROUND
+
 
 ROLES = {
-    "Phil": "Strategy lead. Owns the sale, the Architect handoff, MBR strategy and the 'what's next' conversation.",
-    "Architect": "Assigned delivery lead. Owns the onboarding record, the build, weekly updates and office hours.",
-    "Ops": "RevGravy operations/admin. Owns templates, Supered setup, data hygiene of the process itself.",
-    "AI": "AI agent drafts (handoff brief, agendas, weekly updates). A human always reviews before anything is sent.",
-    "Automation": "HubSpot workflow, no human action needed.",
+    "Phil": "Strategy lead through the sale and the handoff. Picks the Architect based on capacity. Comes back for the 'what's next' call.",
+    "Architect": "Takes over as strategy lead after the handoff. Owns delivery, weekly updates, office hours and MBRs.",
+    "Ops": "RevGravy operations. Owns the templates, Supered setup and the welcome emails.",
     "Client POC": "Main point of contact at the customer. Owns approvals, access and client to-dos.",
-    "Client team": "Supporters / end users at the customer who get trained and use the portal.",
 }
 
-# Each phase maps back to one or more stickies on the FigJam board.
-PHASES = [
-    {
-        "id": "P0", "name": "Pre-sale handoff", "start": -30, "end": 0,
-        "figjam": "New Lead → VSL → Fit/Discovery → Assess Tech Stack → Video → Recommendation → Closing Call",
-        "goal": "Everything the Architect needs is already on the deal before the customer pays (Definition of Ready).",
-        "client_sees": "VSL, recommendation video, proposal Q&A, quote, agreement.",
-        "exit": "Deal has FigJam link, From→To statement, products, progress measures, survey, POC and supporters, signed agreement.",
-    },
-    {
-        "id": "P1", "name": "Close & welcome", "start": 0, "end": 3,
-        "figjam": "Paid & Agreement Signed",
-        "goal": "Customer feels the handoff instantly; the Architect is assigned and briefed within 72 hours.",
-        "client_sees": "Welcome email series with the Supered Action Plan (expectations, next steps, links, agreement, to-dos).",
-        "exit": "Architect assigned, Phil↔Architect 1:1 done, Delivery Template instantiated, kickoff booked.",
-    },
-    {
-        "id": "P2", "name": "Access & intake", "start": 1, "end": 7,
-        "figjam": "HS Access / Form / Trello",
-        "goal": "Get every access and input we need in week 1, and replace Trello with HubSpot + Supered.",
-        "client_sees": "Supered announcement explaining how we deliver announcements and documentation; one short intake form.",
-        "exit": "Portal access granted, intake submitted, audit and baseline KPIs captured.",
-    },
-    {
-        "id": "P3", "name": "Kickoff", "start": 5, "end": 10,
-        "figjam": "Kickoff Session 15 min",
-        "goal": "15 minutes that confirm the plan, close gaps and set the operating rhythm.",
-        "client_sees": "Architect + team intro, confirmed plan, office hours and MBRs explained, MBRs booked.",
-        "exit": "Plan confirmed, missing items owned, MBR dates on calendars, recap sent within 24h.",
-    },
-    {
-        "id": "P4", "name": "Foundations (tech setup)", "start": 7, "end": 30,
-        "figjam": "Delivery Template → technical setup",
-        "goal": "Marketing Hub is set up correctly: tracking, domains, email auth, data model, imports, baseline reporting.",
-        "client_sees": "Supered video announcements as each foundation item is done; weekly updates.",
-        "exit": "Foundation QA passed and a baseline dashboard exists to report progress measures against.",
-    },
-    {
-        "id": "P5", "name": "Build & launch", "start": 21, "end": 75,
-        "figjam": "Tactical outcomes / Factories (progress measures)",
-        "goal": "Ship the tactical outcomes the customer bought, each tied to a progress measure.",
-        "client_sees": "Supered video per delivery, UAT sign-off requests, KPI movement in weekly updates.",
-        "exit": "Every Factory in the Delivery Template is live, approved and reporting.",
-    },
-    {
-        "id": "P6", "name": "Training & adoption", "start": 14, "end": 85,
-        "figjam": "Office Hours / Supered videos",
-        "goal": "The customer's team can run what we built without us.",
-        "client_sees": "Short Supered training videos per delivery, office-hours coaching, an admin handbook.",
-        "exit": "Each user role completed its modules; adoption check passed.",
-    },
-    {
-        "id": "P7", "name": "Run cadence", "start": 7, "end": 90,
-        "figjam": "Office Hours + Weekly updates",
-        "goal": "A predictable rhythm: office hours, Friday updates, monthly business reviews, managed requests.",
-        "client_sees": "Weekly update (progress, tactical work → strategic issue, KPIs, issues found), office hours, MBRs.",
-        "exit": "Runs every week until the program ends.",
-    },
-    {
-        "id": "P8", "name": "What's next", "start": 60, "end": 90,
-        "figjam": "30 Days Before We Finish, Explain What's Next",
-        "goal": "Customer sees the long-term vision and chooses the next phase before the program ends.",
-        "client_sees": "'What's next' call with Phil and the Architect, A/B next-phase options, final results review.",
-        "exit": "Next-phase decision made (A, B or offboard), results review delivered, project closed.",
-    },
-    {
-        "id": "P9", "name": "Post-program", "start": 90, "end": 365,
-        "figjam": "Post-1st Program Offers + Goal: keep relationship 6–12 months",
-        "goal": "Keep the relationship for 6–12 more months.",
-        "client_sees": "6 months of free KPI monitoring, ongoing offers, quarterly check-ins.",
-        "exit": "Customer on a continuation offer, or a clean offboarding with KPI monitoring running.",
-    },
+# Answers from the review (Oct 2026). question, answer, what changed
+DECISIONS = [
+    ("Program length", "60 to 90 days.", "The plan is laid out for 90 days. Each customer project has a Program length; later due dates compress to fit 60 or 75 days."),
+    ("Hub tiers", "Marketing Hub Professional and Enterprise.", "Starter removed. Setup items are tagged 'Pro & Ent' or 'Ent only'."),
+    ("Strategy lead", "Phil leads through the sale, then the Architect takes over.", "Architect owns MBRs, weekly updates and strategy after the handoff. Phil returns for the 'what's next' call."),
+    ("Picking the Architect", "Phil decides, based on capacity.", "Portfolio table has a capacity view (active customers per Architect)."),
+    ("HubSpot Work beta", "Enrolled.", "Build in HubSpot Work now."),
+    ("Where onboarding lives", "Only in HubSpot Work.", "No Projects pipeline and no tickets for onboarding. Tasks, board and requests all live in Work."),
+    ("Client-facing place", "Supered.", "No HubSpot customer portal. Everything the customer sees is in Supered."),
+    ("Progress measures (Factories)", "Use the suggestion.", "Standard set added: 0.1, 1.1, 1.2, 1.3 for every customer; 1.0 and 2.1 when bought."),
+    ("$250 requests", "Per request. Urgency classes not defined yet.", "Recommended classes added: Critical, High, Standard, Not now."),
+    ("Migrations & website work", "In scope.", "Migration and website tasks added to Foundations and Build & launch, with suggested limits."),
+    ("Post-program offers", "Free for 6 months. Contents not defined yet.", "Suggested contents for the free KPI monitoring and the three paid offers."),
 ]
 
-# Columns: id, phase, task, details / definition of done, owner, client_facing,
-#          start_day, due_day, depends_on, lives_in, automation
+PHASES = [
+    {"id": "P0", "name": "Handoff checklist", "start": -30, "end": 0,
+     "figjam": "New Lead → VSL → Fit/Discovery → Assess Tech Stack → Video → Recommendation → Closing Call",
+     "goal": "Everything the Architect needs is on the deal before the customer pays (Definition of Ready).",
+     "client_sees": "VSL, recommendation video, proposal Q&A, quote, agreement.",
+     "exit": "Deal has FigJam link, From→To statement, products, progress measures, survey, POC and supporters, signed agreement."},
+    {"id": "P1", "name": "Close & welcome", "start": 0, "end": 3,
+     "figjam": "Paid & Agreement Signed",
+     "goal": "The customer feels the handoff right away; the Architect is picked and briefed within 72 hours.",
+     "client_sees": "Welcome email series with the Supered Action Plan (expectations, next steps, links, agreement, to-dos).",
+     "exit": "Architect assigned, Phil↔Architect 1:1 done, customer project created, kickoff booked."},
+    {"id": "P2", "name": "Access & intake", "start": 1, "end": 7,
+     "figjam": "HS Access / Form / Trello",
+     "goal": "Every access and input we need arrives in week 1. No Trello.",
+     "client_sees": "Supered announcement on how we deliver updates and documentation; one short intake form.",
+     "exit": "Portal access granted, intake submitted, audit and baseline numbers captured."},
+    {"id": "P3", "name": "Kickoff", "start": 5, "end": 10,
+     "figjam": "Kickoff Session 15 min",
+     "goal": "15 minutes that confirm the plan, close gaps and set the rhythm.",
+     "client_sees": "Architect + team intro, confirmed plan, office hours and MBRs explained and booked.",
+     "exit": "Plan confirmed, missing items owned, MBRs on calendars, recap sent within 24h."},
+    {"id": "P4", "name": "Foundations", "start": 7, "end": 30,
+     "figjam": "Delivery Template → technical setup",
+     "goal": "Marketing Hub set up correctly: tracking, domains, email, data, migration, website connection, baseline dashboard.",
+     "client_sees": "Supered video announcements as foundation items finish; weekly updates.",
+     "exit": "Foundation QA passed, old data migrated, baseline dashboard live."},
+    {"id": "P5", "name": "Build & launch", "start": 21, "end": 75,
+     "figjam": "Tactical outcomes / Factories (progress measures)",
+     "goal": "Build each progress measure the customer bought and get it live.",
+     "client_sees": "A Supered video per delivery, sign-off requests, numbers moving in weekly updates.",
+     "exit": "Every progress measure is live, approved by the client and reporting."},
+    {"id": "P6", "name": "Training & adoption", "start": 14, "end": 85,
+     "figjam": "Office Hours / Supered videos",
+     "goal": "The customer's team can run what we built without us.",
+     "client_sees": "Short Supered training videos, office-hours coaching, an admin handbook.",
+     "exit": "Each audience finished its modules; adoption checks passed."},
+    {"id": "P7", "name": "Run cadence", "start": 7, "end": 90,
+     "figjam": "Office Hours + Weekly updates",
+     "goal": "Same rhythm every week: office hours, Friday update, monthly business review, requests handled by urgency.",
+     "client_sees": "Weekly update (work done → strategic issue, numbers, issues found), office hours, MBRs.",
+     "exit": "Runs every week until the program ends."},
+    {"id": "P8", "name": "What's next", "start": 60, "end": 90,
+     "figjam": "30 Days Before We Finish, Explain What's Next",
+     "goal": "The customer sees the long-term vision and picks the next phase before the program ends.",
+     "client_sees": "'What's next' call with Phil and the Architect, A/B options, final results review.",
+     "exit": "Next phase chosen (A, B or KPI monitoring only), results reviewed, project closed."},
+    {"id": "P9", "name": "After the program", "start": 90, "end": 270,
+     "figjam": "Post-1st Program Offers + Goal: keep relationship 6–12 months",
+     "goal": "Keep the relationship for 6–12 more months, starting with 6 months of free KPI monitoring.",
+     "client_sees": "Monthly KPI snapshot, check-ins at month 3 and 6, paid offers.",
+     "exit": "Customer moved to a paid offer, or monitoring ends cleanly after 6 months."},
+]
+
+# Columns: id, phase, task, definition of done, owner, client_facing, start_day, due_day,
+#          depends_on, lives_in, repeats
 TASKS = [
-    # P0 — Pre-sale handoff (Definition of Ready). These are gates on the deal, not post-sale work.
-    ("0.01", "P0", "Research brief from company URL", "Website URL on the deal; AI research brief attached as a note before the Fit call.", "AI", "No", -30, -28, "", "Deal (note)", "AI agent drafts brief when deal is created"),
-    ("0.02", "P0", "FigJam canvas created after Fit call", "Canvas covers strategic motivation, tactical outcomes, progress measures and fee range. Link saved to the deal and later copied to the onboarding record.", "Phil", "No", -25, -21, "0.01", "Deal property: Canvas / FigJam Link", ""),
-    ("0.03", "P0", "Strategic motivation captured ('From X to Y')", "One sentence: from where they are today to where they want to be. This is the north star the weekly updates tie back to.", "Phil", "No", -25, -21, "0.02", "Deal property", ""),
-    ("0.04", "P0", "Tech stack & team capacity survey completed", "Client gives HubSpot access and completes the survey (form or AI chat): tools beyond HubSpot, internal processes and cadences, current KPIs and progress measures.", "Client POC", "Yes", -21, -14, "0.02", "Form → Deal/Company properties", "Survey reminder email after 2 days"),
-    ("0.05", "P0", "Products and quote on the deal", "Pricing calculator used; line items added; quote created.", "Phil", "No", -14, -10, "0.04", "Deal line items + Quote", ""),
-    ("0.06", "P0", "Progress measures defined", "Each tactical outcome has a progress measure (Factory) with a baseline if known.", "Phil", "No", -14, -7, "0.05", "Deal note → Factory records after close", ""),
-    ("0.07", "P0", "POC and supporters identified", "Contacts associated to the deal with association labels (POC, Supporter, Billing, Decision maker). POC enrolled in the weekly email.", "Phil", "Yes", -10, -3, "0.05", "Contact ↔ Deal association labels", ""),
-    ("0.08", "P0", "Agreement signed", "Includes AI terms, escalation path, how progress is measured, main POC and supporters, strategic job → tactical outcomes → progress measures, and new-request handling with urgency classification ($250).", "Client POC", "Yes", -5, 0, "0.07", "Quote / e-signature", ""),
-    ("0.09", "P0", "Definition of Ready gate", "Deal cannot move to 'Start Payment Received' unless the required handoff properties are filled.", "Automation", "No", 0, 0, "0.08", "Deal stage required properties", "Required properties on stage"),
+    # P0 — Handoff checklist (done before Day 0, verified at the Phil ↔ Architect handoff)
+    ("0.01", "P0", "Research brief from company URL", "Website URL on the deal; research brief attached as a note before the Fit call.", "Phil", "No", -30, -28, "", "Deal note", ""),
+    ("0.02", "P0", "FigJam canvas after Fit call", "Covers strategic motivation, tactical outcomes, progress measures and fee range. Link saved on the deal.", "Phil", "No", -25, -21, "0.01", "Deal: Canvas / FigJam Link", ""),
+    ("0.03", "P0", "From→To statement captured", "One sentence: from where they are today to where they want to be. Every weekly update ties back to it.", "Phil", "No", -25, -21, "0.02", "Deal property", ""),
+    ("0.04", "P0", "Tech stack & team capacity survey", "Client gave HubSpot access and finished the survey: tools beyond HubSpot, internal processes and cadences, current KPIs.", "Client POC", "Yes", -21, -14, "0.02", "Form → deal/company", ""),
+    ("0.05", "P0", "Products and quote on the deal", "Pricing calculator used, line items added, quote created. Hub tier is Pro or Enterprise.", "Phil", "No", -14, -10, "0.04", "Deal line items + quote", ""),
+    ("0.06", "P0", "Progress measures picked", "Core set (0.1, 1.1, 1.2, 1.3) plus any optional ones bought (1.0, 2.1). Baselines noted if known.", "Phil", "No", -14, -7, "0.05", "Deal note", ""),
+    ("0.07", "P0", "POC and supporters identified", "Contacts on the deal with labels (POC, Supporter, Billing, Decision maker). POC gets the weekly email.", "Phil", "Yes", -10, -3, "0.05", "Deal contacts", ""),
+    ("0.08", "P0", "Agreement signed", "Includes AI terms, escalation path, how progress is measured, POC and supporters, strategic job → tactical outcomes → progress measures, and request handling ($250 per request, urgency classes).", "Client POC", "Yes", -5, 0, "0.07", "Quote / e-signature", ""),
 
     # P1 — Close & welcome
-    ("1.01", "P1", "Create onboarding record", "Deal reaches 'Start Payment Received' → onboarding record created from the Marketing Hub template and associated to deal, company and contacts; deal context copied over.", "Automation", "No", 0, 0, "0.09", "Onboarding record + workflow", "Deal-stage workflow"),
-    ("1.02", "P1", "Assign Architect", "Phil picks the Architect (or rotation by capacity). Architect becomes owner of the onboarding record and company.", "Phil", "No", 0, 1, "1.01", "Onboarding record owner", "Notify Phil if unassigned after 24h"),
-    ("1.03", "P1", "Notify team with handoff brief", "Slack + HubSpot notification to the delivery team. AI drafts the brief from deal history, FigJam and survey.", "AI", "No", 0, 1, "1.02", "Slack + Note on onboarding record", "Workflow + AI agent"),
-    ("1.04", "P1", "Welcome email #1: welcome + Action Plan", "Sent from Phil. Links to the Supered Action Plan: expectations, next steps, how the partnership works, agreement, client to-dos, kickoff booking link.", "Automation", "Yes", 0, 0, "1.01", "Marketing email / sequence", "Deal-stage workflow"),
-    ("1.05", "P1", "Build Supered Action Plan from template", "Duplicate the Marketing Hub Action Plan template. Add the agreement, FigJam, client to-dos and access checklist.", "Ops", "Yes", 0, 1, "1.01", "Supered", ""),
-    ("1.06", "P1", "Instantiate Delivery Template", "Create one Factory (progress measure) record per tactical outcome bought, with benchmark, schedule and client to-dos.", "Architect", "No", 1, 3, "1.02", "Factory records (Projects object)", "Optional: workflow creates Factories from line items"),
-    ("1.07", "P1", "Set internal progress measures", "Planned end date, hours budget, health = On track, next MBR date.", "Ops", "No", 0, 1, "1.01", "Onboarding record properties", ""),
-    ("1.08", "P1", "Phil ↔ Architect 1:1 handoff (30 min)", "Walk through FigJam, customer context, products chosen, the goal, outcomes, how success is measured (KPIs), the Delivery Template and schedule.", "Phil", "No", 1, 3, "1.02", "Meeting on onboarding record", "Task auto-created for Phil"),
-    ("1.09", "P1", "Office hours booking link ready", "Architect's HubSpot Meetings link (office-hours type) added to the Supered plan.", "Architect", "Yes", 1, 2, "1.02", "HubSpot Meetings", ""),
-    ("1.10", "P1", "Welcome email #2: how we work", "Office hours, weekly updates, how to request work and the urgency classes, escalation path, how we use AI.", "Automation", "Yes", 2, 2, "1.04", "Marketing email / sequence", "Delay 2 days"),
-    ("1.11", "P1", "Kickoff booked", "Client books the 15-minute kickoff via the link in welcome email #1. Reminder at Day 3 if not booked.", "Client POC", "Yes", 0, 5, "1.04", "Meeting", "Reminder if no meeting by Day 3"),
+    ("1.01", "P1", "Pick the Architect", "Phil checks the capacity view (active customers per Architect) and picks the Architect.", "Phil", "No", 0, 1, "0.08", "Work: Portfolio (capacity view)", ""),
+    ("1.02", "P1", "Create the customer project", "Duplicate the 'Marketing Hub Onboarding (Template)' project, rename it '<Client> · Marketing Hub Onboarding', fill Company, Deal, Architect, Start date and Program length, and add a Portfolio row.", "Ops", "No", 0, 1, "1.01", "Work: customer project", ""),
+    ("1.03", "P1", "Welcome email #1: welcome + Action Plan", "Sent from Phil on Day 0: Supered Action Plan link, kickoff booking link, first to-dos (grant HubSpot access, fill the intake form).", "Ops", "Yes", 0, 0, "0.08", "HubSpot email (automated on deal stage)", ""),
+    ("1.04", "P1", "Build the Supered Action Plan", "Duplicate the Marketing Hub Action Plan template; add the agreement, FigJam, client to-dos and access checklist.", "Ops", "Yes", 0, 1, "1.02", "Supered", ""),
+    ("1.05", "P1", "Phil ↔ Architect handoff (30 min)", "Walk through FigJam, customer context, products, the From→To goal, progress measures and KPIs, schedule. Architect checks the Handoff checklist section. Strategy lead moves to the Architect after this call.", "Phil", "No", 1, 3, "1.01", "Meeting on the deal", ""),
+    ("1.06", "P1", "Set up progress measures", "Add the customer's progress measures to the project (name '<Client> 1.1 Visitor to Lead' etc.) with baseline, target and schedule.", "Architect", "No", 1, 3, "1.05", "Work: customer project", ""),
+    ("1.07", "P1", "Office hours booking link", "Architect's HubSpot meetings link (office-hours type) added to the Supered plan.", "Architect", "Yes", 1, 2, "1.01", "HubSpot Meetings + Supered", ""),
+    ("1.08", "P1", "Welcome email #2: how we work", "Day 2: office hours, Friday updates, how to send a request and the urgency classes, escalation path, how we use AI.", "Ops", "Yes", 2, 2, "1.03", "HubSpot email (automated)", ""),
+    ("1.09", "P1", "Kickoff booked", "Client books the 15-minute kickoff from welcome email #1. Chase on Day 3 if not booked.", "Client POC", "Yes", 0, 5, "1.03", "HubSpot Meetings", ""),
 
     # P2 — Access & intake
-    ("2.01", "P2", "HubSpot access granted", "Partner access or a Super Admin user for the Architect. Confirm the hub tiers (Marketing Starter / Pro / Enterprise).", "Client POC", "Yes", 1, 3, "1.04", "Client to-do in Supered", "Reminder on Day 3"),
-    ("2.02", "P2", "Onboarding intake form submitted", "Short form that asks only what pre-sale didn't capture (see Intake Form tab).", "Client POC", "Yes", 1, 5, "1.04", "Form → onboarding record", "Reminder on Day 4"),
-    ("2.03", "P2", "Access to connected systems", "DNS/IT contact, website CMS, GA4/GTM, ad accounts, social accounts, any CRM or email tool we migrate from.", "Client POC", "Yes", 1, 7, "2.02", "Access checklist (intake)", ""),
-    ("2.04", "P2", "Brand & content assets shared", "Brand guide, logos, fonts, colors, existing email templates, key content, lists to import.", "Client POC", "Yes", 1, 7, "2.02", "File upload on intake form", ""),
-    ("2.05", "P2", "Supered announcement to POC", "Short video: how Supered works (Bases, announcements, documentation) and where updates will show up.", "Architect", "Yes", 2, 3, "1.05", "Supered", ""),
-    ("2.06", "P2", "Portal audit (current state)", "Data health, email health, existing assets, tracking code, workflows, properties. Output: 1-page audit summary for kickoff.", "Architect", "No", 3, 7, "2.01", "Note on onboarding record", "AI can draft from portal scan"),
-    ("2.07", "P2", "Baseline KPI snapshot", "Record the 'before' numbers for each progress measure (sessions, leads, MQLs, meetings, etc.).", "Architect", "No", 5, 7, "2.06", "Factory records: baseline", ""),
-    ("2.08", "P2", "No Trello", "All delivery work lives in HubSpot (tasks on the onboarding record) and client-facing docs in Supered. Architect owns this.", "Architect", "No", 1, 1, "", "Policy", ""),
+    ("2.01", "P2", "HubSpot access granted", "Partner access or a Super Admin user for the Architect. Confirm Pro or Enterprise per hub.", "Client POC", "Yes", 1, 3, "1.03", "Supered to-do", ""),
+    ("2.02", "P2", "Intake form submitted", "Short form with only what pre-sale didn't capture (Intake Form tab).", "Client POC", "Yes", 1, 5, "1.03", "Intake form", ""),
+    ("2.03", "P2", "Access to connected systems", "DNS/IT contact, website CMS, GA4/GTM, ad accounts, social accounts, and the old email/marketing tool we migrate from.", "Client POC", "Yes", 1, 7, "2.02", "Supered to-do", ""),
+    ("2.04", "P2", "Brand & content assets shared", "Brand guide, logos, fonts, colors, email templates, key content, lists to import.", "Client POC", "Yes", 1, 7, "2.02", "Supered upload", ""),
+    ("2.05", "P2", "Supered announcement to POC", "Short video: how Supered works (Bases, announcements, documentation) and where updates show up.", "Architect", "Yes", 2, 3, "1.04", "Supered", ""),
+    ("2.06", "P2", "Portal audit", "Data health, email health, existing assets, tracking, workflows, properties, old tool inventory. 1-page summary for kickoff.", "Architect", "No", 3, 7, "2.01", "Work: customer project (notes)", ""),
+    ("2.07", "P2", "Baseline numbers", "Record the 'before' number for each progress measure.", "Architect", "No", 5, 7, "2.06", "Work: customer project", ""),
 
     # P3 — Kickoff
-    ("3.01", "P3", "Kickoff agenda drafted", "AI drafts from intake + audit: plan summary, missing items, decisions needed. Architect edits.", "AI", "No", 5, 7, "2.02, 2.06", "Doc / note", ""),
-    ("3.02", "P3", "Kickoff session (15 min)", "Architect & team intro; confirm goal and 90-day plan; walk through missing items; explain office hours, weekly updates, MBRs and request process.", "Architect", "Yes", 5, 10, "3.01", "Meeting", ""),
-    ("3.03", "P3", "Book MBRs and the 'what's next' call", "MBR #1 ≈ Day 30, MBR #2 ≈ Day 60 (includes what's next), final results review ≈ Day 85.", "Architect", "Yes", 5, 10, "3.02", "Meetings", ""),
-    ("3.04", "P3", "Kickoff recap within 24h", "AI drafts the recap; Architect sends. Supered plan updated with confirmed schedule and client to-dos.", "Architect", "Yes", 6, 11, "3.02", "Email + Supered", ""),
-    ("3.05", "P3", "Move onboarding to Foundations", "Stage = Foundations, health set.", "Architect", "No", 6, 11, "3.02", "Onboarding pipeline stage", ""),
+    ("3.01", "P3", "Kickoff agenda", "Plan summary, missing items, decisions needed. Drafted from intake + audit.", "Architect", "No", 5, 7, "2.02, 2.06", "Work: customer project (notes)", ""),
+    ("3.02", "P3", "Kickoff session (15 min)", "Architect & team intro; confirm the goal and plan; walk through missing items; explain office hours, Friday updates, MBRs and how to send requests.", "Architect", "Yes", 5, 10, "3.01", "Meeting", ""),
+    ("3.03", "P3", "Book MBRs and the 'what's next' call", "MBR #1 ≈ Day 30, MBR #2 ≈ Day 60, 'what's next' ≈ Day 60–65, final results review ≈ Day 85 (scaled to program length).", "Architect", "Yes", 5, 10, "3.02", "Meetings", ""),
+    ("3.04", "P3", "Kickoff recap within 24h", "Decisions, owners, dates, client to-dos. Supered plan updated.", "Architect", "Yes", 6, 11, "3.02", "Email + Supered", ""),
 
     # P4 — Foundations
-    ("4.01", "P4", "Account settings, users & permissions", "Users, teams, permission sets, 2FA, account defaults, brands/business units if relevant.", "Architect", "No", 7, 12, "2.01", "Tech Setup tab", ""),
-    ("4.02", "P4", "Tracking code & consent", "Tracking code on every site domain, internal IPs excluded, cookie consent banner configured.", "Architect", "No", 7, 14, "2.03", "Tech Setup tab", ""),
-    ("4.03", "P4", "Domains & email authentication", "Connect landing page / blog domains; authenticate the email sending domain (SPF, DKIM, DMARC). Needs client DNS contact.", "Architect", "No", 7, 18, "2.03", "Tech Setup tab", ""),
-    ("4.04", "P4", "Email foundations", "Subscription types, footer and office address, brand kit, email templates, default sender.", "Architect", "No", 10, 18, "2.04", "Tech Setup tab", ""),
-    ("4.05", "P4", "Data model", "Property audit, custom properties, lifecycle stage definitions, lead status, marketing-contact rules.", "Architect", "No", 10, 21, "2.06", "Tech Setup tab", ""),
-    ("4.06", "P4", "Data import & cleanup", "Import contacts/companies, dedupe, associations, set marketing contacts.", "Architect", "No", 14, 25, "4.05", "Tech Setup tab", ""),
-    ("4.07", "P4", "Integrations", "Website forms, GA4, ad accounts, social, webinar/Zoom, Slack, CRM sync if the CRM isn't HubSpot.", "Architect", "No", 14, 28, "2.03", "Tech Setup tab", ""),
-    ("4.08", "P4", "Baseline progress dashboard", "Dashboard with one report per progress measure, so weekly updates can show KPIs.", "Architect", "Yes", 18, 28, "2.07", "HubSpot dashboard", ""),
-    ("4.09", "P4", "Foundation QA", "Test tracking, a test email (deliverability + rendering), test form submission end to end.", "Architect", "No", 25, 30, "4.02, 4.03, 4.04", "QA checklist", ""),
-    ("4.10", "P4", "Supered announcement: foundations done", "Short video: what changed for you and why it matters.", "Architect", "Yes", 28, 30, "4.09", "Supered", ""),
+    ("4.01", "P4", "Account, users & security", "Users, permission sets, 2FA; Enterprise extras where bought.", "Architect", "No", 7, 12, "2.01", "Tech Setup tab", ""),
+    ("4.02", "P4", "Tracking & consent", "Tracking code on every domain, internal traffic excluded, cookie banner set.", "Architect", "No", 7, 14, "2.03", "Tech Setup tab", ""),
+    ("4.03", "P4", "Domains & email authentication", "Content domain connected; sending domain authenticated (SPF, DKIM, DMARC) with the client's DNS contact.", "Architect", "No", 7, 18, "2.03", "Tech Setup tab", ""),
+    ("4.04", "P4", "Email foundations", "Subscription types, footer and address, brand kit, email templates, default sender.", "Architect", "No", 10, 18, "2.04", "Tech Setup tab", ""),
+    ("4.05", "P4", "Data model", "Property audit, lifecycle stage definitions, lead status, marketing-contact rules.", "Architect", "No", 10, 21, "2.06", "Tech Setup tab", ""),
+    ("4.06", "P4", "Migration plan & export", "Inventory and export from the old tool: lists, consent, unsubscribes and bounces, templates, active automations.", "Architect", "No", 8, 16, "2.03", "Tech Setup tab", ""),
+    ("4.07", "P4", "Data import & cleanup", "Import contacts/companies (including migrated lists with consent mapped and unsubscribes suppressed), dedupe, associations, marketing contacts.", "Architect", "No", 14, 25, "4.05, 4.06", "Tech Setup tab", ""),
+    ("4.08", "P4", "Website connection", "HubSpot forms, CTAs, chat and meetings on the current website; landing page and blog templates.", "Architect", "No", 14, 28, "4.02", "Tech Setup tab", ""),
+    ("4.09", "P4", "Integrations", "GA4, ad accounts, social, webinar tool, Slack, CRM sync if their CRM isn't HubSpot.", "Architect", "No", 14, 28, "2.03", "Tech Setup tab", ""),
+    ("4.10", "P4", "Baseline dashboard", "One report per progress measure, showing baseline vs now. Used in every weekly update.", "Architect", "Yes", 18, 28, "2.07", "HubSpot dashboard", ""),
+    ("4.11", "P4", "Foundation QA", "Test visit → form → contact → email → notification end to end; test email rendering and deliverability.", "Architect", "No", 25, 30, "4.02, 4.03, 4.04, 4.07", "Tech Setup tab", ""),
+    ("4.12", "P4", "Supered video: foundations done", "What changed for the customer and why it matters.", "Architect", "Yes", 28, 30, "4.11", "Supered", ""),
 
-    # P5 — Build & launch (repeat per Factory)
-    ("5.01", "P5", "Lead capture", "Forms, CTAs/pop-ups, landing pages, thank-you pages, meetings link.", "Architect", "No", 21, 40, "4.09", "Factory: Visitor → Lead", ""),
-    ("5.02", "P5", "Segmentation", "Segments by persona, lifecycle and engagement; suppression lists.", "Architect", "No", 25, 40, "4.06", "Factory", ""),
-    ("5.03", "P5", "Lead nurture", "Nurture workflows and emails per persona/offer. Client approves copy.", "Architect", "Yes", 30, 55, "5.01, 5.02", "Factory: Lead → MQL", ""),
-    ("5.04", "P5", "Lifecycle automation & MQL handoff", "Lead scoring (Pro+), MQL criteria, owner assignment, sales notifications, follow-up SLA.", "Architect", "Yes", 35, 60, "4.05", "Factory: MQL → Meeting", ""),
-    ("5.05", "P5", "First campaign live", "Campaign object, UTMs, assets associated, launched with the client.", "Architect", "Yes", 40, 65, "5.01, 5.03", "Factory", ""),
-    ("5.06", "P5", "Ads & social", "Connect ad accounts, conversion events, audiences (Pro+), social publishing.", "Architect", "No", 30, 60, "4.07", "Factory", ""),
-    ("5.07", "P5", "Performance reporting", "Marketing performance dashboard, funnel by progress measure, attribution (Pro/Ent).", "Architect", "Yes", 45, 70, "4.08", "HubSpot dashboard", ""),
-    ("5.08", "P5", "AI / Breeze configuration", "Brand voice, content tools and agents, only within the AI terms in the agreement.", "Architect", "No", 45, 70, "4.04", "Tech Setup tab", ""),
-    ("5.09", "P5", "UAT & go-live per Factory", "Client reviews and approves each delivery; Factory moves to Done.", "Client POC", "Yes", 35, 75, "5.01–5.08", "Factory record stage", ""),
-    ("5.10", "P5", "Supered video per delivery", "What was built, how to use it, why it matters.", "Architect", "Yes", 35, 75, "5.09", "Supered", ""),
-    ("5.11", "P5", "Log issues found & out of scope", "Anything uncovered that's not in scope becomes a ticket ('sell the problem') or a 'not now' item.", "Architect", "No", 7, 90, "", "Tickets", ""),
+    # P5 — Build & launch (one task per progress measure + launch tasks)
+    ("5.01", "P5", "Build 1.1 Visitor → Lead", "Forms, CTAs, landing and thank-you pages live on the right pages. Measure: visit-to-contact rate.", "Architect", "No", 21, 40, "4.08, 4.11", "Progress measure 1.1", ""),
+    ("5.02", "P5", "Build 1.2 Lead → MQL", "Segments, nurture emails and workflows, lead scoring, lifecycle automation. Client approves copy. Measure: lead-to-MQL rate.", "Architect", "Yes", 30, 55, "5.01, 4.07", "Progress measure 1.2", ""),
+    ("5.03", "P5", "Build 1.3 MQL → Meeting", "MQL definition agreed with sales, owner assignment, notifications, follow-up SLA, meetings link in nurture. Measure: MQL-to-meeting rate.", "Architect", "Yes", 35, 60, "5.02", "Progress measure 1.3", ""),
+    ("5.04", "P5", "Build 2.1 Subscriber → Engaged (if bought)", "Newsletter or content program, subscription preferences, re-engagement and sunset flows. Measure: email click rate, engaged contacts.", "Architect", "No", 35, 60, "4.04", "Progress measure 2.1", ""),
+    ("5.05", "P5", "Build 1.0 Stranger → Visitor (if bought)", "Campaigns and UTMs, ad audiences and conversion events, social publishing, SEO recommendations. Measure: sessions by source.", "Architect", "No", 30, 60, "4.09", "Progress measure 1.0", ""),
+    ("5.06", "P5", "Migration: rebuild and switch off old tool", "Rebuild templates and active automations from the old tool, send in parallel once, then switch the old tool off.", "Architect", "Yes", 25, 50, "4.06, 4.07", "Tech Setup tab", ""),
+    ("5.07", "P5", "Website: landing pages & blog", "Migrate landing pages and blog posts within the agreed limit; redirects set.", "Architect", "Yes", 30, 60, "4.08", "Tech Setup tab", ""),
+    ("5.08", "P5", "First campaign live", "Campaign with UTMs and assets, launched with the client.", "Architect", "Yes", 40, 65, "5.01, 5.02", "HubSpot campaigns", ""),
+    ("5.09", "P5", "Performance reporting", "Marketing performance dashboard and funnel by progress measure; revenue attribution on Enterprise.", "Architect", "Yes", 45, 70, "4.10", "HubSpot dashboard", ""),
+    ("5.10", "P5", "AI / Breeze setup", "Brand voice and content tools, only within the AI terms in the agreement.", "Architect", "No", 45, 70, "4.04", "Tech Setup tab", ""),
+    ("5.11", "P5", "Client sign-off per progress measure", "Client approves each build before it goes live.", "Client POC", "Yes", 35, 75, "5.01–5.07", "Work: Status 'In review'", ""),
+    ("5.12", "P5", "Supered video per delivery", "What was built, how to use it, why it matters.", "Architect", "Yes", 35, 75, "5.11", "Supered", "After each delivery"),
 
     # P6 — Training & adoption
-    ("6.01", "P6", "Confirm training plan", "Who needs which modules (from intake). See Training tab.", "Architect", "Yes", 10, 14, "2.02", "Training tab", ""),
-    ("6.02", "P6", "Deliver training modules", "Supered videos + live practice in office hours, timed to when each feature ships.", "Architect", "Yes", 14, 85, "6.01", "Supered + office hours", ""),
-    ("6.03", "P6", "Adoption check #1", "Logins, emails sent, workflows active, dashboards viewed. Flag low adoption in the weekly update.", "Architect", "No", 45, 45, "6.02", "Onboarding record", "Task auto-created Day 45"),
-    ("6.04", "P6", "Admin handbook (Supered Base)", "How your portal is set up: naming conventions, properties, workflows, who owns what.", "Architect", "Yes", 60, 85, "5.09", "Supered Base", ""),
-    ("6.05", "P6", "Adoption check #2", "Same check before the final results review.", "Architect", "No", 75, 75, "6.03", "Onboarding record", "Task auto-created Day 75"),
+    ("6.01", "P6", "Confirm training plan", "Who needs which modules (Training tab), from the intake.", "Architect", "Yes", 10, 14, "2.02", "Training tab", ""),
+    ("6.02", "P6", "Deliver training modules", "Supered videos + practice in office hours, timed to when each feature ships.", "Architect", "Yes", 14, 85, "6.01", "Supered + office hours", ""),
+    ("6.03", "P6", "Adoption check #1", "Logins, emails sent, workflows active, dashboards viewed. Flag low adoption in the weekly update.", "Architect", "No", 45, 45, "6.02", "Work: customer project", ""),
+    ("6.04", "P6", "Admin handbook (Supered Base)", "How the portal is set up: naming, properties, workflows, who owns what.", "Architect", "Yes", 60, 85, "5.11", "Supered Base", ""),
+    ("6.05", "P6", "Adoption check #2", "Same check before the final results review.", "Architect", "No", 75, 75, "6.03", "Work: customer project", ""),
 
     # P7 — Run cadence (recurring)
-    ("7.01", "P7", "Office hours (weekly)", "Bookable slots via link. Used for questions, coaching and training practice.", "Architect", "Yes", 7, 90, "1.09", "HubSpot Meetings", ""),
-    ("7.02", "P7", "Weekly update (every Friday)", "AI drafts from completed tasks, Factory progress and KPIs; Architect reviews and sends. See Comms tab for the template.", "Architect", "Yes", 7, 90, "4.08", "Email logged to onboarding record", "Recurring task every Thursday + AI draft"),
-    ("7.03", "P7", "New requests → tickets", "Every client request becomes a ticket with urgency class. Out of scope → quoted ($250) or saved as 'not now'.", "Architect", "Yes", 7, 90, "", "Tickets (Active pipeline)", "Form/email → ticket"),
-    ("7.04", "P7", "Store client ideas as 'not now'", "Ideas we won't do now are saved so we can sell them later (fuel for the 'what's next' call).", "Architect", "No", 7, 90, "", "Tickets: Not Now", ""),
-    ("7.05", "P7", "Work scheduled with due dates", "Every task has a due date and sits in the Architect's task queue / calendar. 'Things we didn't do' are documented, not dropped.", "Architect", "No", 7, 90, "", "HubSpot tasks", ""),
-    ("7.06", "P7", "Weekly health check", "Update status (On track / At risk / Off track), risks & blockers. Escalate per the escalation path.", "Architect", "No", 7, 90, "", "Onboarding record", "Alert Phil when At risk"),
-    ("7.07", "P7", "Monthly Business Review (MBR)", "Progress vs benchmark, KPI trend, issues and opportunities found. Phil joins.", "Architect", "Yes", 30, 60, "3.03", "Meeting", ""),
-    ("7.08", "P7", "Internal delivery review (weekly)", "Phil + Architects: at-risk customers, capacity, blockers.", "Phil", "No", 7, 90, "", "Board view of onboarding pipeline", ""),
+    ("7.01", "P7", "Office hours", "Bookable slots for questions, coaching and training practice.", "Architect", "Yes", 7, 90, "1.07", "HubSpot Meetings", "Weekly"),
+    ("7.02", "P7", "Weekly update", "Drafted with AI, reviewed and sent by the Architect: work done and the strategic issue it moves, numbers vs baseline, issues found outside scope, next week, client to-dos.", "Architect", "Yes", 7, 90, "4.10", "Email, logged on the deal", "Weekly (Friday)"),
+    ("7.03", "P7", "Handle requests by urgency", "Every request gets logged with an urgency class and handled in that time ($250 per request; see Request Classes).", "Architect", "Yes", 7, 90, "", "Work: Requests table", "As they come in"),
+    ("7.04", "P7", "Log issues and 'not now' ideas", "Out-of-scope issues and client ideas go to the Requests table as 'Not now', to sell later.", "Architect", "No", 7, 90, "", "Work: Requests table", "As they come in"),
+    ("7.05", "P7", "Health check", "Set Health (On track / At risk / Off track) and blockers. Escalate per the escalation path.", "Architect", "No", 7, 90, "", "Work: Portfolio", "Weekly"),
+    ("7.06", "P7", "Monthly Business Review", "Progress vs baseline, numbers trend, issues and opportunities. Architect leads; Phil optional.", "Architect", "Yes", 30, 60, "3.03", "Meeting", "Monthly"),
+    ("7.07", "P7", "Internal delivery review", "Phil + Architects: at-risk customers, capacity, blockers.", "Phil", "No", 7, 90, "", "Work: Portfolio", "Weekly"),
 
     # P8 — What's next
-    ("8.01", "P8", "Prep next-phase options", "Results so far, issues found, 'not now' backlog → Option A / Option B.", "Phil", "No", 55, 60, "7.04", "Note on onboarding record", "AI drafts summary"),
-    ("8.02", "P8", "'What's next' call", "Phil explains the customer's next phase with an assumptive A/B choice; Architect joins.", "Phil", "Yes", 60, 65, "8.01", "Meeting", ""),
-    ("8.03", "P8", "Next-phase proposal", "New deal in the Sales Pipeline (type: Expansion) with the chosen option.", "Phil", "Yes", 62, 70, "8.02", "Deal", ""),
-    ("8.04", "P8", "Final results review", "Before vs after for every progress measure; what we built; what's still open.", "Architect", "Yes", 80, 88, "5.09", "Meeting + dashboard", ""),
-    ("8.05", "P8", "Close out the program", "Supered plan archived, onboarding → Completed, feedback/NPS and testimonial request.", "Architect", "Yes", 85, 90, "8.04", "Onboarding pipeline", "Feedback survey on stage change"),
+    ("8.01", "P8", "Prep next-phase options", "Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews.", "Architect", "No", 55, 60, "7.04", "Work: customer project (notes)", ""),
+    ("8.02", "P8", "'What's next' call", "Phil explains the next phase with an A/B choice; Architect joins.", "Phil", "Yes", 60, 65, "8.01", "Meeting", ""),
+    ("8.03", "P8", "Next-phase proposal", "New deal in the Sales Pipeline for the chosen offer.", "Phil", "Yes", 62, 70, "8.02", "Deal", ""),
+    ("8.04", "P8", "Final results review", "Before vs after for every progress measure, what we built, what's still open.", "Architect", "Yes", 80, 88, "5.11", "Meeting + dashboard", ""),
+    ("8.05", "P8", "Close the program", "Supered plan archived, project marked Completed, feedback and testimonial asked for.", "Architect", "Yes", 85, 90, "8.04", "Work + Supered", ""),
 
-    # P9 — Post-program
-    ("9.01", "P9", "6 months of free KPI monitoring", "Monthly KPI snapshot email (scheduled dashboard) + quarterly check-in.", "Automation", "Yes", 90, 270, "8.05", "Scheduled dashboard email", "Monthly"),
-    ("9.02", "P9", "Offer: team support", "Paid ongoing support for their team.", "Phil", "Yes", 60, 120, "8.02", "Deal", ""),
-    ("9.03", "P9", "Offer: build internal capacity", "Paid help to grow their in-house team's skills (training, hiring support).", "Phil", "Yes", 60, 120, "8.02", "Deal", ""),
-    ("9.04", "P9", "Offer: one initiative a month", "Ongoing plan, one initiative per month.", "Phil", "Yes", 60, 120, "8.02", "Deal", ""),
-    ("9.05", "P9", "Quarterly relationship check-in", "Goal: keep the relationship for another 6–12 months.", "Phil", "Yes", 120, 365, "9.01", "Meeting", "Task every 90 days"),
+    # P9 — After the program (6 months of free KPI monitoring)
+    ("9.01", "P9", "Monthly KPI snapshot", "Progress-measure dashboard emailed with 3 short notes from the Architect.", "Architect", "Yes", 90, 270, "8.05", "Scheduled dashboard email", "Monthly × 6"),
+    ("9.02", "P9", "Portal health alerts", "Watch for deliverability drops, workflow errors, form submissions down 30%+. Tell the client when one fires.", "Architect", "Yes", 90, 270, "8.05", "HubSpot alerts", "Ongoing"),
+    ("9.03", "P9", "Check-in call: month 3", "30 minutes: numbers, what's working, what's next.", "Architect", "Yes", 180, 180, "9.01", "Meeting", ""),
+    ("9.04", "P9", "Paid offer conversation: month 5", "Present team support, internal capacity and one-initiative-a-month before monitoring ends.", "Phil", "Yes", 240, 240, "9.03", "Deal", ""),
+    ("9.05", "P9", "Check-in call: month 6", "Final monitoring check-in; confirm the paid offer or close monitoring.", "Architect", "Yes", 270, 270, "9.04", "Meeting", ""),
+]
+
+# Standard progress measures (Factories). Naming follows the existing records: "<Client> 1.1 Visitor to Lead".
+# id, name, when, what it measures, HubSpot report, built by
+FACTORIES = [
+    ("0.1", "Database → Marketable database", "Every customer", "% of contacts with lifecycle stage and original source set; marketable contacts; bounce rate under 2%.", "Contacts by lifecycle stage; email health", "4.05, 4.06, 4.07"),
+    ("1.1", "Visitor → Lead", "Every customer", "Visit-to-contact conversion rate; new contacts from forms per month.", "Sessions vs new contacts by source", "5.01, 4.08"),
+    ("1.2", "Lead → MQL", "Every customer", "Lead-to-MQL rate; MQLs per month.", "Lifecycle stage funnel", "5.02"),
+    ("1.3", "MQL → Meeting", "Every customer", "MQL-to-meeting rate; time to first sales touch.", "Funnel + meetings booked by source", "5.03"),
+    ("1.0", "Stranger → Visitor", "When ads, SEO or content is bought", "Sessions per month by source.", "Traffic analytics by source", "5.05"),
+    ("2.1", "Subscriber → Engaged", "When email programs are bought", "Email click rate; contacts engaged in the last 90 days.", "Email performance; engagement segment size", "5.04"),
+]
+
+# Recommended request handling ($250 per request)
+REQUEST_RULES = [
+    "One request = one deliverable that takes up to about 2 hours (one email, one form, one workflow change, one report).",
+    "Bigger than that becomes a scoped quote, not a request.",
+    "Anything in the customer's plan (Task Template) is never a request.",
+]
+# class, what it is, response and turnaround, price
+REQUEST_CLASSES = [
+    ("Critical", "Something live is broken: forms not submitting, emails not sending, a workflow sending the wrong email, tracking down.", "Reply within 4 business hours; fixed within 1 business day.", "Free if it's in something we built; otherwise $250"),
+    ("High", "Needed for a launch or deadline in the next 2 weeks.", "Started within 2 business days; done within 5.", "$250"),
+    ("Standard", "A small new request with no hard deadline.", "Planned into next week; done within 10 business days.", "$250"),
+    ("Not now", "An idea or a bigger project for later.", "Logged and reviewed at MBRs and the 'what's next' call.", "Quoted when scoped"),
+]
+
+# Suggested scope limits for the new in-scope work
+SCOPE_LIMITS = [
+    ("Migration", "One previous email/marketing tool (e.g. Mailchimp): lists with consent and unsubscribes, up to 5 email templates, and the automations that are active today."),
+    ("Website", "Connect the current website (tracking, forms, CTAs, chat, meetings), landing page and blog templates, up to 10 landing pages, blog import. A full website rebuild is a separate project."),
+]
+
+# offer, price, what's included
+POST_PROGRAM = [
+    ("KPI monitoring (6 months)", "Free", "Monthly KPI snapshot with Architect notes; portal health alerts; check-in calls at month 3 and month 6; requests still available at $250 each."),
+    ("Team support", "Suggest the existing 'Monthly Plan – Standard' ($1,670/mo, 1 task at a time)", "Same Architect, ongoing requests one at a time, weekly office hours."),
+    ("Build internal capacity", "To be priced", "Coach their in-house marketer or admin: monthly training plan, admin office hours, HubSpot certification path, help hiring a marketing ops role."),
+    ("One initiative a month", "To be priced", "One scoped project per month from the 'not now' list (a new nurture, a campaign, a report pack, another tool migration)."),
 ]
 
 # section, question, field type, required, already captured pre-sale?, why we ask, maps to
 INTAKE = [
-    ("Contacts", "Main point of contact (name, email, role)", "Text", "Yes", "Yes (confirm)", "One owner for approvals and to-dos.", "Contact + association label POC"),
-    ("Contacts", "Supporters who should get updates or training", "Multi-line text", "Yes", "Partly", "Training plan and weekly update recipients.", "Contacts + association label Supporter"),
-    ("Contacts", "Who controls your DNS / IT?", "Text", "Yes", "No", "Needed for email authentication and domain connection.", "Onboarding: DNS contact"),
-    ("Contacts", "Preferred channel for quick questions", "Dropdown: Email / Slack Connect / Teams", "Yes", "No", "Sets how office-hours follow-ups happen.", "Onboarding: Comms channel"),
-    ("Contacts", "Time zone and best days for office hours", "Text", "No", "No", "Office hours slots.", "Onboarding: Time zone"),
-    ("Goals", "In one sentence: from where to where? (pre-filled from the sale)", "Multi-line text", "Yes", "Yes (confirm)", "The strategic motivation every update ties back to.", "Onboarding: Customer goal"),
-    ("Goals", "Top 3 results you want in the next 90 days", "Multi-line text", "Yes", "Partly", "Prioritizes the Delivery Template.", "Onboarding: Success metrics"),
-    ("Goals", "How do you report marketing results today, and to whom?", "Multi-line text", "Yes", "Partly", "Shapes dashboards and MBRs.", "Onboarding note"),
-    ("Goals", "Current numbers: monthly sessions, leads, MQLs, meetings, customers", "Number fields", "No", "Partly", "Baseline for progress measures.", "Factory baseline"),
-    ("Audience", "Who are your buyers? (personas / segments)", "Multi-line text", "Yes", "No", "Segmentation and nurture design.", "Onboarding note"),
-    ("Audience", "How do you define a marketing-qualified lead today?", "Multi-line text", "Yes", "No", "Lifecycle and MQL handoff.", "Onboarding note"),
-    ("Marketing today", "Channels you use", "Checkboxes: SEO, Paid search, Paid social, Organic social, Email, Events/Webinars, Partners, Outbound", "Yes", "Partly", "Integrations and campaign setup.", "Onboarding: Channels"),
-    ("Marketing today", "Campaigns or launches planned in the next 90 days", "Multi-line text", "No", "No", "Pick a first campaign to build live.", "Onboarding note"),
-    ("Marketing today", "Who on your team will run HubSpot, and hours per week", "Text", "Yes", "Partly", "Training scope and realistic timeline.", "Onboarding: Team capacity"),
-    ("Marketing today", "Other agencies or freelancers involved", "Text", "No", "No", "Avoid overlap; access and handoff.", "Onboarding note"),
-    ("Content approval", "Who approves emails/pages before they go live, and how fast?", "Text", "Yes", "No", "Sets UAT turnaround in the plan.", "Onboarding: Approver"),
-    ("Tech", "HubSpot hubs and tiers you own", "Checkboxes per hub + tier", "Yes", "Yes (confirm)", "Determines which setup items apply (Starter / Pro / Enterprise).", "Company: Hub tiers"),
-    ("Tech", "Website platform and who can edit it", "Dropdown + text", "Yes", "Partly", "Tracking code and embedded forms.", "Company: CMS"),
-    ("Tech", "Email domain you send from", "Text", "Yes", "No", "Email sending domain authentication.", "Onboarding: Sending domain"),
-    ("Tech", "Other tools we must connect or migrate from", "Multi-line text (CRM, email tool, ads, webinar, chat, analytics)", "Yes", "Partly", "Integration and migration scope.", "Company: Tech stack"),
-    ("Tech", "Where do your contacts live today and roughly how many?", "Text + number", "Yes", "No", "Import scope and marketing contact tier.", "Onboarding note"),
-    ("Compliance", "Regions you market to and consent rules you follow", "Checkboxes: US, Canada (CASL), EU/UK (GDPR), Other", "Yes", "No", "Subscription types, consent and cookie banner.", "Onboarding: Compliance"),
-    ("Compliance", "Industry regulations (e.g. HIPAA, financial)", "Text", "No", "No", "Data handling limits.", "Onboarding: Compliance"),
-    ("Brand", "Upload brand guide, logos, fonts, email templates", "File upload", "Yes", "No", "Brand kit and templates.", "Files on onboarding record"),
-    ("Access", "Checklist: HubSpot partner access, website admin, GA4/GTM, ad accounts, social accounts", "Checkboxes", "Yes", "Partly", "One list so access isn't chased for weeks.", "Onboarding: Access status"),
+    ("Contacts", "Main point of contact (name, email, role)", "Text", "Yes", "Yes (confirm)", "One owner for approvals and to-dos.", "Deal contact: POC"),
+    ("Contacts", "Supporters who should get updates or training", "Multi-line text", "Yes", "Partly", "Training plan and weekly update recipients.", "Deal contacts: Supporter"),
+    ("Contacts", "Who controls your DNS / IT?", "Text", "Yes", "No", "Email authentication and domain connection.", "Customer project"),
+    ("Contacts", "Preferred channel for quick questions", "Dropdown: Email / Slack Connect / Teams", "Yes", "No", "How office-hours follow-ups happen.", "Customer project"),
+    ("Contacts", "Time zone and best days for office hours", "Text", "No", "No", "Office hours slots.", "Customer project"),
+    ("Goals", "In one sentence: from where to where? (pre-filled from the sale)", "Multi-line text", "Yes", "Yes (confirm)", "The goal every update ties back to.", "Customer project"),
+    ("Goals", "Top 3 results you want by the end of the program", "Multi-line text", "Yes", "Partly", "Prioritizes the build.", "Customer project"),
+    ("Goals", "How do you report marketing results today, and to whom?", "Multi-line text", "Yes", "Partly", "Shapes dashboards and MBRs.", "Customer project"),
+    ("Goals", "Current numbers: monthly sessions, leads, MQLs, meetings, customers", "Number fields", "No", "Partly", "Baselines for progress measures.", "Progress measures"),
+    ("Audience", "Who are your buyers? (personas / segments)", "Multi-line text", "Yes", "No", "Segments and nurture.", "Customer project"),
+    ("Audience", "How do you define a marketing-qualified lead today?", "Multi-line text", "Yes", "No", "Progress measures 1.2 and 1.3.", "Customer project"),
+    ("Marketing today", "Channels you use", "Checkboxes: SEO, Paid search, Paid social, Organic social, Email, Events/Webinars, Partners, Outbound", "Yes", "Partly", "Integrations and optional progress measures.", "Customer project"),
+    ("Marketing today", "Campaigns or launches planned in the next 90 days", "Multi-line text", "No", "No", "Pick the first campaign.", "Customer project"),
+    ("Marketing today", "Who on your team will run HubSpot, and hours per week", "Text", "Yes", "Partly", "Training scope and a realistic timeline.", "Customer project"),
+    ("Marketing today", "Other agencies or freelancers involved", "Text", "No", "No", "Avoid overlap.", "Customer project"),
+    ("Approvals", "Who approves emails/pages before they go live, and how fast?", "Text", "Yes", "No", "Sign-off turnaround in the plan.", "Customer project"),
+    ("Tech", "Marketing Hub tier", "Dropdown: Professional / Enterprise", "Yes", "Yes (confirm)", "Which setup items apply.", "Customer project"),
+    ("Tech", "Website platform and who can edit it", "Dropdown + text", "Yes", "Partly", "Website connection.", "Customer project"),
+    ("Tech", "Email domain you send from", "Text", "Yes", "No", "Email authentication.", "Customer project"),
+    ("Migration", "Which email/marketing tool are you moving from, and what's active in it today?", "Text + multi-line text", "Yes", "Partly", "Migration plan.", "Customer project"),
+    ("Migration", "Where do your contacts live today and roughly how many?", "Text + number", "Yes", "No", "Import scope and marketing contacts.", "Customer project"),
+    ("Website", "Landing pages and blog posts to bring over (links or count)", "Multi-line text", "No", "No", "Website scope within the limit.", "Customer project"),
+    ("Tech", "Other tools to connect (CRM, ads, webinar, chat, analytics)", "Multi-line text", "Yes", "Partly", "Integrations.", "Customer project"),
+    ("Compliance", "Regions you market to and consent rules you follow", "Checkboxes: US, Canada (CASL), EU/UK (GDPR), Other", "Yes", "No", "Subscription types, consent, cookie banner.", "Customer project"),
+    ("Compliance", "Industry regulations (e.g. HIPAA, financial)", "Text", "No", "No", "Data handling limits.", "Customer project"),
+    ("Brand", "Upload brand guide, logos, fonts, email templates", "File upload", "Yes", "No", "Brand kit and templates.", "Supered upload"),
+    ("Access", "Checklist: HubSpot access, website admin, GA4/GTM, ad accounts, social accounts, old tool login", "Checkboxes", "Yes", "Partly", "One list so access isn't chased for weeks.", "Supered to-do"),
 ]
 
-# area, item, details, tier (S/P/E = Starter/Pro/Enterprise), phase task id, owner
+# area, item, details, tier ("Pro & Ent" or "Ent only"), task id, owner
 TECH_SETUP = [
-    ("Account", "Users, teams & permission sets", "Invite client users, set permissions by role, teams if needed.", "S", "4.01", "Architect"),
-    ("Account", "Security", "Require 2FA; SSO on Enterprise.", "S", "4.01", "Architect"),
-    ("Account", "Account defaults", "Company info, time zone, currency, fiscal year; brands/business units (Ent).", "S", "4.01", "Architect"),
-    ("Tracking", "Install tracking code", "On every domain (CMS plugin or GTM). Verify with a test visit.", "S", "4.02", "Architect"),
-    ("Tracking", "Exclude internal traffic", "Client and RevGravy IPs/domains excluded from analytics.", "S", "4.02", "Architect"),
-    ("Tracking", "Cookie consent banner", "Configured per regions in intake.", "S", "4.02", "Architect"),
-    ("Domains", "Connect content domains", "Landing pages / blog subdomain (e.g. go.client.com).", "S", "4.03", "Architect"),
-    ("Domains", "Email sending domain authentication", "SPF, DKIM, DMARC records added by client DNS contact; verified in HubSpot.", "S", "4.03", "Architect + client IT"),
-    ("Email", "Subscription types", "Defined per content type; mapped to consent requirements.", "S", "4.04", "Architect"),
-    ("Email", "Footer, office address, default sender", "Compliant footer, real sender name.", "S", "4.04", "Architect"),
-    ("Email", "Brand kit & email templates", "Logo, colors, fonts; 2–3 reusable templates.", "S", "4.04", "Architect"),
-    ("Email", "Double opt-in", "Only if compliance requires it.", "S", "4.04", "Architect"),
-    ("Data", "Property audit & custom properties", "Remove unused, add what the Factories need. Naming convention documented.", "S", "4.05", "Architect"),
-    ("Data", "Lifecycle stages & lead status", "Definitions agreed with client; automation set.", "S", "4.05", "Architect"),
-    ("Data", "Marketing contact rules", "Who is a marketing contact; keeps billing under control.", "S", "4.05", "Architect"),
-    ("Data", "Import contacts & companies", "Mapped import, dedupe, associations.", "S", "4.06", "Architect"),
-    ("Data", "Data hygiene workflows", "Formatting, required fields, duplicates.", "P", "4.06", "Architect"),
-    ("Integrations", "Website CMS / non-HubSpot forms", "Embed or collect external forms.", "S", "4.07", "Architect"),
-    ("Integrations", "GA4", "Connect for reporting.", "S", "4.07", "Architect"),
-    ("Integrations", "Ad accounts", "Google, Meta, LinkedIn; conversion events.", "S", "4.07", "Architect"),
-    ("Integrations", "Social accounts", "Connect for publishing and reporting.", "S", "4.07", "Architect"),
-    ("Integrations", "Webinar / Zoom, Slack, other apps", "As listed in intake.", "S", "4.07", "Architect"),
-    ("Integrations", "CRM sync (if CRM isn't HubSpot)", "Field mapping, sync rules, lifecycle alignment.", "P", "4.07", "Architect"),
-    ("Integrations", "Supered", "Install and grant client users access.", "S", "1.05", "Ops"),
-    ("Lead capture", "Forms", "Hidden fields, consent, progressive fields (Pro).", "S", "5.01", "Architect"),
-    ("Lead capture", "CTAs / pop-ups", "Per offer.", "S", "5.01", "Architect"),
-    ("Lead capture", "Landing & thank-you pages", "Template + first pages.", "S", "5.01", "Architect"),
-    ("Lead capture", "Meetings link", "For sales handoff from nurture.", "S", "5.01", "Architect"),
-    ("Segmentation", "Core segments", "Persona, lifecycle, engagement, customers, suppression.", "S", "5.02", "Architect"),
-    ("Automation", "Nurture workflows", "Per persona / offer.", "P", "5.03", "Architect"),
-    ("Automation", "Lead scoring", "Fit + engagement score; MQL threshold.", "P", "5.04", "Architect"),
-    ("Automation", "MQL handoff", "Assignment, notifications, SLA tasks.", "P", "5.04", "Architect"),
-    ("Campaigns", "Campaigns & UTMs", "Campaign object, UTM conventions, assets associated.", "P", "5.05", "Architect"),
-    ("Campaigns", "Ad audiences", "Retargeting and segment-based audiences.", "P", "5.06", "Architect"),
-    ("Reporting", "Progress-measure dashboard", "One report per Factory; baseline vs now.", "S", "4.08", "Architect"),
-    ("Reporting", "Marketing performance dashboard", "Traffic, leads, MQLs, emails, campaigns.", "S", "5.07", "Architect"),
-    ("Reporting", "Attribution reports", "Multi-touch revenue attribution.", "E", "5.07", "Architect"),
-    ("AI", "Breeze / AI settings", "Brand voice, content tools, agents — within agreed AI terms.", "S", "5.08", "Architect"),
-    ("QA", "End-to-end test", "Visit → form → contact → workflow → email → notification.", "S", "4.09", "Architect"),
-    ("QA", "Client sign-off (UAT)", "Client approves each delivery before go-live.", "S", "5.09", "Client POC"),
+    ("Account", "Users & permission sets", "Invite client users, set permissions by role, teams if needed.", "Pro & Ent", "4.01", "Architect"),
+    ("Account", "Require 2FA", "For every user.", "Pro & Ent", "4.01", "Architect"),
+    ("Account", "Single sign-on (SSO)", "If the client uses an identity provider.", "Ent only", "4.01", "Architect"),
+    ("Account", "Brands / business units", "If they market more than one brand.", "Ent only", "4.01", "Architect"),
+    ("Account", "Sandbox account", "Test workflows and changes before production.", "Ent only", "4.01", "Architect"),
+    ("Tracking", "Tracking code on every domain", "CMS plugin or GTM. Verify with a test visit.", "Pro & Ent", "4.02", "Architect"),
+    ("Tracking", "Exclude internal traffic", "Client and RevGravy IPs/domains.", "Pro & Ent", "4.02", "Architect"),
+    ("Tracking", "Cookie consent banner", "Per the regions in the intake.", "Pro & Ent", "4.02", "Architect"),
+    ("Domains", "Connect content domain", "Landing pages / blog subdomain (e.g. go.client.com).", "Pro & Ent", "4.03", "Architect"),
+    ("Domains", "Email sending domain authentication", "SPF, DKIM, DMARC added by the client's DNS contact; verified in HubSpot.", "Pro & Ent", "4.03", "Architect + client IT"),
+    ("Email", "Subscription types", "Per content type; mapped to consent rules.", "Pro & Ent", "4.04", "Architect"),
+    ("Email", "Footer, address, default sender", "Compliant footer, real sender name.", "Pro & Ent", "4.04", "Architect"),
+    ("Email", "Brand kit & email templates", "Logo, colors, fonts; 2–3 reusable templates.", "Pro & Ent", "4.04", "Architect"),
+    ("Data", "Property audit", "Remove unused, add what the progress measures need. Naming convention documented.", "Pro & Ent", "4.05", "Architect"),
+    ("Data", "Lifecycle stages & lead status", "Definitions agreed with the client; automation set.", "Pro & Ent", "4.05", "Architect"),
+    ("Data", "Marketing contact rules", "Who is a marketing contact; keeps billing under control.", "Pro & Ent", "4.05", "Architect"),
+    ("Data", "Custom behavioral events", "Track key product or site actions.", "Ent only", "4.05", "Architect"),
+    ("Migration", "Old tool inventory", "Lists, segments, templates, active automations, integrations.", "Pro & Ent", "4.06", "Architect"),
+    ("Migration", "Export lists with consent", "Including unsubscribes and hard bounces to suppress.", "Pro & Ent", "4.06", "Architect"),
+    ("Data", "Import contacts & companies", "Mapped import, consent mapped, unsubscribes suppressed, dedupe, associations.", "Pro & Ent", "4.07", "Architect"),
+    ("Data", "Data hygiene workflows", "Formatting, required fields, duplicates.", "Pro & Ent", "4.07", "Architect"),
+    ("Website", "HubSpot forms on the site", "Replace or collect existing site forms.", "Pro & Ent", "4.08", "Architect"),
+    ("Website", "CTAs, chat & meetings on the site", "Placed on the pages that matter.", "Pro & Ent", "4.08", "Architect"),
+    ("Website", "Landing page & blog templates", "Matching the brand kit.", "Pro & Ent", "4.08", "Architect"),
+    ("Integrations", "GA4", "Connected for reporting.", "Pro & Ent", "4.09", "Architect"),
+    ("Integrations", "Ad accounts", "Google, Meta, LinkedIn with conversion events.", "Pro & Ent", "4.09", "Architect"),
+    ("Integrations", "Social accounts", "Connected for publishing and reporting.", "Pro & Ent", "4.09", "Architect"),
+    ("Integrations", "Webinar, Slack, other apps", "As listed in the intake.", "Pro & Ent", "4.09", "Architect"),
+    ("Integrations", "CRM sync (if CRM isn't HubSpot)", "Field mapping, sync rules, lifecycle alignment.", "Pro & Ent", "4.09", "Architect"),
+    ("Reporting", "Baseline dashboard", "One report per progress measure; baseline vs now.", "Pro & Ent", "4.10", "Architect"),
+    ("QA", "End-to-end test", "Visit → form → contact → workflow → email → notification.", "Pro & Ent", "4.11", "Architect"),
+    ("Lead capture", "Forms, CTAs, landing & thank-you pages", "Per offer.", "Pro & Ent", "5.01", "Architect"),
+    ("Segmentation", "Core segments", "Persona, lifecycle, engagement, customers, suppression.", "Pro & Ent", "5.02", "Architect"),
+    ("Automation", "Nurture workflows & emails", "Per persona / offer.", "Pro & Ent", "5.02", "Architect"),
+    ("Automation", "Lead scoring", "Fit + engagement score; MQL threshold.", "Pro & Ent", "5.02", "Architect"),
+    ("Automation", "MQL handoff", "Assignment, notifications, follow-up SLA.", "Pro & Ent", "5.03", "Architect"),
+    ("Email", "Re-engagement & sunset flows", "Keeps the list healthy.", "Pro & Ent", "5.04", "Architect"),
+    ("Campaigns", "Campaigns, UTMs & ad audiences", "Campaign object, UTM conventions, retargeting audiences.", "Pro & Ent", "5.05", "Architect"),
+    ("Migration", "Rebuild templates & automations", "Up to 5 templates; automations active today.", "Pro & Ent", "5.06", "Architect"),
+    ("Migration", "Parallel send, then switch off the old tool", "One parallel send to compare, then cancel the old tool.", "Pro & Ent", "5.06", "Architect + Client POC"),
+    ("Website", "Migrate landing pages & blog", "Up to 10 landing pages + blog import; redirects set.", "Pro & Ent", "5.07", "Architect"),
+    ("Reporting", "Marketing performance dashboard", "Traffic, leads, MQLs, emails, campaigns.", "Pro & Ent", "5.09", "Architect"),
+    ("Reporting", "Revenue attribution reports", "Multi-touch attribution.", "Ent only", "5.09", "Architect"),
+    ("AI", "Breeze / AI settings", "Brand voice and content tools within the agreed AI terms.", "Pro & Ent", "5.10", "Architect"),
 ]
 
-# module, audience, content, format, when (task / day), length
+# module, audience, content, format, when, length
 TRAINING = [
     ("T1 · HubSpot basics", "All client users", "Navigation, records, notifications, where to find help.", "Supered tour + video", "After access (≈ Day 7)", "10 min"),
     ("T2 · Contacts & segments", "Marketing team", "Contact records, properties, segments, data hygiene habits.", "Video + office hours practice", "After data import (≈ Day 25)", "20 min"),
-    ("T3 · Email marketing", "Marketing team", "Build, test, send and analyze emails using your templates.", "Video + live build in office hours", "After email foundations (≈ Day 20)", "25 min"),
-    ("T4 · Forms, landing pages & CTAs", "Marketing team", "Create and edit lead capture assets.", "Video", "After lead capture ships (≈ Day 40)", "20 min"),
-    ("T5 · Workflows & nurture", "HubSpot admin(s)", "Read, edit and safely clone workflows.", "Live session", "After nurture ships (≈ Day 55)", "30 min"),
-    ("T6 · Campaigns, ads & social", "Marketing team", "Campaign object, UTMs, ads and social reporting.", "Video", "After first campaign (≈ Day 65)", "20 min"),
+    ("T3 · Email marketing", "Marketing team", "Build, test, send and analyze emails with your templates.", "Video + live build in office hours", "After email foundations (≈ Day 20)", "25 min"),
+    ("T4 · Forms, landing pages & CTAs", "Marketing team", "Create and edit lead capture assets.", "Video", "After 1.1 ships (≈ Day 40)", "20 min"),
+    ("T5 · Workflows & nurture", "HubSpot admin(s)", "Read, edit and safely clone workflows.", "Live session", "After 1.2 ships (≈ Day 55)", "30 min"),
+    ("T6 · Campaigns, ads & social", "Marketing team", "Campaigns, UTMs, ads and social reporting.", "Video", "After first campaign (≈ Day 65)", "20 min"),
     ("T7 · Reporting & dashboards", "Marketing lead + leadership", "Read the progress-measure dashboard; build a report.", "Live at MBR #2", "≈ Day 60", "20 min"),
-    ("T8 · Lead handoff", "Marketing + sales", "MQL definition, notifications, follow-up SLA.", "Live session", "After MQL handoff ships (≈ Day 60)", "20 min"),
+    ("T8 · Lead handoff", "Marketing + sales", "MQL definition, notifications, follow-up SLA.", "Live session", "After 1.3 ships (≈ Day 60)", "20 min"),
     ("T9 · Admin handbook", "HubSpot admin(s)", "How your portal is built and how to maintain it.", "Supered Base", "≈ Day 85", "Self-serve"),
 ]
 
 # touchpoint, timing, channel, owner, content
 COMMS = [
-    ("Welcome email #1", "Day 0", "Email from Phil", "Automation", "Welcome, Supered Action Plan link, kickoff booking link, first to-dos (access + intake)."),
-    ("Welcome email #2", "Day 2", "Email", "Automation", "How we work: office hours, weekly updates, requests & urgency classes ($250), escalation path, AI use."),
-    ("Access / intake reminders", "Day 3–5 if incomplete", "Email", "Automation", "Friendly reminder with the exact missing items."),
+    ("Welcome email #1", "Day 0", "Email from Phil", "Ops (automated)", "Welcome, Supered Action Plan link, kickoff booking link, first to-dos (access + intake)."),
+    ("Welcome email #2", "Day 2", "Email", "Ops (automated)", "How we work: office hours, weekly updates, requests and urgency classes ($250), escalation path, AI use."),
+    ("Access / intake reminders", "Day 3–5 if incomplete", "Email", "Architect", "Friendly reminder listing the exact missing items."),
     ("Supered announcement", "Day 2–3", "Supered", "Architect", "How Supered works: Bases, announcements, documentation."),
     ("Kickoff (15 min)", "Day 5–10", "Video call", "Architect", "Intros, plan, missing items, office hours, MBRs."),
-    ("Kickoff recap", "Within 24h of kickoff", "Email", "Architect (AI draft)", "Decisions, owners, dates, client to-dos."),
-    ("Weekly update", "Every Friday", "Email", "Architect (AI draft)", "1) What we did and which strategic issue it moves  2) KPIs vs baseline  3) Issues found that aren't in scope  4) Next week  5) Your to-dos."),
+    ("Kickoff recap", "Within 24h of kickoff", "Email", "Architect", "Decisions, owners, dates, client to-dos."),
+    ("Weekly update", "Every Friday", "Email", "Architect (AI draft)", "1) Work done and the strategic issue it moves  2) Numbers vs baseline  3) Issues found outside scope  4) Next week  5) Your to-dos."),
     ("Delivery announcement", "Each delivery", "Supered video", "Architect", "What was built, how to use it, why it matters."),
     ("Office hours", "Weekly slots", "Booking link", "Architect", "Questions, coaching, training practice."),
-    ("MBR", "≈ Day 30 and Day 60", "Video call", "Architect + Phil", "Progress vs benchmark, KPI trend, issues and opportunities."),
-    ("What's next", "≈ Day 60–65", "Video call", "Phil + Architect", "Long-term vision, A/B next phase."),
-    ("Final results review", "≈ Day 80–88", "Video call", "Architect", "Before vs after, what we built, what's open."),
-    ("KPI monitoring", "Monthly for 6 months", "Scheduled dashboard email", "Automation", "Progress measures snapshot."),
+    ("MBR", "Monthly (≈ Day 30 and 60)", "Video call", "Architect (Phil optional)", "Progress vs baseline, numbers trend, issues and opportunities."),
+    ("What's next", "≈ 30 days before the end", "Video call", "Phil + Architect", "Long-term vision, A/B next phase."),
+    ("Final results review", "Last week of the program", "Video call", "Architect", "Before vs after, what we built, what's open."),
+    ("KPI snapshot", "Monthly for 6 months after", "Scheduled dashboard email", "Architect", "Progress measures + 3 short notes."),
 ]
 
-# criterion, HubSpot Work, Projects object, Tickets — each cell: (score 0-2, note)
+# criterion, HubSpot Work, Projects object, Tickets — each cell: (score 0-2, note). Kept as the record of the comparison.
 TOOL_FIT = [
-    ("One record per customer program", (2, "Row in a tracker table linked to the CRM company/deal"), (2, "Native CRM record, associated to deal/company/contacts"), (1, "Possible, but tickets are built for single requests")),
-    ("Reusable task template per program", (2, "Project templates; AI builds from a prompt"), (1, "Tasks on records; templates/dependencies maturing — confirm in portal"), (1, "Workflow-created tasks only")),
-    ("Timeline / Gantt / due dates", (1, "Dates and statuses in tables"), (2, "Gantt, board, table, calendar views"), (0, "Board only")),
-    ("Client can see their plan", (0, "Internal workspace"), (2, "'Visible to Onboarding Customers' → customer portal"), (1, "Customer portal shows tickets")),
-    ("Trigger from closed-won deal", (1, "Agents can react to CRM changes (beta)"), (2, "Standard workflows"), (2, "Standard workflows")),
-    ("Reporting (health, time in stage)", (1, "Table views"), (2, "Standard reports, time-in-stage props"), (2, "Standard reports")),
-    ("Intake forms feed the record", (2, "Work forms create table rows"), (1, "HubSpot form + workflow"), (1, "HubSpot form + workflow")),
-    ("Playbooks / docs next to the work", (2, "Work documents"), (0, "Notes/attachments only"), (0, "Notes only")),
-    ("AI drafts (handoff, weekly update)", (2, "Built-in agents (uses HubSpot Credits)"), (1, "Breeze / workflow AI actions"), (1, "Breeze / workflow AI actions")),
-    ("Client requests & change orders", (1, "Table of requests"), (0, "Not its job"), (2, "Already running: 'Active' ticket pipeline")),
-    ("Maturity / risk", (0, "Public beta; features may change"), (2, "Generally available, already used for Factories"), (2, "Generally available")),
+    ("One record per customer program", (2, "One project per customer, from a template"), (2, "Native CRM record"), (1, "Built for single requests")),
+    ("Reusable task template", (2, "Duplicate the template project"), (1, "Templates still maturing"), (1, "Workflow-created tasks only")),
+    ("Board, timeline, due dates", (2, "Board, timeline and calendar views"), (2, "Gantt, board, table, calendar"), (0, "Board only")),
+    ("Sections per phase", (2, "Tasks grouped by section"), (1, "Pipeline stages"), (1, "Pipeline stages")),
+    ("Client can see their plan", (0, "Internal only (Supered covers this)"), (2, "Customer portal"), (1, "Customer portal")),
+    ("Request log with urgency", (2, "Requests table in each project"), (0, "Not its job"), (2, "Ticket pipeline")),
+    ("Maturity", (0, "Public beta"), (2, "Generally available"), (2, "Generally available")),
 ]
 
-TOOL_VERDICT = [
-    ("HubSpot Work", "The team's operating hub: template library, intake form, onboarding tracker, playbook docs and AI agents (handoff brief, weekly update drafts, delay alerts). Start here as the pilot your boss asked for."),
-    ("Projects object", "The customer's onboarding record of truth: one record per program, associated to the deal, with tasks, Gantt, health and customer-portal visibility. Factories (progress measures) already live here."),
-    ("Tickets", "Client requests during the program: urgency class, $250 out-of-scope requests, 'not now' ideas. Keep the existing 'Active' pipeline."),
-    ("Tasks", "Every to-do has an owner and a due date so it lands on the Architect's queue and calendar (fixes 'Architect needs work scheduled')."),
+WHERE_IT_LIVES = [
+    ("HubSpot Work", "The whole onboarding: a template project duplicated per customer, task sections by phase, board, timeline, requests log, and a portfolio for Phil."),
+    ("Supered", "Everything the customer sees: Action Plan, announcements, delivery and training videos, admin handbook."),
+    ("HubSpot CRM", "The deal-stage gate, the two welcome emails, meetings links and the dashboards that report progress measures."),
+    ("Not used for onboarding", "Projects object pipelines, tickets, HubSpot customer portal, Trello."),
 ]
 
-# HubSpot build spec: (area, item, spec)
-BUILD_SPEC = [
-    ("Projects object", "New pipeline: 'Client Onboarding'", "Stages: Welcome → Access & Intake → Kickoff → Foundations → Build & Launch → Wrap-up & Next Phase → Completed (closed) | Paused | Cancelled (closed)."),
-    ("Projects object", "Type (hs_type) value", "'Marketing Hub Onboarding' (later: Sales Hub Onboarding, Sales Team Onboarding)."),
-    ("Projects object", "Reuse existing props", "Onboarding plan customer goal, Success metrics, Risks and blockers, Status (health), Start date, Target due date, Canvas / FigJam Link, Visible to Onboarding Customers."),
-    ("Projects object", "New props", "Architect, Kickoff date, Next MBR date, Supered Action Plan URL, Office hours link, Hub tier, Sending domain, DNS contact, Access status, Last weekly update sent."),
-    ("Projects object", "Naming", "'<Client> · Marketing Hub Onboarding' so it never mixes up with '<Client> 1.1 … to …' Factory records."),
-    ("Projects object", "Task template", "Tasks from the Task Template tab, with due dates offset from Start date."),
-    ("Deals", "Required props on 'Start Payment Received'", "Canvas / FigJam Link, From→To statement, line items, POC contact, AI terms confirmed, escalation path."),
-    ("Workflow", "WF-01 Closed-won → onboarding", "Create onboarding project, associate deal/company/contacts, copy props, create Phil handoff task, notify Slack, enroll POC in welcome emails."),
-    ("Workflow", "WF-02 Access & intake reminders", "If access or intake not done by Day 3 / Day 4, send reminder and create task for Architect."),
-    ("Workflow", "WF-03 Weekly update task", "Every Thursday while stage is open: task 'Review & send weekly update' + AI draft."),
-    ("Workflow", "WF-04 Health alert", "Status → At risk/Off track: notify Phil, create task."),
-    ("Workflow", "WF-05 Day 55 'what's next' prep", "Create prep task for Phil and Architect."),
-    ("Workflow", "WF-06 Close-out", "Stage → Completed: feedback survey, start KPI monitoring, create 90-day check-in task."),
-    ("Tickets", "Active pipeline: new props", "Urgency class, In scope? (In scope / Out of scope – quote / Not now), Price ($250 default for new requests)."),
-    ("Tickets", "Optional 'Not Now' pipeline", "Ideas and issues to sell later; feeds the 'what's next' call."),
-    ("HubSpot Work", "Workspace: 'Client Onboarding'", "Project: 'Marketing Hub Onboarding'. Tables: Onboarding Tracker, Task Template Library, Tech Setup Checklist, Intake Responses, Issues & Not-Now Ideas, Weekly Update Log, Training Tracker."),
-    ("HubSpot Work", "Forms", "Client Intake Form (→ Intake Responses), Sales→Architect Handoff Form, New Request Form."),
-    ("HubSpot Work", "Documents", "Onboarding Playbook, Kickoff Agenda, Weekly Update Template, MBR Template, 'What's Next' Script, Welcome Email Copy."),
-    ("HubSpot Work", "Agents", "Handoff Brief (on new tracker row), Weekly Update Drafter (Thursdays), Delay Flagger (daily), Not-Now Collector."),
+# HubSpot Work structure — used by both the sheet and the prompt.
+WORK_STATUSES = ["Not started", "In progress", "Waiting on client", "In review", "Done", "Won't do"]
+WORK_TASK_COLUMNS = [
+    ("Task", "Text", "Task name"),
+    ("Section", "Dropdown", "Phase: P0 to P9"),
+    ("Task ID", "Text", "e.g. 4.03"),
+    ("Status", "Dropdown", ", ".join(WORK_STATUSES)),
+    ("Owner role", "Dropdown", ", ".join(ROLES)),
+    ("Assignee", "HubSpot user", "Person doing it"),
+    ("Client-facing", "Yes/No", "Does the customer see or do this?"),
+    ("Start day", "Number", "Days after Day 0 (90-day plan)"),
+    ("Due day", "Number", "Days after Day 0 (90-day plan)"),
+    ("Start date", "Date", "Set per customer"),
+    ("Due date", "Date", "Set per customer (see compression rule)"),
+    ("Repeats", "Text", "Weekly, Monthly, etc."),
+    ("Depends on", "Text", "Task IDs"),
+    ("Definition of done", "Long text", "What 'done' means"),
+    ("Notes", "Long text", "Anything else"),
+]
+WORK_VIEWS = [
+    ("Board", "Columns = Status. Cards show Task ID, Task, Assignee, Due date."),
+    ("By section", "List grouped by Section (P0 → P9), sorted by Task ID."),
+    ("Timeline", "Start date → Due date, grouped by Section."),
+    ("Calendar", "By Due date."),
+    ("My tasks", "Assignee = me, Status not Done / Won't do."),
+    ("Client to-dos", "Owner role = Client POC, Status not Done."),
+    ("This week", "Due date in the next 7 days, Status not Done."),
+    ("Overdue", "Due date before today, Status not Done / Won't do."),
+]
+WORK_PROJECT_FIELDS = [
+    ("Company", "CRM company"), ("Deal", "CRM deal"), ("Architect", "HubSpot user"),
+    ("Program length", "Dropdown: 60, 75, 90 days"), ("Start date", "Date (Day 0)"), ("Target end date", "Date"),
+    ("Marketing Hub tier", "Dropdown: Professional, Enterprise"), ("Health", "Dropdown: On track, At risk, Off track"),
+    ("From→To goal", "Long text"), ("FigJam link", "URL"), ("Supered Action Plan link", "URL"),
+]
+WORK_REQUEST_COLUMNS = [
+    ("Request", "Text"), ("Urgency", "Dropdown: Critical, High, Standard, Not now"),
+    ("Type", "Dropdown: Client request, Issue found, Client idea"), ("Status", "Dropdown: New, Quoted, In progress, Done, Parked"),
+    ("Price", "Number (default 250)"), ("Logged on", "Date"), ("Due date", "Date"), ("Notes", "Long text"),
+]
+WORK_PORTFOLIO_COLUMNS = [
+    ("Customer", "Text (link to the customer project)"), ("Company", "CRM company"), ("Architect", "HubSpot user"),
+    ("Program length", "60, 75, 90 days"), ("Start date", "Date"), ("Target end date", "Date"),
+    ("Current section", "Dropdown P0–P9, Completed"), ("Health", "On track, At risk, Off track"),
+    ("Next MBR", "Date"), ("Next due task", "Text"),
+]
+WORK_PORTFOLIO_VIEWS = [
+    ("Capacity", "Grouped by Architect, only active customers, with a count per group. Phil uses this to pick the Architect."),
+    ("Health board", "Columns = Health."),
+    ("Ending soon", "Target end date in the next 35 days (time for the 'what's next' call)."),
 ]
 
 OPEN_QUESTIONS = [
-    ("Program", "Which Marketing Hub tiers do we sell onboarding for (Starter, Pro, Enterprise)? Is there one package or several?", "Which Tech Setup items are in scope"),
-    ("Roles", "Is Phil always the strategy lead, or will other people sell and hand off too?", "Owner column, handoff workflow"),
-    ("Roles", "How is the Architect picked: Phil chooses, or rotation by capacity?", "WF-01 assignment"),
-    ("Tools", "Is the portal enrolled in the HubSpot Work beta yet, and who is Super Admin?", "Whether we can build in Work now"),
-    ("Tools", "OK to add a 'Client Onboarding' pipeline to the Projects object (the one renamed 'Factory'), or keep onboarding only in HubSpot Work?", "Record of truth"),
-    ("Tools", "Will customers use the HubSpot customer portal, or is Supered the only client-facing place?", "'Visible to Onboarding Customers' setting"),
-    ("Delivery", "What are the standard Factories (progress measures) for a Marketing Hub program? E.g. 1.1 Visitor → Lead, 1.2 Lead → MQL, 2.1 MQL → Meeting.", "Delivery Template + Build phase"),
-    ("Delivery", "Is the $250 new-request price per request, and what are the urgency classes?", "Ticket properties"),
-    ("Delivery", "Are migrations (e.g. Mailchimp → HubSpot) and website work in scope, or separate products?", "Scope of Foundations"),
-    ("Commercial", "What exactly do the post-program offers cost and include?", "Phase 9 offers"),
+    ("Roles", "Phil runs the 'what's next' call (as in the FigJam), or does the Architect lead it now that strategy moves to them?", "Owner of task 8.02"),
+    ("Requests", "OK with the urgency classes and 'one request = up to about 2 hours of work'?", "Request Classes tab, welcome email #2"),
+    ("Scope", "OK with the limits for migration (one tool, 5 templates) and website (10 landing pages + blog import)?", "Tasks 4.06, 5.06, 5.07"),
+    ("Offers", "Prices for 'build internal capacity' and 'one initiative a month'. Use the $1,670/mo Monthly Plan for team support?", "After-program offers"),
+    ("Progress measures", "Agree with the standard set (0.1, 1.1, 1.2, 1.3 always; 1.0 and 2.1 when bought)?", "Build & launch section"),
 ]
