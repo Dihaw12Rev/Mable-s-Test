@@ -12429,7 +12429,7 @@
             "maxErrors": 3,
             "autoCommit": true,
             "autoCommitTriggerLast": true,
-            "sequential": true,
+            "sequential": false,
             "slots": null,
             "confidential": false,
             "dataloss": false,

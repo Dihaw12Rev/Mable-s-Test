@@ -240,7 +240,9 @@ def write(filename, name, flow, instant):
     bp = {"name": name, "flow": flow,
           "metadata": {"instant": instant, "version": 1,
                        "scenario": {"roundtrips": 1, "maxErrors": 3, "autoCommit": True, "autoCommitTriggerLast": True,
-                                    "sequential": instant, "slots": None, "confidential": False, "dataloss": False,
+                                    # Not sequential: with stored incomplete runs (dlq), a sequential
+                                    # scenario holds every later run until a failed one is resolved.
+                                    "sequential": False, "slots": None, "confidential": False, "dataloss": False,
                                     "dlq": True, "freshVariables": False},
                        "designer": {"orphans": []}, "zone": "us2.make.com", "notes": []}}
     (DIST / filename).parent.mkdir(parents=True, exist_ok=True)

@@ -8,14 +8,23 @@ Rebuilt versions of the MTMC ⇄ Nuance sync scenarios, built on the **live** sc
 
 No live scenario has been changed. Each v2 scenario is created as a **new, inactive** scenario next to the original, so the original keeps running until we switch over.
 
-**Phase 1 status (created 2026-10-28, folder "MTMC to Nuance Sync", both inactive):**
+**Phase 1 status: LIVE since 2026-10-28** (folder "MTMC to Nuance Sync"):
 
-| New scenario | ID | Built from | Trigger |
+| Scenario | ID | Built from | Trigger |
 |---|---|---|---|
-| MTMC <> Nuance – Create Deals from MTMC to Nuance v2 (Phase 1) | 6811855 | `dist/phase1/2_…_phase1_TEST_HOOK` | **Test** webhook 2994157 (not the live 2675167) |
+| MTMC <> Nuance – Create Deals from MTMC to Nuance v2 (Phase 1) | 6811855 | `dist/phase1/2_…_phase1_TEST_HOOK` | Webhook 2994157. The MTMC HubSpot workflow now calls this URL. |
 | MTMC <> Nuance – Backfill Companies and Contacts to Nuance v2 (Phase 1) | 6811938 | `dist/phase1/6_…_phase1` | Every 3 h, 06:00–19:00 |
 
-Switchover for the Create Deals scenario means swapping its webhook to 2675167 and turning off the original. Don't turn on the v2 backfill while the original backfill is on, because both would work the same deals.
+The originals are off and moved to the ARCHIVED folder:
+- Create Deals (READY): 5904636, webhook 2675167;
+- Backfill Companies and Contacts: 6449806.
+
+**Rollback:**
+1. Point the MTMC HubSpot workflow back at `https://hook.us2.make.com/44g08bvgc9m3u1s4mgmz6j0ob9hebivo`.
+2. Turn the two originals back on.
+3. Turn the two v2 scenarios off.
+
+Never run both backfills at the same time.
 
 | File in `dist/` | Replaces (live scenario) | Trigger |
 |---|---|---|
