@@ -6,7 +6,16 @@ Rebuilt versions of the MTMC ⇄ Nuance sync scenarios, built on the **live** sc
 - it runs on a **1-hour** handoff cycle;
 - it closes the timing and duplicate gaps found in review.
 
-Nothing in Make has been changed. These files are ready to import once approved.
+No live scenario has been changed. Each v2 scenario is created as a **new, inactive** scenario next to the original, so the original keeps running until we switch over.
+
+**Phase 1 status (created 2026-10-28, folder "MTMC to Nuance Sync", both inactive):**
+
+| New scenario | ID | Built from | Trigger |
+|---|---|---|---|
+| MTMC <> Nuance – Create Deals from MTMC to Nuance v2 (Phase 1) | 6811855 | `dist/phase1/2_…_phase1_TEST_HOOK` | **Test** webhook 2994157 (not the live 2675167) |
+| MTMC <> Nuance – Backfill Companies and Contacts to Nuance v2 (Phase 1) | 6811938 | `dist/phase1/6_…_phase1` | Every 3 h, 06:00–19:00 |
+
+Switchover for the Create Deals scenario means swapping its webhook to 2675167 and turning off the original. Don't turn on the v2 backfill while the original backfill is on, because both would work the same deals.
 
 | File in `dist/` | Replaces (live scenario) | Trigger |
 |---|---|---|
