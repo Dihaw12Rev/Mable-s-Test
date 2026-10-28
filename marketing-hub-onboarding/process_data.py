@@ -4,8 +4,8 @@ Both build_workbook.py (the sheet) and build_roadmap.py (the visual roadmap)
 read from this file, so edit the process here and re-run both scripts.
 
 Day offsets are counted from Day 0 = deal reaches "Start Payment Received"
-(the closed-won stage of the Sales Pipeline). Program length is assumed to be
-90 days; change PROGRAM_DAYS and the offsets if that assumption is wrong.
+(the closed-won stage of the Sales Pipeline). The program targets 90 days
+(confirmed); some customers may run longer, so treat offsets as targets.
 """
 
 PROGRAM_DAYS = 90
@@ -344,7 +344,6 @@ BUILD_SPEC = [
 ]
 
 OPEN_QUESTIONS = [
-    ("Program", "Is the Marketing Hub onboarding a fixed 90-day program? The roadmap assumes 90 days because of the '30 days before we finish' step.", "Day offsets, MBR count, 'what's next' timing"),
     ("Program", "Which Marketing Hub tiers do we sell onboarding for (Starter, Pro, Enterprise)? Is there one package or several?", "Which Tech Setup items are in scope"),
     ("Roles", "Is Phil always the strategy lead, or will other people sell and hand off too?", "Owner column, handoff workflow"),
     ("Roles", "How is the Architect picked: Phil chooses, or rotation by capacity?", "WF-01 assignment"),

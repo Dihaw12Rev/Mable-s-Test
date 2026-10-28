@@ -10,14 +10,16 @@ Nothing here has been built in the HubSpot portal. These are design files for re
 |---|---|
 | `Marketing_Hub_Onboarding_Process.xlsx` | The sheet: Roadmap, Task Template (77 tasks), Intake Form, Tech Setup, Training, Comms, Tool Fit, HubSpot Build Spec, Open Questions |
 | `roadmap.html` | Visual roadmap for review (timeline, tool recommendation, filterable tasks, open questions) |
-| `hubspot-work-prompt.md` | Ready-to-paste prompt that has HubSpot Work build the workspace (tables, forms, docs, agents) |
+| `hubspot-work-prompt-1-build.txt` | Exact prompt 1 to paste into HubSpot Work: builds the tables, forms, documents and agents |
+| `hubspot-work-prompt-2-load-rows.txt` | Exact prompt 2: loads the 68 tasks, 25 intake questions, 40 setup items and 9 training modules |
+| `hubspot-work-prompt.md` | How to use the two prompts |
 | `process_data.py` | Single source of truth for all content |
-| `build_workbook.py`, `build_roadmap.py` | Regenerate the sheet and the roadmap from `process_data.py` |
+| `build_workbook.py`, `build_roadmap.py`, `build_prompt.py` | Regenerate the sheet, the roadmap and the prompts from `process_data.py` |
 
 To change the process, edit `process_data.py`, then run:
 
 ```bash
-python3 build_workbook.py && python3 build_roadmap.py
+python3 build_workbook.py && python3 build_roadmap.py && python3 build_prompt.py
 ```
 
 ## Recommendation: Work vs Projects vs Tickets
@@ -31,6 +33,6 @@ The three tools do different jobs, so the recommendation is to use them together
 
 ## Key assumptions (see the Open Questions tab)
 
-- The program runs 90 days. Day 0 is when the deal reaches *Start Payment Received*.
+- The program targets 90 days (confirmed). Day 0 is when the deal reaches *Start Payment Received*.
 - Phil is the strategy lead and an Architect is assigned per customer.
 - Supered is the client-facing layer, and Trello is retired.
