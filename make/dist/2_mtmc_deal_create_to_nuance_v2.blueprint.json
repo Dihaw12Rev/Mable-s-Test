@@ -12906,7 +12906,7 @@
                                 }
                             ],
                             "filter": {
-                                "name": "Has Nuance line items",
+                                "name": "Has Nuance Medical line items",
                                 "conditions": [
                                     [
                                         {

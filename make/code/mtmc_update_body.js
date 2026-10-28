@@ -23,7 +23,9 @@ const props = {
 };
 // Optional: MTMC's last activity date. Create the Nuance deal property first, then set
 // input.lastActivityProperty to its internal name (e.g. mtmc_last_activity_date).
-if (clean(input.lastActivityProperty)) props[clean(input.lastActivityProperty)] = d.notes_last_updated;
+// Only a real property name is used: a mapped value (e.g. a date) is ignored, not sent as a name.
+const lastActivityProperty = clean(input.lastActivityProperty);
+if (/^[a-z][a-z0-9_]{0,99}$/.test(lastActivityProperty)) props[lastActivityProperty] = d.notes_last_updated;
 const properties = {};
 for (const [k, v] of Object.entries(props)) if (clean(v)) properties[k] = clean(v);
 return { body: JSON.stringify({ properties }), fieldCount: Object.keys(properties).length };

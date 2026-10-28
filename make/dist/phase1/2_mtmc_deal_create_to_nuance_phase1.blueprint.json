@@ -13321,7 +13321,7 @@
                                     },
                                     {
                                         "name": "vendor",
-                                        "value": ""
+                                        "value": "Nuance Medical"
                                     }
                                 ],
                                 "language": "javascript",
@@ -13603,7 +13603,7 @@
                                 }
                             ],
                             "filter": {
-                                "name": "Has line items",
+                                "name": "Has Nuance Medical line items",
                                 "conditions": [
                                     [
                                         {

@@ -230,4 +230,12 @@ test("mtmc_update_body: all guide fields, blanks dropped, primary team", () => {
     assert.strictEqual(p2.mtmc_last_activity_date, "2026-10-20");
 });
 
+test("mtmc_update_body: a mapped date in lastActivityProperty is ignored, not sent as a property name", () => {
+    const r = run("mtmc_update_body.js", { deal: { properties: { dealname: "X", notes_last_updated: "2026-10-28T18:51:38.592Z" } }, owner: {},
+        nuanceStage: "", lastActivityProperty: "2026-10-28T18:51:38.592Z" });
+    const props = JSON.parse(r.body).properties;
+    assert.ok(!("2026-10-28T18:51:38.592Z" in props));
+    assert.strictEqual(props.dealname, "X");
+});
+
 console.log(`\n${passed} tests passed`);

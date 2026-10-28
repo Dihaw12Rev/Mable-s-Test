@@ -427,7 +427,7 @@ def build_deal_in(phase1=False):
 
     li_create = retry(reuse("deal_in", 16, name="Nuance: create line items"))
     li_create["mapper"]["body"] = "{{303.result.body}}"
-    li_create["filter"] = filt("Has line items" if phase1 else "Has Nuance line items", cond("{{303.result.count}}", "number:greater", "0"))
+    li_create["filter"] = filt("Has Nuance Medical line items", cond("{{303.result.count}}", "number:greater", "0"))
     line_items = [
         reuse("deal_in", 8, name="MTMC: deal line items"),
         code(301, "assoc_to_batch_read.js", [("assoc", "{{8.body}}"), ("properties", "name,quantity,price,hs_sku,vendor__name,vendor_name")],
@@ -435,7 +435,7 @@ def build_deal_in(phase1=False):
         api(302, MTMC, "POST", "/crm/v3/objects/line_items/batch/read", "MTMC: read line items", body="{{301.result.body}}",
             filter=filt("Deal has line items", cond("{{301.result.count}}", "number:greater", "0"))),
         code(303, "mtmc_line_items_body.js", [("lineItems", "{{302.body}}"), ("dealId", "{{14.id}}"), ("currency", "USD"),
-                                               ("vendor", "" if phase1 else LINE_ITEM_VENDOR)],
+                                               ("vendor", LINE_ITEM_VENDOR)],  # Nuance Medical items only (live since 2026-10-28)
              "Build Nuance line items" + ("" if phase1 else " (Nuance vendor only)")),
         li_create,
     ]
