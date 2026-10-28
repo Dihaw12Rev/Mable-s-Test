@@ -44,6 +44,8 @@ HANDOFF_CUTOFF = "2026-10-23T00:00:00.000Z"
 HANDOFF_OVERLAP_MINUTES = 30
 # Notes scenarios (hourly) look back the same way; duplicates are prevented by the note map.
 NOTES_OVERLAP_MINUTES = 60
+# Webhook created in Make (MTMC Health) for testing Phase 1 scenario 2 without touching the live trigger.
+PHASE1_TEST_HOOK = 2994157
 # Only Nuance-supplied MTMC line items are copied (same rule as the line-item backfill).
 LINE_ITEM_VENDOR = "Nuance Medical"
 
@@ -657,7 +659,13 @@ if __name__ == "__main__":
     build_update_in()
     build_backfill()
     # Phase 1: only the two scenarios that carry the Nuance-approved rules.
-    build_deal_in(phase1=True)
+    bp = build_deal_in(phase1=True)
+    # Test copy: same blueprint, triggered by the Phase 1 TEST webhook (2994157) so the live
+    # webhook stays on the live scenario until switchover.
+    bp["flow"][0]["parameters"]["hook"] = PHASE1_TEST_HOOK
+    bp["name"] += " - TEST webhook"
+    (DIST / "phase1/2_mtmc_deal_create_to_nuance_phase1_TEST_HOOK.blueprint.json").write_text(
+        json.dumps(bp, indent=4, ensure_ascii=False) + "\n")
     build_backfill("phase1/6_mtmc_backfill_companies_contacts_to_nuance_phase1.blueprint.json",
                    "MTMC <> Nuance - Backfill Companies and Contacts to Nuance v2 (Phase 1)")
     for args in [
