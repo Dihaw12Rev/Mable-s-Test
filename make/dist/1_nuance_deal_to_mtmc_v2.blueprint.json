@@ -2972,6 +2972,7 @@
                                     "Cryodose TA"
                                 ],
                                 "cryodose_product": "TA",
+                                "hubspot_owner_id": "{{12.properties.hubspot_owner_id}}",
                                 "mtmc_deal_source": "Nuance",
                                 "parseCustomFields": true
                             },

@@ -291,8 +291,8 @@ def build_deal_out():
     writeback["mapper"]["dealId"] = "{{12.id}}"
     line_item = retry(reuse("deal_out", 84, name="Create Cryodose TA line item at MTMC"))
     copy_deal = retry(reuse("deal_out", 64, name="Create linked copy in MTMC Sync"))
-    # The live scenario sets no owner on the copy (owner mapping removed in Make on 2026-10-28).
-    copy_deal["mapper"].pop("hubspot_owner_id", None)
+    # The copy is owned by the Cryodose deal's owner (same person, same Nuance portal).
+    assert copy_deal["mapper"]["hubspot_owner_id"] == "{{12.properties.hubspot_owner_id}}"
     link_back = retry(reuse("deal_out", 65, name="Write Nuance Deal ID on MTMC deal"))
     supplier = retry(reuse("deal_out", 76, name="Associate Nuance Medical supplier"))
 
