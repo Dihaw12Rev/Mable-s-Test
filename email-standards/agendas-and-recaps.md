@@ -2,6 +2,8 @@
 
 Short and easy to scan. A customer should be able to read one of these in under 30 seconds.
 
+Want to compare looks? See [style-variations.md](style-variations.md) for three ways to style the same emails.
+
 ## The rules
 
 | | Agenda | Recap |
