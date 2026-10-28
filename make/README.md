@@ -30,7 +30,7 @@ Never run both backfills at the same time.
 
 | New scenario | ID | Replaces (live) | Trigger |
 |---|---|---|---|
-| Nuance Deal → MTMC (Create + Update) v2 (Phase 2) | 6813004 | 5563815 | Every 1 h (was 3 h); shares watermark `nuance_handoff` |
+| Nuance Deal → MTMC (Create + Update) v2 (Phase 2) | 6813004 | 5563815 | **LIVE since 2026-10-28** (original off). Every 1 h; shares watermark `nuance_handoff`. The MTMC Sync copy now gets the original deal's contacts and companies (primary label kept), and no owner. |
 | MTMC Deal Updated → Nuance (Update) v2 (Phase 2) | 6812939 | 5563819 | New webhook 2994549 (`…/lxywn1ub3v86hbnatvyddgxkrpm8rhxf`) |
 | MTMC Notes → Nuance (Create + Update) v2 (Phase 2) | 6812950 | 6056956 | Every 1 h (was 6 h) |
 | Nuance Notes → MTMC (Create + Update) v2 (Phase 2) | 6812969 | 6056834 | Every 1 h (was 6 h) |

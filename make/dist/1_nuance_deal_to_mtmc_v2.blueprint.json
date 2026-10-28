@@ -2972,7 +2972,6 @@
                                     "Cryodose TA"
                                 ],
                                 "cryodose_product": "TA",
-                                "hubspot_owner_id": "{{12.properties.hubspot_owner_id}}",
                                 "mtmc_deal_source": "Nuance",
                                 "parseCustomFields": true
                             },
@@ -8472,6 +8471,875 @@
                                             }
                                         }
                                     ]
+                                },
+                                {
+                                    "flow": [
+                                        {
+                                            "id": 231,
+                                            "mapper": {
+                                                "url": "/crm/v4/objects/deals/{{12.id}}/associations/contacts",
+                                                "method": "GET",
+                                                "headers": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    }
+                                                ]
+                                            },
+                                            "module": "hubspotcrm:MakeAPICall",
+                                            "version": 2,
+                                            "metadata": {
+                                                "expect": [
+                                                    {
+                                                        "name": "url",
+                                                        "type": "text",
+                                                        "label": "URL",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "method",
+                                                        "type": "select",
+                                                        "label": "Method",
+                                                        "required": true,
+                                                        "validate": {
+                                                            "enum": [
+                                                                "GET",
+                                                                "POST",
+                                                                "PUT",
+                                                                "PATCH",
+                                                                "DELETE"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "headers",
+                                                        "spec": [
+                                                            {
+                                                                "name": "key",
+                                                                "type": "text",
+                                                                "label": "Key"
+                                                            },
+                                                            {
+                                                                "name": "value",
+                                                                "type": "text",
+                                                                "label": "Value"
+                                                            }
+                                                        ],
+                                                        "type": "array",
+                                                        "label": "Headers"
+                                                    },
+                                                    {
+                                                        "name": "qs",
+                                                        "spec": [
+                                                            {
+                                                                "name": "key",
+                                                                "type": "text",
+                                                                "label": "Key"
+                                                            },
+                                                            {
+                                                                "name": "value",
+                                                                "type": "text",
+                                                                "label": "Value"
+                                                            }
+                                                        ],
+                                                        "type": "array",
+                                                        "label": "Query String"
+                                                    },
+                                                    {
+                                                        "name": "body",
+                                                        "type": "any",
+                                                        "label": "Body"
+                                                    }
+                                                ],
+                                                "restore": {
+                                                    "expect": {
+                                                        "qs": {
+                                                            "mode": "chose"
+                                                        },
+                                                        "method": {
+                                                            "mode": "chose",
+                                                            "label": "GET"
+                                                        },
+                                                        "headers": {
+                                                            "mode": "chose",
+                                                            "items": [
+                                                                null
+                                                            ]
+                                                        }
+                                                    },
+                                                    "parameters": {
+                                                        "__IMTCONN__": {
+                                                            "data": {
+                                                                "scoped": "true",
+                                                                "connection": "hubspotcrm"
+                                                            },
+                                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                                        }
+                                                    }
+                                                },
+                                                "designer": {
+                                                    "name": "Nuance: original deal's contacts",
+                                                    "x": 3600,
+                                                    "y": 1500
+                                                },
+                                                "parameters": [
+                                                    {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:hubspotcrm",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                    }
+                                                ]
+                                            },
+                                            "parameters": {
+                                                "__IMTCONN__": 9735744
+                                            }
+                                        },
+                                        {
+                                            "id": 232,
+                                            "mapper": {
+                                                "input": [
+                                                    {
+                                                        "name": "assoc",
+                                                        "value": "{{231.body}}"
+                                                    },
+                                                    {
+                                                        "name": "dealId",
+                                                        "value": "{{64.id}}"
+                                                    },
+                                                    {
+                                                        "name": "typeId",
+                                                        "value": "3"
+                                                    }
+                                                ],
+                                                "language": "javascript",
+                                                "inputFormat": "editor",
+                                                "dependencies": [],
+                                                "codeEditorJavascript": "// --- shared helpers (prepended to every code module by build.py) ---\nconst arr = v => Array.isArray(v) ? v : (v && Array.isArray(v.results) ? v.results : []);\nconst clean = v => (v === null || v === undefined) ? \"\" : String(v).trim();\nconst normEmail = v => clean(v).toLowerCase();\nfunction normDomain(v) {\n    let s = clean(v).toLowerCase();\n    if (!s) return \"\";\n    s = s.replace(/^[a-z][a-z0-9+.-]*:\\/\\//, \"\").replace(/^www\\./, \"\");\n    return s.split(/[\\/?#:\\s]/)[0];\n}\nconst stripHtml = h => clean(h).replace(/<[^>]*>/g, \" \").replace(/&nbsp;/gi, \" \").replace(/&amp;/gi, \"&\").replace(/\\s+/g, \" \").trim();\nconst escHtml = s => clean(s).replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n// --- end helpers ---\n\n// Copies a deal's associations to another deal in the same portal (e.g. the MTMC Sync copy gets\n// the same contacts and companies as the original Cryodose deal). Only the \"Primary\" label is\n// carried over. Builds a v4 batch-create body (deal -> X).\n// Inputs: assoc (v4 association response of the source deal), dealId (target deal),\n// typeId (unlabeled deal -> X type, e.g. 3 contacts / 341 companies),\n// primaryTypeId (optional, e.g. 5 for the deal -> company primary label).\nconst dealId = clean(input.dealId);\nif (!dealId) throw new Error(\"Missing dealId - cannot copy associations.\");\nconst typeId = Number(input.typeId);\nconst primaryTypeId = Number(clean(input.primaryTypeId)) || null;\nconst seen = new Set(), inputs = [];\nfor (const r of arr(input.assoc)) {\n    const id = clean(r && typeof r === \"object\" ? (r.toObjectId || r.id) : r);\n    if (!id || seen.has(id)) continue;\n    seen.add(id);\n    const types = [{ associationCategory: \"HUBSPOT_DEFINED\", associationTypeId: typeId }];\n    const primary = ((r && r.associationTypes) || []).some(t => clean(t.label).toLowerCase() === \"primary\");\n    if (primary && primaryTypeId) types.push({ associationCategory: \"HUBSPOT_DEFINED\", associationTypeId: primaryTypeId });\n    inputs.push({ from: { id: dealId }, to: { id }, types });\n}\nreturn { body: JSON.stringify({ inputs }), count: inputs.length };\n"
+                                            },
+                                            "module": "code:ExecuteCode",
+                                            "version": 1,
+                                            "metadata": {
+                                                "expect": [
+                                                    {
+                                                        "name": "language",
+                                                        "type": "select",
+                                                        "label": "Language",
+                                                        "required": true,
+                                                        "validate": {
+                                                            "enum": [
+                                                                "javascript",
+                                                                "python"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "input",
+                                                        "spec": {
+                                                            "name": "value",
+                                                            "spec": [
+                                                                {
+                                                                    "name": "name",
+                                                                    "type": "text",
+                                                                    "label": "Name",
+                                                                    "required": true,
+                                                                    "validate": {
+                                                                        "max": 32,
+                                                                        "min": 1,
+                                                                        "pattern": "^[a-zA-Z0-9_]{1,32}$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "name": "value",
+                                                                    "type": "any",
+                                                                    "label": "Value"
+                                                                }
+                                                            ],
+                                                            "type": "collection",
+                                                            "label": "Variable"
+                                                        },
+                                                        "type": "array",
+                                                        "label": "Input"
+                                                    },
+                                                    {
+                                                        "name": "dependencies",
+                                                        "spec": {
+                                                            "name": "value",
+                                                            "type": "text",
+                                                            "label": "Dependency",
+                                                            "required": true,
+                                                            "validate": {
+                                                                "max": 214,
+                                                                "min": 1,
+                                                                "pattern": "^[A-Za-z0-9_@\\./<>=!~\\^+-]{1,214}$"
+                                                            }
+                                                        },
+                                                        "type": "array",
+                                                        "label": "Additional dependencies (Enterprise plans only)"
+                                                    },
+                                                    {
+                                                        "name": "inputFormat",
+                                                        "type": "select",
+                                                        "label": "Input format",
+                                                        "required": true,
+                                                        "validate": {
+                                                            "enum": [
+                                                                "editor",
+                                                                "string"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "codeEditorJavascript",
+                                                        "type": "editor",
+                                                        "label": "Code",
+                                                        "required": true
+                                                    }
+                                                ],
+                                                "restore": {
+                                                    "expect": {
+                                                        "input": {
+                                                            "items": [
+                                                                null,
+                                                                null,
+                                                                null
+                                                            ]
+                                                        },
+                                                        "language": {
+                                                            "mode": "chose",
+                                                            "label": "JavaScript"
+                                                        },
+                                                        "inputFormat": {
+                                                            "label": "Code editor"
+                                                        }
+                                                    }
+                                                },
+                                                "designer": {
+                                                    "name": "Build contact links for copy",
+                                                    "x": 3900,
+                                                    "y": 1500
+                                                }
+                                            },
+                                            "parameters": {}
+                                        },
+                                        {
+                                            "id": 233,
+                                            "mapper": {
+                                                "url": "/crm/v4/associations/deals/contacts/batch/create",
+                                                "method": "POST",
+                                                "headers": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "body": "{{232.result.body}}"
+                                            },
+                                            "module": "hubspotcrm:MakeAPICall",
+                                            "version": 2,
+                                            "metadata": {
+                                                "expect": [
+                                                    {
+                                                        "name": "url",
+                                                        "type": "text",
+                                                        "label": "URL",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "method",
+                                                        "type": "select",
+                                                        "label": "Method",
+                                                        "required": true,
+                                                        "validate": {
+                                                            "enum": [
+                                                                "GET",
+                                                                "POST",
+                                                                "PUT",
+                                                                "PATCH",
+                                                                "DELETE"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "headers",
+                                                        "spec": [
+                                                            {
+                                                                "name": "key",
+                                                                "type": "text",
+                                                                "label": "Key"
+                                                            },
+                                                            {
+                                                                "name": "value",
+                                                                "type": "text",
+                                                                "label": "Value"
+                                                            }
+                                                        ],
+                                                        "type": "array",
+                                                        "label": "Headers"
+                                                    },
+                                                    {
+                                                        "name": "qs",
+                                                        "spec": [
+                                                            {
+                                                                "name": "key",
+                                                                "type": "text",
+                                                                "label": "Key"
+                                                            },
+                                                            {
+                                                                "name": "value",
+                                                                "type": "text",
+                                                                "label": "Value"
+                                                            }
+                                                        ],
+                                                        "type": "array",
+                                                        "label": "Query String"
+                                                    },
+                                                    {
+                                                        "name": "body",
+                                                        "type": "any",
+                                                        "label": "Body"
+                                                    }
+                                                ],
+                                                "restore": {
+                                                    "expect": {
+                                                        "qs": {
+                                                            "mode": "chose"
+                                                        },
+                                                        "method": {
+                                                            "mode": "chose",
+                                                            "label": "POST"
+                                                        },
+                                                        "headers": {
+                                                            "mode": "chose",
+                                                            "items": [
+                                                                null
+                                                            ]
+                                                        }
+                                                    },
+                                                    "parameters": {
+                                                        "__IMTCONN__": {
+                                                            "data": {
+                                                                "scoped": "true",
+                                                                "connection": "hubspotcrm"
+                                                            },
+                                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                                        }
+                                                    }
+                                                },
+                                                "designer": {
+                                                    "name": "Nuance: link contacts to copy",
+                                                    "x": 4200,
+                                                    "y": 1500
+                                                },
+                                                "parameters": [
+                                                    {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:hubspotcrm",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                    }
+                                                ]
+                                            },
+                                            "parameters": {
+                                                "__IMTCONN__": 9735744
+                                            },
+                                            "filter": {
+                                                "name": "Has contacts",
+                                                "conditions": [
+                                                    [
+                                                        {
+                                                            "a": "{{232.result.count}}",
+                                                            "o": "number:greater",
+                                                            "b": "0"
+                                                        }
+                                                    ]
+                                                ]
+                                            },
+                                            "onerror": [
+                                                {
+                                                    "id": 9233,
+                                                    "module": "builtin:Break",
+                                                    "version": 1,
+                                                    "parameters": {},
+                                                    "mapper": {
+                                                        "count": 3,
+                                                        "retry": true,
+                                                        "interval": 15
+                                                    },
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 4350,
+                                                            "y": 1650
+                                                        },
+                                                        "restore": {
+                                                            "expect": {
+                                                                "retry": {
+                                                                    "mode": "chose"
+                                                                }
+                                                            }
+                                                        },
+                                                        "expect": [
+                                                            {
+                                                                "name": "retry",
+                                                                "type": "boolean",
+                                                                "label": "Automatically complete execution",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "count",
+                                                                "type": "integer",
+                                                                "label": "Number of attempts",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "interval",
+                                                                "type": "integer",
+                                                                "label": "Interval between attempts",
+                                                                "required": true
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    "flow": [
+                                        {
+                                            "id": 234,
+                                            "mapper": {
+                                                "url": "/crm/v4/objects/deals/{{12.id}}/associations/companies",
+                                                "method": "GET",
+                                                "headers": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    }
+                                                ]
+                                            },
+                                            "module": "hubspotcrm:MakeAPICall",
+                                            "version": 2,
+                                            "metadata": {
+                                                "expect": [
+                                                    {
+                                                        "name": "url",
+                                                        "type": "text",
+                                                        "label": "URL",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "method",
+                                                        "type": "select",
+                                                        "label": "Method",
+                                                        "required": true,
+                                                        "validate": {
+                                                            "enum": [
+                                                                "GET",
+                                                                "POST",
+                                                                "PUT",
+                                                                "PATCH",
+                                                                "DELETE"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "headers",
+                                                        "spec": [
+                                                            {
+                                                                "name": "key",
+                                                                "type": "text",
+                                                                "label": "Key"
+                                                            },
+                                                            {
+                                                                "name": "value",
+                                                                "type": "text",
+                                                                "label": "Value"
+                                                            }
+                                                        ],
+                                                        "type": "array",
+                                                        "label": "Headers"
+                                                    },
+                                                    {
+                                                        "name": "qs",
+                                                        "spec": [
+                                                            {
+                                                                "name": "key",
+                                                                "type": "text",
+                                                                "label": "Key"
+                                                            },
+                                                            {
+                                                                "name": "value",
+                                                                "type": "text",
+                                                                "label": "Value"
+                                                            }
+                                                        ],
+                                                        "type": "array",
+                                                        "label": "Query String"
+                                                    },
+                                                    {
+                                                        "name": "body",
+                                                        "type": "any",
+                                                        "label": "Body"
+                                                    }
+                                                ],
+                                                "restore": {
+                                                    "expect": {
+                                                        "qs": {
+                                                            "mode": "chose"
+                                                        },
+                                                        "method": {
+                                                            "mode": "chose",
+                                                            "label": "GET"
+                                                        },
+                                                        "headers": {
+                                                            "mode": "chose",
+                                                            "items": [
+                                                                null
+                                                            ]
+                                                        }
+                                                    },
+                                                    "parameters": {
+                                                        "__IMTCONN__": {
+                                                            "data": {
+                                                                "scoped": "true",
+                                                                "connection": "hubspotcrm"
+                                                            },
+                                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                                        }
+                                                    }
+                                                },
+                                                "designer": {
+                                                    "name": "Nuance: original deal's companies",
+                                                    "x": 3600,
+                                                    "y": 1800
+                                                },
+                                                "parameters": [
+                                                    {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:hubspotcrm",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                    }
+                                                ]
+                                            },
+                                            "parameters": {
+                                                "__IMTCONN__": 9735744
+                                            }
+                                        },
+                                        {
+                                            "id": 235,
+                                            "mapper": {
+                                                "input": [
+                                                    {
+                                                        "name": "assoc",
+                                                        "value": "{{234.body}}"
+                                                    },
+                                                    {
+                                                        "name": "dealId",
+                                                        "value": "{{64.id}}"
+                                                    },
+                                                    {
+                                                        "name": "typeId",
+                                                        "value": "341"
+                                                    },
+                                                    {
+                                                        "name": "primaryTypeId",
+                                                        "value": "5"
+                                                    }
+                                                ],
+                                                "language": "javascript",
+                                                "inputFormat": "editor",
+                                                "dependencies": [],
+                                                "codeEditorJavascript": "// --- shared helpers (prepended to every code module by build.py) ---\nconst arr = v => Array.isArray(v) ? v : (v && Array.isArray(v.results) ? v.results : []);\nconst clean = v => (v === null || v === undefined) ? \"\" : String(v).trim();\nconst normEmail = v => clean(v).toLowerCase();\nfunction normDomain(v) {\n    let s = clean(v).toLowerCase();\n    if (!s) return \"\";\n    s = s.replace(/^[a-z][a-z0-9+.-]*:\\/\\//, \"\").replace(/^www\\./, \"\");\n    return s.split(/[\\/?#:\\s]/)[0];\n}\nconst stripHtml = h => clean(h).replace(/<[^>]*>/g, \" \").replace(/&nbsp;/gi, \" \").replace(/&amp;/gi, \"&\").replace(/\\s+/g, \" \").trim();\nconst escHtml = s => clean(s).replace(/&/g, \"&amp;\").replace(/</g, \"&lt;\").replace(/>/g, \"&gt;\");\n// --- end helpers ---\n\n// Copies a deal's associations to another deal in the same portal (e.g. the MTMC Sync copy gets\n// the same contacts and companies as the original Cryodose deal). Only the \"Primary\" label is\n// carried over. Builds a v4 batch-create body (deal -> X).\n// Inputs: assoc (v4 association response of the source deal), dealId (target deal),\n// typeId (unlabeled deal -> X type, e.g. 3 contacts / 341 companies),\n// primaryTypeId (optional, e.g. 5 for the deal -> company primary label).\nconst dealId = clean(input.dealId);\nif (!dealId) throw new Error(\"Missing dealId - cannot copy associations.\");\nconst typeId = Number(input.typeId);\nconst primaryTypeId = Number(clean(input.primaryTypeId)) || null;\nconst seen = new Set(), inputs = [];\nfor (const r of arr(input.assoc)) {\n    const id = clean(r && typeof r === \"object\" ? (r.toObjectId || r.id) : r);\n    if (!id || seen.has(id)) continue;\n    seen.add(id);\n    const types = [{ associationCategory: \"HUBSPOT_DEFINED\", associationTypeId: typeId }];\n    const primary = ((r && r.associationTypes) || []).some(t => clean(t.label).toLowerCase() === \"primary\");\n    if (primary && primaryTypeId) types.push({ associationCategory: \"HUBSPOT_DEFINED\", associationTypeId: primaryTypeId });\n    inputs.push({ from: { id: dealId }, to: { id }, types });\n}\nreturn { body: JSON.stringify({ inputs }), count: inputs.length };\n"
+                                            },
+                                            "module": "code:ExecuteCode",
+                                            "version": 1,
+                                            "metadata": {
+                                                "expect": [
+                                                    {
+                                                        "name": "language",
+                                                        "type": "select",
+                                                        "label": "Language",
+                                                        "required": true,
+                                                        "validate": {
+                                                            "enum": [
+                                                                "javascript",
+                                                                "python"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "input",
+                                                        "spec": {
+                                                            "name": "value",
+                                                            "spec": [
+                                                                {
+                                                                    "name": "name",
+                                                                    "type": "text",
+                                                                    "label": "Name",
+                                                                    "required": true,
+                                                                    "validate": {
+                                                                        "max": 32,
+                                                                        "min": 1,
+                                                                        "pattern": "^[a-zA-Z0-9_]{1,32}$"
+                                                                    }
+                                                                },
+                                                                {
+                                                                    "name": "value",
+                                                                    "type": "any",
+                                                                    "label": "Value"
+                                                                }
+                                                            ],
+                                                            "type": "collection",
+                                                            "label": "Variable"
+                                                        },
+                                                        "type": "array",
+                                                        "label": "Input"
+                                                    },
+                                                    {
+                                                        "name": "dependencies",
+                                                        "spec": {
+                                                            "name": "value",
+                                                            "type": "text",
+                                                            "label": "Dependency",
+                                                            "required": true,
+                                                            "validate": {
+                                                                "max": 214,
+                                                                "min": 1,
+                                                                "pattern": "^[A-Za-z0-9_@\\./<>=!~\\^+-]{1,214}$"
+                                                            }
+                                                        },
+                                                        "type": "array",
+                                                        "label": "Additional dependencies (Enterprise plans only)"
+                                                    },
+                                                    {
+                                                        "name": "inputFormat",
+                                                        "type": "select",
+                                                        "label": "Input format",
+                                                        "required": true,
+                                                        "validate": {
+                                                            "enum": [
+                                                                "editor",
+                                                                "string"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "codeEditorJavascript",
+                                                        "type": "editor",
+                                                        "label": "Code",
+                                                        "required": true
+                                                    }
+                                                ],
+                                                "restore": {
+                                                    "expect": {
+                                                        "input": {
+                                                            "items": [
+                                                                null,
+                                                                null,
+                                                                null,
+                                                                null
+                                                            ]
+                                                        },
+                                                        "language": {
+                                                            "mode": "chose",
+                                                            "label": "JavaScript"
+                                                        },
+                                                        "inputFormat": {
+                                                            "label": "Code editor"
+                                                        }
+                                                    }
+                                                },
+                                                "designer": {
+                                                    "name": "Build company links for copy",
+                                                    "x": 3900,
+                                                    "y": 1800
+                                                }
+                                            },
+                                            "parameters": {}
+                                        },
+                                        {
+                                            "id": 236,
+                                            "mapper": {
+                                                "url": "/crm/v4/associations/deals/companies/batch/create",
+                                                "method": "POST",
+                                                "headers": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "body": "{{235.result.body}}"
+                                            },
+                                            "module": "hubspotcrm:MakeAPICall",
+                                            "version": 2,
+                                            "metadata": {
+                                                "expect": [
+                                                    {
+                                                        "name": "url",
+                                                        "type": "text",
+                                                        "label": "URL",
+                                                        "required": true
+                                                    },
+                                                    {
+                                                        "name": "method",
+                                                        "type": "select",
+                                                        "label": "Method",
+                                                        "required": true,
+                                                        "validate": {
+                                                            "enum": [
+                                                                "GET",
+                                                                "POST",
+                                                                "PUT",
+                                                                "PATCH",
+                                                                "DELETE"
+                                                            ]
+                                                        }
+                                                    },
+                                                    {
+                                                        "name": "headers",
+                                                        "spec": [
+                                                            {
+                                                                "name": "key",
+                                                                "type": "text",
+                                                                "label": "Key"
+                                                            },
+                                                            {
+                                                                "name": "value",
+                                                                "type": "text",
+                                                                "label": "Value"
+                                                            }
+                                                        ],
+                                                        "type": "array",
+                                                        "label": "Headers"
+                                                    },
+                                                    {
+                                                        "name": "qs",
+                                                        "spec": [
+                                                            {
+                                                                "name": "key",
+                                                                "type": "text",
+                                                                "label": "Key"
+                                                            },
+                                                            {
+                                                                "name": "value",
+                                                                "type": "text",
+                                                                "label": "Value"
+                                                            }
+                                                        ],
+                                                        "type": "array",
+                                                        "label": "Query String"
+                                                    },
+                                                    {
+                                                        "name": "body",
+                                                        "type": "any",
+                                                        "label": "Body"
+                                                    }
+                                                ],
+                                                "restore": {
+                                                    "expect": {
+                                                        "qs": {
+                                                            "mode": "chose"
+                                                        },
+                                                        "method": {
+                                                            "mode": "chose",
+                                                            "label": "POST"
+                                                        },
+                                                        "headers": {
+                                                            "mode": "chose",
+                                                            "items": [
+                                                                null
+                                                            ]
+                                                        }
+                                                    },
+                                                    "parameters": {
+                                                        "__IMTCONN__": {
+                                                            "data": {
+                                                                "scoped": "true",
+                                                                "connection": "hubspotcrm"
+                                                            },
+                                                            "label": "Nuance HubSpot (admin@revgravy.com)"
+                                                        }
+                                                    }
+                                                },
+                                                "designer": {
+                                                    "name": "Nuance: link companies to copy",
+                                                    "x": 4200,
+                                                    "y": 1800
+                                                },
+                                                "parameters": [
+                                                    {
+                                                        "name": "__IMTCONN__",
+                                                        "type": "account:hubspotcrm",
+                                                        "label": "Connection",
+                                                        "required": true
+                                                    }
+                                                ]
+                                            },
+                                            "parameters": {
+                                                "__IMTCONN__": 9735744
+                                            },
+                                            "filter": {
+                                                "name": "Has companies",
+                                                "conditions": [
+                                                    [
+                                                        {
+                                                            "a": "{{235.result.count}}",
+                                                            "o": "number:greater",
+                                                            "b": "0"
+                                                        }
+                                                    ]
+                                                ]
+                                            },
+                                            "onerror": [
+                                                {
+                                                    "id": 9236,
+                                                    "module": "builtin:Break",
+                                                    "version": 1,
+                                                    "parameters": {},
+                                                    "mapper": {
+                                                        "count": 3,
+                                                        "retry": true,
+                                                        "interval": 15
+                                                    },
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 4350,
+                                                            "y": 1950
+                                                        },
+                                                        "restore": {
+                                                            "expect": {
+                                                                "retry": {
+                                                                    "mode": "chose"
+                                                                }
+                                                            }
+                                                        },
+                                                        "expect": [
+                                                            {
+                                                                "name": "retry",
+                                                                "type": "boolean",
+                                                                "label": "Automatically complete execution",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "count",
+                                                                "type": "integer",
+                                                                "label": "Number of attempts",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "interval",
+                                                                "type": "integer",
+                                                                "label": "Interval between attempts",
+                                                                "required": true
+                                                            }
+                                                        ]
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
                                 }
                             ]
                         }
@@ -8585,7 +9453,7 @@
                                 "designer": {
                                     "name": "Get Nuance deal owner",
                                     "x": 1200,
-                                    "y": 1500
+                                    "y": 2100
                                 },
                                 "parameters": [
                                     {
@@ -8755,7 +9623,7 @@
                                 },
                                 "designer": {
                                     "x": 1500,
-                                    "y": 1500,
+                                    "y": 2100,
                                     "name": "Update MTMC deal (no stage / close date)"
                                 },
                                 "parameters": [
@@ -8784,7 +9652,7 @@
                                     "metadata": {
                                         "designer": {
                                             "x": 1650,
-                                            "y": 1650
+                                            "y": 2250
                                         },
                                         "restore": {
                                             "expect": {

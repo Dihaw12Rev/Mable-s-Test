@@ -162,6 +162,22 @@ test("assoc_batch_body", () => {
     assert.deepStrictEqual(JSON.parse(r.body).inputs[1], { from: { id: "2" }, to: { id: "9" } });
 });
 
+test("assoc_copy_body: same links on the copy, primary label kept", () => {
+    const r = run("assoc_copy_body.js", { dealId: 64, typeId: 341, primaryTypeId: 5, assoc: { results: [
+        { toObjectId: 11, associationTypes: [{ typeId: 341, label: null }, { typeId: 5, label: "Primary" }] },
+        { toObjectId: 12, associationTypes: [{ typeId: 341, label: null }] },
+        { toObjectId: 11, associationTypes: [] }] } });
+    assert.strictEqual(r.count, 2);
+    const inputs = JSON.parse(r.body).inputs;
+    assert.deepStrictEqual(inputs[0], { from: { id: "64" }, to: { id: "11" }, types: [
+        { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 341 },
+        { associationCategory: "HUBSPOT_DEFINED", associationTypeId: 5 }] });
+    assert.deepStrictEqual(inputs[1].types, [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 341 }]);
+    const none = run("assoc_copy_body.js", { dealId: 64, typeId: 3, assoc: { results: [] } });
+    assert.strictEqual(none.count, 0);
+    assert.throws(() => run("assoc_copy_body.js", { typeId: 3, assoc: { results: [{ toObjectId: 1 }] } }));
+});
+
 test("notes_for_copy: prefixes, skips echoes, uses author then fallback", () => {
     const r = run("notes_for_copy.js", {
         notes: { results: [

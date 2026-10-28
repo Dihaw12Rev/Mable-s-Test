@@ -179,10 +179,12 @@ def ds_add(mid, store, key, data, name, filter=None):
 _eid = [9000]
 
 
-def retry(m, attempts=3, minutes=15):
-    """Attach a Break handler: the run is stored as an incomplete execution and retried."""
-    _eid[0] += 1
-    m["onerror"] = [{"id": _eid[0], "module": "builtin:Break", "version": 1, "parameters": {},
+def retry(m, attempts=3, minutes=15, eid=None):
+    """Attach a Break handler: the run is stored as an incomplete execution and retried.
+    Pass eid to pin the handler's ID (keeps the other scenarios' IDs stable when adding one)."""
+    if eid is None:
+        _eid[0] += 1
+    m["onerror"] = [{"id": eid or _eid[0], "module": "builtin:Break", "version": 1, "parameters": {},
                      "mapper": {"count": attempts, "retry": True, "interval": minutes},
                      "metadata": {"designer": {},
                                   "restore": {"expect": {"retry": {"mode": "chose"}}},
@@ -289,6 +291,8 @@ def build_deal_out():
     writeback["mapper"]["dealId"] = "{{12.id}}"
     line_item = retry(reuse("deal_out", 84, name="Create Cryodose TA line item at MTMC"))
     copy_deal = retry(reuse("deal_out", 64, name="Create linked copy in MTMC Sync"))
+    # The live scenario sets no owner on the copy (owner mapping removed in Make on 2026-10-28).
+    copy_deal["mapper"].pop("hubspot_owner_id", None)
     link_back = retry(reuse("deal_out", 65, name="Write Nuance Deal ID on MTMC deal"))
     supplier = retry(reuse("deal_out", 76, name="Associate Nuance Medical supplier"))
 
@@ -351,6 +355,21 @@ def build_deal_out():
         ds_add(230, DS_NOTE_MAP, "mtmc:{{228.id}}", note_record("nuance", "{{226.id}}", "{{228.id}}", "{{226.modified}}"), "Remember note (MTMC side)"),
     ]
 
+    # The MTMC Sync copy gets the same contacts and companies as the original Cryodose deal.
+    copy_contacts = [
+        api(231, NUANCE, "GET", "/crm/v4/objects/deals/{{12.id}}/associations/contacts", "Nuance: original deal's contacts"),
+        code(232, "assoc_copy_body.js", [("assoc", "{{231.body}}"), ("dealId", "{{64.id}}"), ("typeId", "3")], "Build contact links for copy"),
+        retry(api(233, NUANCE, "POST", "/crm/v4/associations/deals/contacts/batch/create", "Nuance: link contacts to copy",
+                  body="{{232.result.body}}", filter=filt("Has contacts", cond("{{232.result.count}}", "number:greater", "0"))), eid=9233),
+    ]
+    copy_companies = [
+        api(234, NUANCE, "GET", "/crm/v4/objects/deals/{{12.id}}/associations/companies", "Nuance: original deal's companies"),
+        code(235, "assoc_copy_body.js", [("assoc", "{{234.body}}"), ("dealId", "{{64.id}}"), ("typeId", "341"), ("primaryTypeId", "5")],
+             "Build company links for copy"),
+        retry(api(236, NUANCE, "POST", "/crm/v4/associations/deals/companies/batch/create", "Nuance: link companies to copy",
+                  body="{{235.result.body}}", filter=filt("Has companies", cond("{{235.result.count}}", "number:greater", "0"))), eid=9236),
+    ]
+
     owner_upd = api(87, NUANCE, "GET", "/crm/v3/owners/{{12.properties.hubspot_owner_id}}", "Get Nuance deal owner",
                     filter=filt("Already sent (update)", cond("{{12.properties.mtmc_deal_id}}", "exist")))
     update = retry(reuse("deal_out", 86, name="Update MTMC deal (no stage / close date)"))
@@ -361,7 +380,7 @@ def build_deal_out():
         search,
         router(10,
                [owner, mtmc_deal, writeback, line_item, copy_deal, link_back, supplier,
-                router(200, contacts, company, notes)],
+                router(200, contacts, company, notes, copy_contacts, copy_companies)],
                [owner_upd, update]),
     ]
     return write("1_nuance_deal_to_mtmc_v2.blueprint.json", "Nuance Deal → MTMC (Create + Update) v2", flow, False)
