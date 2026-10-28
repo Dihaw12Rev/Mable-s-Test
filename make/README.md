@@ -30,13 +30,13 @@ Never run both backfills at the same time.
 
 | New scenario | ID | Replaces (live) | Trigger |
 |---|---|---|---|
-| Nuance Deal → MTMC (Create + Update) v2 (Phase 2) | 6813004 | 5563815 | **LIVE since 2026-10-28** (original off). Every 1 h; shares watermark `nuance_handoff`. The MTMC Sync copy gets the original deal's owner, contacts and companies (primary label kept). |
-| MTMC Deal Updated → Nuance (Update) v2 (Phase 2) | 6812939 | 5563819 | New webhook 2994549 (`…/lxywn1ub3v86hbnatvyddgxkrpm8rhxf`) |
+| Nuance Deal → MTMC (Create + Update) v2 (Phase 2) | 6813004 | 5563815 | **LIVE since 2026-10-28** (original off, ARCHIVED). Every 1 h; shares watermark `nuance_handoff`. The MTMC Sync copy gets the original deal's owner, contacts and companies (primary label kept). |
+| MTMC Deal Updated → Nuance (Update) v2 (Phase 2) | 6812939 | 5563819 | **LIVE since 2026-10-28** (original off, ARCHIVED). Webhook 2994549 (`…/lxywn1ub3v86hbnatvyddgxkrpm8rhxf`); the MTMC workflow points here. |
 | MTMC Notes → Nuance (Create + Update) v2 (Phase 2) | 6812950 | 6056956 | Every 1 h (was 6 h) |
 | Nuance Notes → MTMC (Create + Update) v2 (Phase 2) | 6812969 | 6056834 | Every 1 h (was 6 h) |
 
 Before switching each one:
-- **Deal update:** add MTMC stage 1296904841 to the stage map data store (118696). Then point the MTMC "deal updated" workflow at the new webhook URL.
+- **Deal update:** done. The stage map (118696) covers every stage in MTMC's Team Pipeline. Stage 1296904841 no longer exists.
 - **Notes:** the live notes scenarios keep their history in data store 181066 (and in 181067, which is empty). v2 uses 138595. So, in this order:
   1. Copy each 181066 record into 138595 under the keys `nuance:<id>` and `mtmc:<id>`.
   2. Set the `mtmc_notes` / `nuance_notes` watermarks in 114187 to the originals' last run.
