@@ -9688,7 +9688,18 @@
                         }
                     ]
                 }
-            ]
+            ],
+            "filter": {
+                "name": "Deal Found",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{12.id}}",
+                            "o": "exist"
+                        }
+                    ]
+                ]
+            }
         }
     ],
     "metadata": {

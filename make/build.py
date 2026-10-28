@@ -378,10 +378,13 @@ def build_deal_out():
         ds_get(100, DS_WATERMARKS, "nuance_handoff", "Last run"),
         ds_add(101, DS_WATERMARKS, "nuance_handoff", {"last_run_at": '{{formatDate(now; "x")}}'}, "Save this run"),
         search,
-        router(10,
-               [owner, mtmc_deal, writeback, line_item, copy_deal, link_back, supplier,
-                router(200, contacts, company, notes, copy_contacts, copy_companies)],
-               [owner_upd, update]),
+        # An empty search can still emit one bundle with no deal; without this filter it would create a
+        # blank MTMC deal and then fail the write-back (HubSpot 405 on a missing deal ID).
+        {**router(10,
+                  [owner, mtmc_deal, writeback, line_item, copy_deal, link_back, supplier,
+                   router(200, contacts, company, notes, copy_contacts, copy_companies)],
+                  [owner_upd, update]),
+         "filter": filt("Deal Found", cond("{{12.id}}", "exist"))},
     ]
     return write("1_nuance_deal_to_mtmc_v2.blueprint.json", "Nuance Deal → MTMC (Create + Update) v2", flow, False)
 
