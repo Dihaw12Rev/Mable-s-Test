@@ -32,16 +32,15 @@ Never run both backfills at the same time.
 |---|---|---|---|
 | Nuance Deal → MTMC (Create + Update) v2 (Phase 2) | 6813004 | 5563815 | **LIVE since 2026-10-28** (original off, ARCHIVED). Every 1 h; shares watermark `nuance_handoff`. The MTMC Sync copy gets the original deal's owner, contacts and companies (primary label kept). |
 | MTMC Deal Updated → Nuance (Update) v2 (Phase 2) | 6812939 | 5563819 | **LIVE since 2026-10-28** (original off, ARCHIVED). Webhook 2994549 (`…/lxywn1ub3v86hbnatvyddgxkrpm8rhxf`); the MTMC workflow points here. |
-| MTMC Notes → Nuance (Create + Update) v2 (Phase 2) | 6812950 | 6056956 | Every 1 h (was 6 h) |
-| Nuance Notes → MTMC (Create + Update) v2 (Phase 2) | 6812969 | 6056834 | Every 1 h (was 6 h) |
+| MTMC Notes → Nuance (Create + Update) v2 (Phase 2) | 6812950 | 6056956 | **LIVE since 2026-10-28** (original off, ARCHIVED). Every 1 h (was 6 h). |
+| Nuance Notes → MTMC (Create + Update) v2 (Phase 2) | 6812969 | 6056834 | **LIVE since 2026-10-28** (original off, ARCHIVED). Every 1 h; includes notes on MTMC Sync copies. |
 
 Before switching each one:
 - **Deal update:** done. The stage map (118696) covers every stage in MTMC's Team Pipeline. Stage 1296904841 no longer exists.
-- **Notes:** the live notes scenarios keep their history in data store 181066 (and in 181067, which is empty). v2 uses 138595. So, in this order:
-  1. Copy each 181066 record into 138595 under the keys `nuance:<id>` and `mtmc:<id>`.
-  2. Set the `mtmc_notes` / `nuance_notes` watermarks in 114187 to the originals' last run.
-  3. Swap the scenarios.
-- **Nuance → MTMC notes** also copies notes from the MTMC Sync pipeline (915661656). That still needs Nuance's OK; until then, set the pipelines input on module 512 to `31457678` only.
+- **Notes:** done. The 17 note pairs from the original history (181066; 181067 was empty) were copied into 138595 as `nuance:<id>` / `mtmc:<id>`.
+  The data structure of 138595 (473458) now includes `origin`, `nuance_note_id`, `mtmc_note_id`, `source_modified_at` and `last_synced_at`.
+  The `mtmc_notes` / `nuance_notes` watermarks were set so the first run starts at the originals' last run (2026-10-28 18:01:35 UTC).
+- **Nuance → MTMC notes** copies notes from both Cryodose (31457678) and MTMC Sync (915661656) deals (agreed 2026-10-28).
 
 | File in `dist/` | Replaces (live scenario) | Trigger |
 |---|---|---|
