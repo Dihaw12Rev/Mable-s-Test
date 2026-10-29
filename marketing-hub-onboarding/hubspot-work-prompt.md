@@ -1,64 +1,79 @@
-# HubSpot Work prompt: Marketing Hub Onboarding
+# HubSpot Work prompts: Marketing Hub Onboarding
 
-`hubspot-work-prompt.txt` has the exact text to paste into HubSpot Work. It builds the template project (10 sections, 74 tasks, 44 subtasks), the board and views, a Requests table, the Onboarding Portfolio with its Customers table, and 8 agents. No documents or forms.
+All of these are generated from `process_data.py` by `build_prompt.py`. Edit the data and re-run the script; don't edit the text by hand.
 
-It's generated from `process_data.py` by `build_prompt.py`. Edit the data and re-run the script; don't edit the text by hand.
+| File | When to use it |
+|---|---|
+| `hubspot-work-redesign-prompt.txt` | Paste into the chat of the workspace you already built. It switches to shared tables linked to Customers, which is the setup HubSpot Work recommended so agents work across all customers. |
+| `hubspot-work-agent-prompts.md` | 8 prompts, one per agent, for the agent builder. Use them after the redesign. |
+| `hubspot-work-prompt.txt` | Builds everything from scratch in a new workspace (no agents). |
 
-There are two prompts:
+## Why shared tables
 
-- `hubspot-work-prompt.txt` builds everything from scratch, in a new workspace.
-- `hubspot-work-update-prompt.txt` is for the workspace already built from the earlier prompt. paste it in that workspace's chat. It puts Task IDs first, checks the Due date formula, updates 6 tasks, and adds the agents.
+HubSpot Work has no custom project fields, and copying a project doesn't copy its agents' workflows. With one project per customer, every agent would have to be set up again in each copy, and nothing could look across customers. With shared tables, each Customer Tasks, Requests and Updates row links to its Customers row, and one set of agents covers everyone.
 
-## How to use the full prompt
+## Order
 
-1. Open HubSpot Work and start a new workspace from a blank prompt.
-2. Paste everything in `hubspot-work-prompt.txt`.
-3. HubSpot Work shows a plan first. Check the counts against the CHECK line at the end, then approve.
-4. For each new customer:
-   1. Duplicate 'Marketing Hub Onboarding (Template)' and name the copy exactly '<Client> · Marketing Hub Onboarding'.
-   2. Add a row to Customers with Customer = that exact name, plus Company, Deal, Architect, Program length, Start date and the rest.
-   3. The Date Setter agent fills Project Day 0 and Program length on every task in the copy, so Due dates calculate. Without the agent, bulk-edit those two columns on all rows.
-   4. Share the copy with the Architect (workspaces are private by default).
+1. Paste `hubspot-work-redesign-prompt.txt` in the workspace chat and approve the plan.
+2. Create the Onboarding Task Generator from `hubspot-work-agent-prompts.md`.
+3. Test it: add a Customers row "Test Co" with Start date today, Program length 60 and yourself as Architect. Expect 74 rows in Customer Tasks for Test Co, task 4.11 due in 20 days, 8.05 in 60, 9.05 in 240, P0 tasks undated, and Tasks created = Yes.
+4. Create the other 7 agents.
+5. Delete the Test Co row and its tasks. Share the workspace with Phil and the Architects.
 
-Agents spend HubSpot Credits. The Delay Flagger and Portfolio Sync run every weekday, so check the credit balance before turning them on.
-
-If HubSpot Work says the prompt is too long, paste everything up to the line "Create these sections and tasks" first. Then send the sections in two or three messages, each starting with "Add these sections and tasks to the Tasks table in the template project:".
-
-## The prompt
+## Redesign prompt
 
 ```text
-{PROMPT}```
+Restructure the "Client Onboarding" workspace the way you recommended: shared tables linked to Customers, so agents work across all customers. Don't create agents; I'll create them in the agent builder. Don't create documents or forms. Don't delete anything that has rows.
 
-## The update prompt (for the workspace you already built)
+1. TEMPLATE PROJECT
+Keep "Marketing Hub Onboarding (Template)" and its Tasks table as the master task list. Nobody works in it; new customers' tasks get copied from it.
+- Update these tasks:
+- 1.01: Task = "Pick the Architect". Owner role = Phil. Definition of done = "Phil checks the Capacity report (active customers per Architect) and picks the Architect."
+- 1.02: Task = "Add the customer in HubSpot Work". Owner role = Ops. Definition of done = "Add a Customers row: Customer, Company, Deal, Architect, Program length, Start date, tier, From→To goal, FigJam and Supered links. Check that the Task Generator created the customer's tasks (Tasks created = Yes)."
+- Check that the Due date formula follows this rule, and fix it if it doesn't: Due date = Project Day 0 + Due day. For programs shorter than 90 days, tasks with a Due day above 10 are compressed: Due day × Program length ÷ 90, rounded. Tasks in section P9 are counted from the end instead: Due day − 90 + Program length. Tasks in section P0 get no date. If Project Day 0 is empty, Due date stays empty.
+- If the template's Requests table has no rows, remove it. Requests now live in the Onboarding Portfolio.
 
-```text
-Update the existing "Client Onboarding" workspace. Don't recreate or duplicate anything that already exists; only make the changes below.
+2. ONBOARDING PORTFOLIO PROJECT
+Make it hold these four tables.
 
-1. TASK IDS AND COLUMNS
-In the Tasks table of "Marketing Hub Onboarding (Template)", make sure every task has its Task ID filled (0.01 to 9.05, matching the order of the tasks). In the Main table view, show these columns in this order: Task ID, Task, Status, Owner role, Assignee, Due date, Client-facing, Repeats, Depends on, Definition of done, Notes. Hide Section, Start day, Due day, Start date, Project Day 0, Program length.
+Table "Customers", one row per customer. Columns: Customer (Text: client name); Company (CRM company); Deal (CRM deal); Architect (HubSpot user); Program length (Number: 60, 75 or 90); Start date (Date, Day 0); Target end date (Date); Marketing Hub tier (Dropdown: Professional, Enterprise); Health (Dropdown: On track, At risk, Off track); Current section (Dropdown: P0–P9, Completed); Next MBR (Date, filled by the Architect when booked); Next due task (Text); Tasks created (Yes/No); From→To goal (Long text); Progress measures (Long text: name, baseline, target); FigJam link (URL); Supered Action Plan link (URL).
+Views and reports:
+- Capacity: Report: active customers per Architect. Phil uses it to pick the Architect.
+- Health board: Columns = Health.
+- Ending soon: Target end date in the next 35 days (time for the 'what's next' call).
 
-2. CHECK THE DUE DATE FORMULA
-Make sure the Due date formula follows this rule, and fix it if it doesn't: Due date = Project Day 0 + Due day. For programs shorter than 90 days, tasks with a Due day above 10 are compressed: Due day × Program length ÷ 90, rounded. Tasks in section P9 are counted from the end instead: Due day − 90 + Program length. Tasks in section P0 get no date. If Project Day 0 is empty, Due date stays empty.
+Table "Customer Tasks": every customer's tasks in one table. Same columns as the template's Tasks table (including the Due date formula, both helper columns, and subtasks), plus "Customer" (link to the Customers row) as the second column. Statuses: Not started, In progress, Waiting on client, In review, Done, Won't do.
+Main table: show Task ID, Customer, Task, Status, Owner role, Assignee, Due date, Client-facing, Repeats, Depends on, Definition of done, Notes. Hide Section, Start day, Due day, Start date, Project Day 0, Program length.
+Views:
+- Board: Columns = Status. Cards show Customer, Task ID, Task, Assignee, Due date.
+- By customer: List grouped by Customer, then Section, sorted by Task ID.
+- By section: List grouped by Section (P0 → P9), sorted by Task ID.
+- Timeline: Start date → Due date, grouped by Customer.
+- Calendar: By Due date.
+- My tasks: Assignee = me, Status not Done / Won't do.
+- Client to-dos: Owner role = Client POC, Status not Done.
+- This week: Due date in the next 7 days, Status not Done.
+- Overdue: Due date before today, Status not Done / Won't do.
+Leave it empty; the Onboarding Task Generator agent fills it for each new customer.
 
-3. TASK CHANGES
-The Architect now runs the "what's next" call, and customer details live on the Customers table. Update these tasks:
-- 1.01 Pick the Architect: Owner role = Phil. Definition of done = "Phil checks the Capacity report (active customers per Architect) and picks the Architect."
-- 1.02 Create the customer project: Owner role = Ops. Definition of done = "Duplicate the 'Marketing Hub Onboarding (Template)' project and name it exactly '<Client> · Marketing Hub Onboarding'. Add a Customers row with that exact name plus Company, Deal, Architect, Program length and Start date. Share the project with the Architect."
-- 8.01 Prep next-phase options: Owner role = Architect. Definition of done = "Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews before the call."
-- 8.02 'What's next' call: Owner role = Architect. Definition of done = "Architect explains the long-term vision and the next phase as an A/B choice."
-- 8.03 Next-phase proposal: Owner role = Architect. Definition of done = "New deal in the Sales Pipeline for the chosen offer."
-- 9.04 Paid offer conversation: month 5: Owner role = Architect. Definition of done = "Present team support, internal capacity and one-initiative-a-month before monitoring ends."
+Table "Requests": every customer's requests. Columns: Customer (Link to Customers row); Request (Text); Urgency (Dropdown: Critical, High, Standard, Not now); Type (Dropdown: Client request, Issue found, Client idea); Status (Dropdown: New, Quoted, In progress, Done, Parked); Price (Number, default 250); Logged on (Date); Due date (Date); Notes (Long text).
+Views: "Board by urgency" (columns = Urgency) and "Open requests" (Status not Done or Parked, sorted by Due date).
+Use these as the descriptions of the Urgency options:
+- Critical: Something live is broken: forms not submitting, emails not sending, a workflow sending the wrong email, tracking down. Reply within 4 business hours; fixed within 1 business day. Price: Free if it's in something we built; otherwise $250.
+- High: Needed for a launch or deadline in the next 2 weeks. Started within 2 business days; done within 5. Price: $250.
+- Standard: A small new request with no hard deadline. Planned into next week; done within 10 business days. Price: $250.
+- Not now: An idea or a bigger project for later. Logged and reviewed at MBRs and the 'what's next' call. Price: Quoted when scoped.
 
-4. AGENTS
-Add these agents. Every agent only drafts, fills dates or flags. None of them sends anything to a customer or changes a deal. Agents find a customer's project through the Customers row: its Customer value is the project's exact name.
-- Date Setter. Trigger: A Customers row's Start date, Program length or Architect is set or changed. What it does: Find the project whose name matches the row's Customer value. In its Tasks table, set Project Day 0 = the row's Start date and Program length = the row's Program length on every task, so the Due date formula calculates. Assign every task with Owner role 'Architect' to the row's Architect. Set the row's Target end date = Start date + Program length.
-- Handoff Brief. Trigger: A new row in Customers. What it does: Read the linked deal's history, notes, meetings and emails. Write a one-page brief for the Architect: who the customer is, the From→To goal, what they bought, the progress measures, the people involved, risks and open questions. Save it in the matching customer project and notify the Architect.
-- Weekly Update Drafter. Trigger: Every Thursday, for each Customers row whose Current section is P2 to P8. What it does: In the matching project, draft the Friday update in five parts: 1) work done this week and the strategic issue it moves, 2) numbers vs baseline, 3) issues found outside scope, 4) next week, 5) client to-dos. Use tasks marked Done this week, tasks due next week, and Requests logged this week. Save the draft in the project and notify the Architect, who reviews and sends it.
-- Delay Flagger. Trigger: Every weekday morning. What it does: In each customer project, flag tasks past their Due date and tasks 'Waiting on client' for more than 3 days. If a project has 3 or more overdue tasks, set Health to At risk on its Customers row. Notify the Architect, and notify Phil when Health becomes At risk or Off track.
-- Request Triage. Trigger: A new row in a customer project's Requests table. What it does: Suggest the Urgency class and Price from the urgency rules, and set Due date from that class's turnaround. If it looks bigger than about 2 hours of work, mark it 'Quoted' and say why. Notify the Architect at once for Critical requests.
-- Portfolio Sync. Trigger: Every day. What it does: For each Customers row, look at the matching project and update Current section (earliest section with open tasks), Next MBR and Next due task.
-- What's Next Prep. Trigger: 35 days before a Customers row's Target end date. What it does: Summarize results vs baseline, issues found and 'not now' requests into Option A and Option B for the next phase. Save it in the matching project, notify the Architect, and ask Phil to review before the call.
-- KPI Snapshot Drafter. Trigger: Monthly for 6 months after a Customers row's Target end date. What it does: Draft the monthly KPI snapshot notes (3 short notes on the progress measures) for the Architect to review and send with the dashboard email.
+Table "Updates": drafts the agents write for the Architect. Columns: Customer (Link to Customers row); Type (Dropdown: Handoff brief, Weekly update, What's next options, KPI snapshot); Period (Date: week of, or month); Draft (Long text); Status (Dropdown: Draft, Reviewed, Sent); Notes (Long text).
+Views:
+- To review: Status = Draft, grouped by Customer.
+- By customer: Grouped by Customer, newest first.
 
-Show me the plan and wait for my approval before you change anything. When you're done, confirm: 74 tasks with a Task ID, 6 tasks updated, 8 agents.
+3. HOW WE'LL USE IT
+1. Add a row to Customers: Customer, Company, Deal, Architect, Program length, Start date, tier, From→To goal, FigJam and Supered links.
+2. The Task Generator agent copies the template tasks into Customer Tasks for that customer, fills the dates, assigns the Architect and sets Tasks created = Yes.
+3. To work on one customer, filter any view by Customer. 'My tasks' shows an Architect's work across all their customers.
+4. Share the workspace with Phil and the Architects (it's private by default).
+
+Show me the plan and wait for my approval before you change anything. When you're done, confirm: 4 tables in Onboarding Portfolio (Customers, Customer Tasks, Requests, Updates), 9 views on Customer Tasks, 0 rows in Customer Tasks, and tasks 1.01 and 1.02 updated in the template.
 ```

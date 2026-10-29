@@ -1,11 +1,10 @@
-"""Build the exact HubSpot Work prompt from process_data.py.
+"""Build the HubSpot Work prompts from process_data.py.
 
-The prompt builds the template project, its sections and tasks (with setup
-items as subtasks), columns, board and views, the requests table, the
-portfolio, and the agents. No documents or forms.
-
-Writes hubspot-work-prompt.txt (the text to paste) and hubspot-work-prompt.md
-(the same text plus how to use it).
+Writes:
+- hubspot-work-redesign-prompt.txt  switch the workspace already built to shared tables (paste in its chat)
+- hubspot-work-prompt.txt           build everything from scratch in a new workspace
+- hubspot-work-agent-prompts.md     one prompt per agent, for HubSpot Work's agent builder
+- hubspot-work-prompt.md            how to use all of the above
 
 Run:  python3 build_prompt.py
 """
@@ -15,6 +14,7 @@ from pathlib import Path
 import process_data as d
 
 HERE = Path(__file__).parent
+(HERE / "hubspot-work-update-prompt.txt").unlink(missing_ok=True)   # superseded by the redesign prompt
 
 subtasks = defaultdict(list)
 for area, item, det, tier, tid, owner in d.TECH_SETUP:
@@ -35,136 +35,170 @@ def task_line(t):
     return line
 
 
-sections = []
-for p in d.PHASES:
-    tasks = "\n".join(task_line(t) for t in d.TASKS if t[1] == p["id"])
-    sections.append(f"Section {p['id']} · {p['name']} (Day {p['start']} to {p['end']})\n{tasks}")
-sections = "\n\n".join(sections)
+def bullets(rows, fmt):
+    return "\n".join(fmt(*r) for r in rows)
 
-new_customer = "\n".join(f"{i}. {step}" for i, step in enumerate(d.NEW_CUSTOMER_STEPS, start=1))
+
+sections = "\n\n".join(
+    f"Section {p['id']} · {p['name']} (Day {p['start']} to {p['end']})\n" + "\n".join(task_line(t) for t in d.TASKS if t[1] == p["id"])
+    for p in d.PHASES)
+
+statuses = ", ".join(d.WORK_STATUSES)
+task_columns = bullets(d.WORK_TASK_COLUMNS, lambda c, t, n: f"- {c} ({t}): {n}")
 visible = ", ".join(c for c, t, n in d.WORK_TASK_COLUMNS if "hidden" not in n)
 hidden = ", ".join(c for c, t, n in d.WORK_TASK_COLUMNS if "hidden" in n)
+visible_ct = visible.replace("Task ID, Task,", "Task ID, Customer, Task,")
+views = bullets(d.WORK_VIEWS, lambda v, s: f"- {v}: {s}")
+template_views = bullets([v for v in d.WORK_VIEWS if v[0] != "By customer"],
+                         lambda v, s: f"- {v}: {s}".replace("Customer, ", "").replace("grouped by Customer", "grouped by Section"))
+customers_cols = "; ".join(f"{c} ({t})" for c, t in d.WORK_PORTFOLIO_COLUMNS)
+portfolio_views = bullets(d.WORK_PORTFOLIO_VIEWS, lambda v, s: f"- {v}: {s}")
+request_cols = "; ".join(f"{c} ({t})" for c, t in d.WORK_REQUEST_COLUMNS)
+request_classes = bullets(d.REQUEST_CLASSES, lambda u, w, t, p: f"- {u}: {w} {t} Price: {p}.")
+update_cols = "; ".join(f"{c} ({t})" for c, t in d.WORK_UPDATE_COLUMNS)
+update_views = bullets(d.WORK_UPDATE_VIEWS, lambda v, s: f"- {v}: {s}")
+new_customer = "\n".join(f"{i}. {s}" for i, s in enumerate(d.NEW_CUSTOMER_STEPS, start=1))
 due_rule = (f"Due date = Project Day 0 + Due day. For programs shorter than 90 days, tasks with a Due day above {d.FIXED_UNTIL_DAY} "
             f"are compressed: Due day × Program length ÷ 90, rounded. Tasks in section P9 are counted from the end instead: "
             f"Due day − 90 + Program length. Tasks in section P0 get no date. If Project Day 0 is empty, Due date stays empty.")
-task_columns = "\n".join(f"- {c} ({t}): {n}" for c, t, n in d.WORK_TASK_COLUMNS)
-views = "\n".join(f"- {v}: {s}" for v, s in d.WORK_VIEWS)
-request_columns = "; ".join(f"{c} ({t})" for c, t in d.WORK_REQUEST_COLUMNS)
-request_classes = "\n".join(f"- {u}: {w} {t} Price: {p}." for u, w, t, p in d.REQUEST_CLASSES)
-portfolio_columns = "; ".join(f"{c} ({t})" for c, t in d.WORK_PORTFOLIO_COLUMNS)
-portfolio_views = "\n".join(f"- {v}: {s}" for v, s in d.WORK_PORTFOLIO_VIEWS)
-statuses = ", ".join(d.WORK_STATUSES)
-agents = "\n".join(f"- {n}. Trigger: {t}. What it does: {w}" for n, t, w in d.WORK_AGENTS)
 n_tasks = len(d.TASKS)
 n_sub = sum(len(v) for v in subtasks.values())
 
-PROMPT = f"""Build a workspace called "Client Onboarding" for RevGravy, a HubSpot consultancy. It holds the structure we use to run every Marketing Hub onboarding. Build only what is described below: projects, task sections, tasks, subtasks, columns, board, views and agents. Do not create documents or forms.
+PORTFOLIO_TABLES = f"""Table "Customers", one row per customer. Columns: {customers_cols}.
+Views and reports:
+{portfolio_views}
 
-HOW WE WILL USE IT
-- Day 0 is the day the customer's deal reaches "Start Payment Received" in our Sales Pipeline.
-- Programs last 60 to 90 days. The task days below are for a 90-day program.
-- Projects have no custom fields, so each customer's details live on their row in the Customers table. The Customer column holds the exact name of the customer's project, and that is how the two are matched.
-- For each new customer:
+Table "Customer Tasks": every customer's tasks in one table. Same columns as the template's Tasks table (including the Due date formula, both helper columns, and subtasks), plus "Customer" (link to the Customers row) as the second column. Statuses: {statuses}.
+Main table: show {visible_ct}. Hide {hidden}.
+Views:
+{views}
+Leave it empty; the Onboarding Task Generator agent fills it for each new customer.
+
+Table "Requests": every customer's requests. Columns: {request_cols}.
+Views: "Board by urgency" (columns = Urgency) and "Open requests" (Status not Done or Parked, sorted by Due date).
+Use these as the descriptions of the Urgency options:
+{request_classes}
+
+Table "Updates": drafts the agents write for the Architect. Columns: {update_cols}.
+Views:
+{update_views}"""
+
+CHANGED = ["1.01", "1.02"]
+changed = "\n".join(f"- {t[0]}: Task = \"{t[2]}\". Owner role = {t[4]}. Definition of done = \"{t[3]}\""
+                    for t in d.TASKS if t[0] in CHANGED)
+
+REDESIGN = f"""Restructure the "Client Onboarding" workspace the way you recommended: shared tables linked to Customers, so agents work across all customers. Don't create agents; I'll create them in the agent builder. Don't create documents or forms. Don't delete anything that has rows.
+
+1. TEMPLATE PROJECT
+Keep "Marketing Hub Onboarding (Template)" and its Tasks table as the master task list. Nobody works in it; new customers' tasks get copied from it.
+- Update these tasks:
+{changed}
+- Check that the Due date formula follows this rule, and fix it if it doesn't: {due_rule}
+- If the template's Requests table has no rows, remove it. Requests now live in the Onboarding Portfolio.
+
+2. ONBOARDING PORTFOLIO PROJECT
+Make it hold these four tables.
+
+{PORTFOLIO_TABLES}
+
+3. HOW WE'LL USE IT
+{new_customer}
+
+Show me the plan and wait for my approval before you change anything. When you're done, confirm: 4 tables in Onboarding Portfolio (Customers, Customer Tasks, Requests, Updates), {len(d.WORK_VIEWS)} views on Customer Tasks, 0 rows in Customer Tasks, and tasks 1.01 and 1.02 updated in the template.
+"""
+
+PROMPT = f"""Build a workspace called "Client Onboarding" for RevGravy, a HubSpot consultancy, to run every Marketing Hub onboarding. Build only the projects, tables, columns, views, sections, tasks and subtasks below. Don't create agents (I'll create them in the agent builder), documents or forms.
+
+HOW WE'LL USE IT
+- Day 0 is the day the customer's deal reaches "Start Payment Received" in our Sales Pipeline. Programs last 60 to 90 days; the task days below are for a 90-day program.
+- All customers share the same tables, and each row links to its Customers row, so agents work across all customers.
 {new_customer}
 
 PROJECT 1: "Marketing Hub Onboarding (Template)"
+The master task list. Nobody works in it; new customers' tasks get copied from it.
 
 Table "Tasks" with these columns, in this order:
 {task_columns}
 
-Board statuses, in this order: {statuses}. Every task starts as "Not started".
-
+Statuses, in this order: {statuses}. Every task starts as "Not started".
 Main table: show {visible}. Hide {hidden}.
-
 Due date formula: {due_rule} Leave Project Day 0 and Program length empty in the template.
 
-Views on the Tasks table:
-{views}
+Views:
+{template_views}
 
 Create these sections and tasks, in this order. Put each task in its section and fill Task ID, Owner role, Client-facing, Start day, Due day, Repeats, Depends on and Definition of done ("Done when") from its line. Add the "Subtasks" as a checklist of subtasks under that task.
 
 {sections}
 
-Table "Requests" (in the same project) with these columns: {request_columns}.
-Views on Requests: "Board by urgency" (columns = Urgency) and "Open requests" (Status not Done or Parked, sorted by Due date).
-Use these as the descriptions of the Urgency options:
-{request_classes}
-
 PROJECT 2: "Onboarding Portfolio"
 
-Table "Customers", one row per customer, with these columns: {portfolio_columns}.
-Views and reports:
-{portfolio_views}
-
-AGENTS
-Every agent only drafts, fills dates or flags. None of them sends anything to a customer or changes a deal. Agents find a customer's project through the Customers row: its Customer value is the project's exact name.
-{agents}
+{PORTFOLIO_TABLES}
 
 CHECK
-When you show me the plan, confirm the counts: 2 projects, {len(d.PHASES)} sections, {n_tasks} tasks, {n_sub} subtasks, {len(d.WORK_VIEWS)} views on Tasks, 1 Requests table, {len(d.WORK_AGENTS)} agents. Show me the plan and wait for my approval before you create anything.
+When you show me the plan, confirm: 2 projects; the template has {len(d.PHASES)} sections, {n_tasks} tasks and {n_sub} subtasks; Onboarding Portfolio has 4 tables (Customers, Customer Tasks, Requests, Updates) and Customer Tasks has {len(d.WORK_VIEWS)} views. Show me the plan and wait for my approval before you create anything.
 """
 
-# Follow-up prompt for a workspace that was already built from the v2 prompt (no agents yet).
-CHANGED_TASKS = ["1.01", "1.02", "8.01", "8.02", "8.03", "9.04"]   # changed since the v2 build
-changed = "\n".join(
-    f"- {t[0]} {t[2]}: Owner role = {t[4]}. Definition of done = \"{t[3]}\""
-    for t in d.TASKS if t[0] in CHANGED_TASKS)
+COMMON_RULE = "Only draft, fill fields or flag. Never send anything to a customer and never change a CRM deal."
 
-UPDATE = f"""Update the existing "Client Onboarding" workspace. Don't recreate or duplicate anything that already exists; only make the changes below.
 
-1. TASK IDS AND COLUMNS
-In the Tasks table of "Marketing Hub Onboarding (Template)", make sure every task has its Task ID filled (0.01 to 9.05, matching the order of the tasks). In the Main table view, show these columns in this order: {visible}. Hide {hidden}.
+def agent_prompt(a):
+    lines = [f"Name: {a['name']}",
+             "Where: \"Client Onboarding\" workspace, \"Onboarding Portfolio\" project. Tables: Customers, Customer Tasks, Requests, Updates. Each row in Customer Tasks, Requests and Updates links to its Customers row through the Customer column.",
+             f"Trigger: {a['trigger']}",
+             "What to do:"]
+    lines += [f"{i}. {s}" for i, s in enumerate(a["steps"], start=1)]
+    lines += ["Rules:"] + [f"- {r}" for r in a["rules"] + [COMMON_RULE]]
+    return "\n".join(lines)
 
-2. CHECK THE DUE DATE FORMULA
-Make sure the Due date formula follows this rule, and fix it if it doesn't: {due_rule}
 
-3. TASK CHANGES
-The Architect now runs the "what's next" call, and customer details live on the Customers table. Update these tasks:
-{changed}
+agent_blocks = []
+for i, a in enumerate(d.WORK_AGENTS, start=1):
+    start = f"Start from the sample **{a['sample']}** and replace its description with this." if a["sample"] else "Start from a blank agent."
+    agent_blocks.append(f"## {i}. {a['name']}\n\n{a['summary']} {start}\n\n```text\n{agent_prompt(a)}\n```\n")
 
-4. AGENTS
-Add these agents. Every agent only drafts, fills dates or flags. None of them sends anything to a customer or changes a deal. Agents find a customer's project through the Customers row: its Customer value is the project's exact name.
-{agents}
+AGENTS_MD = f"""# HubSpot Work agent prompts
 
-Show me the plan and wait for my approval before you change anything. When you're done, confirm: {len(d.TASKS)} tasks with a Task ID, {len(CHANGED_TASKS)} tasks updated, {len(d.WORK_AGENTS)} agents.
-"""
+One prompt per agent for HubSpot Work's agent builder ("What kind of agent do you want to create?"). Create them only after the workspace has the shared tables (Customers, Customer Tasks, Requests, Updates).
 
-GUIDE = f"""# HubSpot Work prompt: Marketing Hub Onboarding
+Create the **Onboarding Task Generator** first and test it with a fake customer before adding the rest. The other agents read what it creates.
 
-`hubspot-work-prompt.txt` has the exact text to paste into HubSpot Work. It builds the template project ({len(d.PHASES)} sections, {n_tasks} tasks, {n_sub} subtasks), the board and views, a Requests table, the Onboarding Portfolio with its Customers table, and {len(d.WORK_AGENTS)} agents. No documents or forms.
+Agents spend HubSpot Credits. Delay Flagger and Portfolio Sync run every day.
 
-It's generated from `process_data.py` by `build_prompt.py`. Edit the data and re-run the script; don't edit the text by hand.
+""" + "\n".join(agent_blocks)
 
-There are two prompts:
+GUIDE = f"""# HubSpot Work prompts: Marketing Hub Onboarding
 
-- `hubspot-work-prompt.txt` builds everything from scratch, in a new workspace.
-- `hubspot-work-update-prompt.txt` is for the workspace already built from the earlier prompt. paste it in that workspace's chat. It puts Task IDs first, checks the Due date formula, updates 6 tasks, and adds the agents.
+All of these are generated from `process_data.py` by `build_prompt.py`. Edit the data and re-run the script; don't edit the text by hand.
 
-## How to use the full prompt
+| File | When to use it |
+|---|---|
+| `hubspot-work-redesign-prompt.txt` | Paste into the chat of the workspace you already built. It switches to shared tables linked to Customers, which is the setup HubSpot Work recommended so agents work across all customers. |
+| `hubspot-work-agent-prompts.md` | {len(d.WORK_AGENTS)} prompts, one per agent, for the agent builder. Use them after the redesign. |
+| `hubspot-work-prompt.txt` | Builds everything from scratch in a new workspace (no agents). |
 
-1. Open HubSpot Work and start a new workspace from a blank prompt.
-2. Paste everything in `hubspot-work-prompt.txt`.
-3. HubSpot Work shows a plan first. Check the counts against the CHECK line at the end, then approve.
-4. For each new customer:
-""" + "\n".join(f"   {i}. {step}" for i, step in enumerate(d.NEW_CUSTOMER_STEPS, start=1)) + """
+## Why shared tables
 
-Agents spend HubSpot Credits. The Delay Flagger and Portfolio Sync run every weekday, so check the credit balance before turning them on.
+HubSpot Work has no custom project fields, and copying a project doesn't copy its agents' workflows. With one project per customer, every agent would have to be set up again in each copy, and nothing could look across customers. With shared tables, each Customer Tasks, Requests and Updates row links to its Customers row, and one set of agents covers everyone.
 
-If HubSpot Work says the prompt is too long, paste everything up to the line "Create these sections and tasks" first. Then send the sections in two or three messages, each starting with "Add these sections and tasks to the Tasks table in the template project:".
+## Order
 
-## The prompt
+1. Paste `hubspot-work-redesign-prompt.txt` in the workspace chat and approve the plan.
+2. Create the Onboarding Task Generator from `hubspot-work-agent-prompts.md`.
+3. Test it: add a Customers row "Test Co" with Start date today, Program length 60 and yourself as Architect. Expect {n_tasks} rows in Customer Tasks for Test Co, task 4.11 due in 20 days, 8.05 in 60, 9.05 in 240, P0 tasks undated, and Tasks created = Yes.
+4. Create the other {len(d.WORK_AGENTS) - 1} agents.
+5. Delete the Test Co row and its tasks. Share the workspace with Phil and the Architects.
+
+## Redesign prompt
 
 ```text
-{PROMPT}```
+{REDESIGN}```
 """
 
+(HERE / "hubspot-work-redesign-prompt.txt").write_text(REDESIGN, encoding="utf-8")
 (HERE / "hubspot-work-prompt.txt").write_text(PROMPT, encoding="utf-8")
-(HERE / "hubspot-work-update-prompt.txt").write_text(UPDATE, encoding="utf-8")
-(HERE / "hubspot-work-prompt.md").write_text(GUIDE + f"""
-## The update prompt (for the workspace you already built)
-
-```text
-{UPDATE}```
-""", encoding="utf-8")
-print(f"Update prompt: {len(UPDATE):,} characters")
-print(f"Prompt: {len(PROMPT):,} characters, {n_tasks} tasks, {n_sub} subtasks, {len(d.WORK_AGENTS)} agents")
+(HERE / "hubspot-work-agent-prompts.md").write_text(AGENTS_MD, encoding="utf-8")
+(HERE / "hubspot-work-prompt.md").write_text(GUIDE, encoding="utf-8")
+print(f"Redesign prompt: {len(REDESIGN):,} characters")
+print(f"Full prompt: {len(PROMPT):,} characters, {n_tasks} tasks, {n_sub} subtasks")
+print(f"Agent prompts: {len(d.WORK_AGENTS)}, longest {max(len(agent_prompt(a)) for a in d.WORK_AGENTS):,} characters")

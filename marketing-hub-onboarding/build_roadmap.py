@@ -25,7 +25,7 @@ data = {
     "scope": d.SCOPE_LIMITS,
     "post": d.POST_PROGRAM,
     "questions": d.OPEN_QUESTIONS,
-    "agents": d.WORK_AGENTS,
+    "agents": [(a["name"], a["trigger"], a["summary"]) for a in d.WORK_AGENTS],
 }
 
 TEMPLATE = r"""<title>Marketing Hub Onboarding Roadmap</title>
@@ -143,7 +143,7 @@ footer { font-size: 13px; color: var(--muted); }
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">RevGravy · v3 approved</div>
+    <div class="eyebrow">RevGravy · v4 shared tables</div>
     <h1>Marketing Hub Onboarding Roadmap</h1>
     <p>Everything that happens after a customer buys a Marketing Hub onboarding, from the FigJam session and the answers from review. It all runs in HubSpot Work; the customer sees it through Supered.</p>
     <div class="facts" id="facts"></div>

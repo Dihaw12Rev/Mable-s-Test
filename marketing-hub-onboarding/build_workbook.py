@@ -282,21 +282,23 @@ def work_setup(wb):
     r = 4
     heading(ws, r, "Where each part lives")
     r = table_at(ws, r + 1, ["Tool", "", "Job"], [(t, "", j) for t, j in d.WHERE_IT_LIVES], fill=TEAL) + 2
-    heading(ws, r, "Setting up a new customer (HubSpot Work has no custom project fields)")
+    heading(ws, r, "Setting up a new customer (all customers share the same tables)")
     r = table_at(ws, r + 1, ["Step", "", "What to do"], [(i, "", st) for i, st in enumerate(d.NEW_CUSTOMER_STEPS, start=1)], fill=TEAL) + 2
-    heading(ws, r, "Template project 'Marketing Hub Onboarding (Template)': Tasks table columns")
+    heading(ws, r, "Task columns (template Tasks table and the shared Customer Tasks table, which adds a Customer link)")
     r = table_at(ws, r + 1, ["Column", "Type", "Notes"], d.WORK_TASK_COLUMNS) + 2
     heading(ws, r, "Board statuses")
     r = table_at(ws, r + 1, ["Status", "", ""], [(s, "", "") for s in d.WORK_STATUSES]) + 2
     heading(ws, r, "Views")
     r = table_at(ws, r + 1, ["View", "", "Setup"], [(v, "", s) for v, s in d.WORK_VIEWS]) + 2
-    heading(ws, r, "Requests table (one per customer project)")
+    heading(ws, r, "Requests table (shared, each row linked to its customer)")
     r = table_at(ws, r + 1, ["Column", "Type", ""], [(c, t, "") for c, t in d.WORK_REQUEST_COLUMNS]) + 2
-    heading(ws, r, "Portfolio project 'Onboarding Portfolio': Customers table, one row per customer")
+    heading(ws, r, "Updates table (drafts the agents write for the Architect)")
+    r = table_at(ws, r + 1, ["Column", "Type", ""], [(c, t, "") for c, t in d.WORK_UPDATE_COLUMNS]) + 2
+    heading(ws, r, "Customers table, one row per customer")
     r = table_at(ws, r + 1, ["Column", "Type", ""], [(c, t, "") for c, t in d.WORK_PORTFOLIO_COLUMNS]) + 2
     r = table_at(ws, r, ["Portfolio view", "", "Setup"], [(v, "", s) for v, s in d.WORK_PORTFOLIO_VIEWS]) + 2
-    heading(ws, r, "Agents (draft, fill dates or flag only; none sends anything to a customer)")
-    table_at(ws, r + 1, ["Agent", "Trigger", "What it does"], d.WORK_AGENTS, fill=TEAL)
+    heading(ws, r, "Agents (draft, fill fields or flag only; none sends anything to a customer). Full prompts: hubspot-work-agent-prompts.md")
+    table_at(ws, r + 1, ["Agent", "Trigger", "What it does"], [(a["name"], a["trigger"], a["summary"]) for a in d.WORK_AGENTS], fill=TEAL)
 
 
 def tool_fit(wb):
