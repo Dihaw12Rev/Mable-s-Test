@@ -41,6 +41,7 @@ Before switching each one:
   The data structure of 138595 (473458) now includes `origin`, `nuance_note_id`, `mtmc_note_id`, `source_modified_at` and `last_synced_at`.
   The `mtmc_notes` / `nuance_notes` watermarks were set so the first run starts at the originals' last run (2026-10-28 18:01:35 UTC).
 - **Nuance → MTMC notes** copies notes from both Cryodose (31457678) and MTMC Sync (915661656) deals (agreed 2026-10-28).
+- **Empty-search guards (2026-10-29):** both notes scenarios stop when the search returns nothing or the note has no deal (filters on modules 7 and 510, added in Make and mirrored here). Before, an empty search still ran the association step and used ~64 / ~142 operations an hour for nothing. Scenario 1 got the same guard (`Deal Found` on router 10) on 2026-10-28.
 
 | File in `dist/` | Replaces (live scenario) | Trigger |
 |---|---|---|
@@ -200,7 +201,10 @@ The notes increase is the price of hourly notes with edits. Every 2 hours halves
 - **Line items:** copy only Nuance Medical line items (v2, same as the line-item backfill), or every line item on the deal (live)?
 - **MTMC Team:** the ZIP-based team when MTMC has one, otherwise the deal owner's team (v2)? Today the update scenario and the team scenarios overwrite each other.
 - **Notes schedule:** hourly (about 4,300 idle credits a month) or every 2 hours (about 2,200)?
-- **Last Activity Date** (optional): create a Nuance deal date property, then set `lastActivityProperty` on Code module 401 in scenario 3. MTMC's `notes_last_updated` then syncs to it.
+- **Last Activity Date** (prepared 2026-10-29, not live yet): Nuance's own *Last activity date* is read-only via the API, so MTMC's `notes_last_updated` goes to a custom Nuance deal property.
+  1. In Nuance, create a deal property **MTMC Last Activity Date**, internal name `mtmc_last_activity_date`, type **Date and time picker** (date-only rejects the timestamp).
+  2. In MTMC, make the workflow that calls scenario 3's webhook also re-enroll when *Last activity date* changes, or the date only moves when another deal field changes.
+  3. Push scenario 3 (`build.py` already sets `NUANCE_LAST_ACTIVITY_PROPERTY`). Don't push it before step 1: the update would fail on the unknown property.
 
 ---
 

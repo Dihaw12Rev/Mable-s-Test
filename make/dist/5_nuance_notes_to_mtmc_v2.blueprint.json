@@ -670,6 +670,11 @@
                             "a": "{{2.properties.hs_body_preview}}",
                             "o": "text:notstartwith",
                             "b": "[Note from MTMC Team"
+                        },
+                        {
+                            "a": "{{2.`__IMTLENGTH__`}}",
+                            "o": "number:notequal",
+                            "b": "0"
                         }
                     ]
                 ]
@@ -795,7 +800,18 @@
                     "y": 0
                 }
             },
-            "parameters": {}
+            "parameters": {},
+            "filter": {
+                "name": "Deal Found",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{7.associations.deals[].id}}",
+                            "o": "exist"
+                        }
+                    ]
+                ]
+            }
         },
         {
             "id": 511,

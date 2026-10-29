@@ -30,6 +30,9 @@ NUANCE_CRYODOSE_PIPELINE = "31457678"
 NUANCE_READY_FOR_MTMC = "260719393"
 NUANCE_MTMC_SYNC_PIPELINE = "915661656"
 NUANCE_MTMC_SYNC_DEFAULT_STAGE = "1394921518"
+# Nuance deal property (Date and time picker) that receives MTMC's Last Activity Date. It must exist
+# in Nuance before scenario 3 is pushed, or every MTMC deal update fails with a HubSpot 400.
+NUANCE_LAST_ACTIVITY_PROPERTY = "mtmc_last_activity_date"
 MTMC_NUANCE_PIPELINE = "866607494"
 MTMC_STARTED_DISCOVERY = "1296904839"
 MTMC_NUANCE_SUPPLIER_ID = "47591994658"
@@ -520,7 +523,7 @@ def build_update_in():
     owner["filter"] = filt("Linked to a Nuance deal", cond("{{38.properties.nuance_deal_id}}", "exist"))
     stage = ds_get(36, DS_STAGE_MAP, "{{38.properties.dealstage}}", "Stage mapping")
     body = code(401, "mtmc_update_body.js", [("deal", "{{38.properties}}"), ("owner", "{{40.body}}"), ("nuanceStage", "{{36.`Nuanca Deal ID`}}"),
-                                             ("lastActivityProperty", "")], "Build update (skips blanks)")
+                                             ("lastActivityProperty", NUANCE_LAST_ACTIVITY_PROPERTY)], "Build update (skips blanks)")
     patch = retry(api(402, NUANCE, "PATCH", "/crm/v3/objects/deals/{{38.properties.nuance_deal_id}}", "Nuance: update MTMC Sync deal",
                       body="{{401.result.body}}"))
     return write("3_mtmc_deal_update_to_nuance_v2.blueprint.json", "MTMC Deal Updated → Nuance (Update) v2",
@@ -543,8 +546,11 @@ def build_notes(src_conn, dst_conn, src_label, other_label, link_prop, pipelines
     search["mapper"]["filter"] = [[{"a": "hs_lastmodifieddate", "b": since(500, NOTES_OVERLAP_MINUTES, 60), "o": "GT"}]]
 
     assoc = reuse("notes_in", 7, name="Note's deals", conn=src_conn)
+    # An empty search still emits one bundle (__IMTLENGTH__ 0); without the length check it went on
+    # to list associations for a blank note and burned ~60-140 operations an hour doing nothing.
     assoc["filter"] = filt("Not a copy from the other portal",
-                           cond("{{2.properties.hs_body_preview}}", "text:notstartwith", f"[Note from {other_label} Team"))
+                           cond("{{2.properties.hs_body_preview}}", "text:notstartwith", f"[Note from {other_label} Team"),
+                           cond("{{2.`__IMTLENGTH__`}}", "number:notequal", "0"))
     assoc["mapper"]["limit"] = 50
 
     def rep_lookup(mid):
@@ -584,7 +590,7 @@ def build_notes(src_conn, dst_conn, src_label, other_label, link_prop, pipelines
         search,
         assoc,
         code(510, "assoc_to_batch_read.js", [("assoc", "{{7.associations.deals}}"), ("properties", f"{link_prop},hubspot_owner_id,pipeline")],
-             "Build deal read"),
+             "Build deal read", filter=filt("Deal Found", cond("{{7.associations.deals[].id}}", "exist"))),
         api(511, src_conn, "POST", "/crm/v3/objects/deals/batch/read", "Read note's deals", body="{{510.result.body}}",
             filter=filt("Note is on a deal", cond("{{510.result.count}}", "number:greater", "0"))),
         code(512, "pick_synced_deal.js", [("deals", "{{511.body}}"), ("linkProperty", link_prop), ("pipelines", pipelines)],

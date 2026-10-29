@@ -12138,7 +12138,7 @@
                     },
                     {
                         "name": "lastActivityProperty",
-                        "value": ""
+                        "value": "mtmc_last_activity_date"
                     }
                 ],
                 "language": "javascript",
