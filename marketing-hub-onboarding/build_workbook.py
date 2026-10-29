@@ -96,6 +96,7 @@ def start_here(wb):
     rows = [
         ("Decisions", "Your answers, what each one changed, and the scope limits."),
         ("Roadmap", "Phases on a week-by-week timeline, mapped to the FigJam stickies."),
+        ("Journey", "Start to end, lane by lane (customer, Phil, Architect, Ops, HubSpot Work), with when to mark tasks Done."),
         ("Task Template", "Every task by section. Set Program length (60–90) at the top and the due days compress."),
         ("Progress Measures", "The standard progress measures (Factories) every Marketing Hub program builds."),
         ("Requests", "How $250 requests work and the urgency classes."),
@@ -301,6 +302,31 @@ def work_setup(wb):
     table_at(ws, r + 1, ["Agent", "Trigger", "What it does"], [(a["name"], a["trigger"], a["summary"]) for a in d.WORK_AGENTS], fill=TEAL)
 
 
+def journey(wb):
+    ws = wb.create_sheet("Journey")
+    ex = d.EXAMPLE
+    title(ws, "Journey", f"Worked example: {ex['customer']} ({ex['note'].lower()}), {ex['tier']}, {ex['program_days']} days, Day 0 = {ex['day0']}.")
+    names = {t[0]: t[2] for t in d.TASKS}
+    lane_keys = [k for k, n, h in d.LANES]
+    headers = ["Stage", "Day", "Moment"] + [n for k, n, h in d.LANES] + ["Mark Done in Work", "Note"]
+    rows = []
+    for m in d.JOURNEY:
+        days = "Before Day 0" if m["end"] < 0 else (f"Day {m['start']}" if m["start"] == m["end"] else f"Day {m['start']}–{m['end']}")
+        done = ", ".join(m["done"]) + (("; Won't do: " + ", ".join(m["wont"])) if m.get("wont") else "")
+        rows.append([m["stage"], days, m["title"]] + ["\n".join("• " + x for x in m[k]) or "—" for k in lane_keys] + [done or "—", m.get("note", "")])
+    last = table(ws, 4, headers, rows, [14, 12, 20, 40, 34, 44, 30, 40, 20, 30], freeze=False)
+    ws.freeze_panes = "D5"
+    r = last + 2
+    heading(ws, r, "When to change a task's status")
+    r = table_at(ws, r + 1, ["Status", "When"], d.STATUS_RULES) + 2
+    heading(ws, r, "How a request moves")
+    r = table_at(ws, r + 1, ["Step", "What happens"], d.REQUEST_FLOW) + 2
+    heading(ws, r, "A normal week")
+    r = table_at(ws, r + 1, ["When", "Who", "What happens"], d.WEEKLY_RHYTHM) + 2
+    heading(ws, r, "When things don't go to plan")
+    table_at(ws, r + 1, ["Situation", "What to do"], d.EXCEPTIONS)
+
+
 def tool_fit(wb):
     ws = wb.create_sheet("Tool Fit")
     title(ws, "Tool Fit: HubSpot Work vs Projects vs Tickets",
@@ -329,6 +355,7 @@ def main():
     start_here(wb)
     decisions(wb)
     roadmap(wb)
+    journey(wb)
     task_template(wb)
     simple_tab(wb, "Progress Measures", "Name each one '<Client> 1.1 Visitor to Lead', like the existing Factory records.",
                ["ID", "Progress measure", "When", "What it measures", "HubSpot report", "Built by tasks"],

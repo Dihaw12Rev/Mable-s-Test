@@ -14,13 +14,14 @@ Nothing here has been built in the HubSpot portal. These are design files and a 
 | `hubspot-work-prompt.md` | Which prompt to use when, and the order to set things up |
 | `Marketing_Hub_Onboarding_Process.xlsx` | The sheet: Decisions, Roadmap, Task Template (Program length input compresses dates), Progress Measures, Requests, After the Program, Intake Form, Tech Setup, Training, Comms, HubSpot Work Setup, Tool Fit |
 | `roadmap.html` | Visual roadmap for review, with a 60/75/90-day switch |
+| `journey.html` | The full experience start to end: what the customer, Phil, the Architect, Ops and HubSpot Work do at each moment, when to mark tasks Done, requests, statuses and exceptions |
 | `process_data.py` | Single source of truth for all content |
-| `build_workbook.py`, `build_roadmap.py`, `build_prompt.py` | Regenerate the sheet, the roadmap and the prompt from `process_data.py` |
+| `build_workbook.py`, `build_roadmap.py`, `build_journey.py`, `build_prompt.py` | Regenerate the sheet, the roadmap, the journey and the prompts from `process_data.py` |
 
 To change the process, edit `process_data.py`, then run:
 
 ```bash
-python3 build_workbook.py && python3 build_roadmap.py && python3 build_prompt.py
+python3 build_workbook.py && python3 build_roadmap.py && python3 build_journey.py && python3 build_prompt.py
 ```
 
 ## What the review decided
