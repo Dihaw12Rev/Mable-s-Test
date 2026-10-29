@@ -201,7 +201,7 @@ def roadmap(wb):
 
 def task_template(wb):
     ws = wb.create_sheet("Task Template")
-    title(ws, "Task Template", "Grouped by section (phase). Set Program length in yellow; 'Due day (this program)' compresses.")
+    title(ws, "Task Template", "The task library: Core tasks for every customer plus one module per hub (MH-, SH-, SV-). Set Program length in yellow; 'Due day (this program)' compresses.")
     ws["A3"], ws["C3"] = "Program length (days)", d.PROGRAM_DAYS
     ws["D3"], ws["E3"] = "Plan laid out for", d.PROGRAM_DAYS
     ws["F3"], ws["G3"] = "Fixed until day", d.FIXED_UNTIL_DAY
@@ -216,11 +216,15 @@ def task_template(wb):
     dv_len.add("C3")
 
     headers = ["ID", "Section", "Task", "Definition of done", "Owner", "Client-facing", "Start day", "Due day (90-day plan)",
-               "Due day (this program)", "Repeats", "Depends on", "Lives in"]
+               "Due day (this program)", "Repeats", "Depends on", "Lives in", "Module"]
     hr = 6
-    rows = [(tid, f"{ph} · {PHASE_NAME[ph]}", task, det, owner, cf, s, e, None, rep, dep, where)
-            for tid, ph, task, det, owner, cf, s, e, dep, where, rep in d.TASKS]
-    last = table(ws, hr, headers, rows, [6, 20, 32, 55, 11, 9, 7, 9, 9, 13, 11, 26])
+    phase_order = [p["id"] for p in d.PHASES]
+    module_order = list(d.MODULES)
+    ordered = sorted(enumerate(d.TASKS), key=lambda it: (phase_order.index(it[1][1]), module_order.index(d.module_of(it[1][0])), it[0]))
+    rows = [(tid, f"{ph} · {PHASE_NAME[ph]}", task, det, owner, cf, s, e, None, rep, dep, where,
+             "Core" if d.module_of(tid) == "Core" else d.MODULES[d.module_of(tid)])
+            for _, (tid, ph, task, det, owner, cf, s, e, dep, where, rep) in ordered]
+    last = table(ws, hr, headers, rows, [8, 20, 32, 55, 11, 9, 7, 9, 9, 13, 14, 26, 14])
     for r in range(hr + 1, last + 1):
         ws.cell(row=r, column=9, value=(
             f'=IF(OR(LEFT($B{r},2)="P0",$H{r}<=$G$3),$H{r},'

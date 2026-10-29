@@ -1,19 +1,22 @@
-Build a workspace called "Client Onboarding" for RevGravy, a HubSpot consultancy, to run every Marketing Hub onboarding. Build only the projects, tables, columns, views, sections, tasks and subtasks below. Don't create agents (I'll create them in the agent builder), documents or forms.
+Build a workspace called "Client Onboarding" for RevGravy, a HubSpot consultancy, to run Marketing, Sales and Service Hub onboardings. Build only the projects, tables, columns, views, sections, tasks and subtasks below. Don't create agents (I'll create them in the agent builder), documents or forms.
 
 HOW WE'LL USE IT
 - Day 0 is the day the customer's deal reaches "Start Payment Received" in our Sales Pipeline. Programs last 60 to 90 days; the task days below are for a 90-day program.
+- Every customer gets the Core tasks once, plus one module per hub they bought (Marketing Hub, Sales Hub, Service Hub).
 - All customers share the same tables, and each row links to its Customers row, so agents work across all customers.
-1. Add a row to Customers: Customer, Company, Deal, Architect, Program length, Start date, tier, From→To goal, FigJam and Supered links.
-2. The Task Generator (a workflow) copies the template tasks into Customer Task for that customer, fills the dates, assigns the Architect and sets Tasks created = Yes.
-3. To work on one customer, filter any view by Customer. 'My tasks' shows an Architect's work across all their customers.
-4. Share the workspace with Phil and the Architects (it's private by default).
+1. Add a row to Customers: Customer, Company, Deal, Architect, Program length, Start date (the payment date), Products purchased, hub tiers, From→To goal, FigJam and Supered links.
+2. Tick Create tasks. The Task Generator copies the Core tasks once, plus one module for each product purchased, into Customer Task. It fills the dates, assigns the Architect, sets Tasks created for, and unticks Create tasks.
+3. If the customer buys another hub later, add it to Products purchased and tick Create tasks again. Only the new hub's tasks are added.
+4. To work on one customer, filter any view by Customer. 'My tasks' shows an Architect's work across all their customers.
+5. Share the workspace with Phil and the Architects (it's private by default).
 
-PROJECT 1: "Marketing Hub Onboarding (Template)"
-The master task list. Nobody works in it; new customers' tasks get copied from it.
+PROJECT 1: "Onboarding Task Library"
+The master task list. Nobody works in it; customers' tasks are copied from it.
 
-Table "Tasks" with these columns, in this order:
-- Task ID (Text): e.g. 4.03. First column, so 'Depends on' can be read
+Table "Task Library" with these columns, in this order:
+- Task ID (Text): e.g. 4.07 (Core) or MH-4.03 (Marketing Hub). First column, so 'Depends on' can be read
 - Task (Text): Task name
+- Module (Dropdown): Core, Marketing Hub, Sales Hub, Service Hub
 - Status (Dropdown): Not started, In progress, Waiting on client, In review, Done, Won't do
 - Owner role (Dropdown): Phil, Architect, Ops, Client POC
 - Assignee (HubSpot user): Person doing it
@@ -31,230 +34,297 @@ Table "Tasks" with these columns, in this order:
 - Program length (Number): Helper for the formula: 60, 75 or 90, filled by the Task Generator (hidden)
 
 Statuses, in this order: Not started, In progress, Waiting on client, In review, Done, Won't do. Every task starts as "Not started".
-Main table: show Task ID, Task, Status, Owner role, Assignee, Due date, Client-facing, Repeats, Depends on, Definition of done, Notes. Hide Section, Start day, Due day, Start date, Project Day 0, Program length.
-Due date formula: Due date = Project Day 0 + Due day. For programs shorter than 90 days, tasks with a Due day above 10 are compressed: Due day × Program length ÷ 90, rounded. Tasks in section P9 are counted from the end instead: Due day − 90 + Program length. Tasks in section P0 get no date. If Project Day 0 is empty, Due date stays empty. Leave Project Day 0 and Program length empty in the template.
-
+Main table: show Task ID, Task, Module, Status, Owner role, Assignee, Due date, Client-facing, Repeats, Depends on, Definition of done, Notes. Hide Section, Start day, Due day, Start date, Project Day 0, Program length.
+Due date formula: Due date = Project Day 0 + Due day. For programs shorter than 90 days, tasks with a Due day above 10 are compressed: Due day × Program length ÷ 90, rounded. Tasks in section P9 are counted from the end instead: Due day − 90 + Program length. Tasks in section P0 get no date. If Project Day 0 is empty, Due date stays empty. Leave Project Day 0 and Program length empty in the library.
 Views:
 - Board: Columns = Status. Cards show Task ID, Task, Assignee, Due date.
 - By section: List grouped by Section (P0 → P9), sorted by Task ID.
-- Timeline: Start date → Due date, grouped by Section.
-- Calendar: By Due date.
-- My tasks: Assignee = me, Status not Done / Won't do.
-- Client to-dos: Owner role = Client POC, Status not Done.
-- This week: Due date in the next 7 days, Status not Done.
-- Overdue: Due date before today, Status not Done / Won't do.
+- By module: Grouped by Module, then Section.
 
-Create these sections and tasks, in this order. Put each task in its section and fill Task ID, Owner role, Client-facing, Start day, Due day, Repeats, Depends on and Definition of done ("Done when") from its line. Add the "Subtasks" as a checklist of subtasks under that task.
+Create these sections and tasks, in this order. Fill Task ID, Module, Owner role, Client-facing, Start day, Due day, Repeats, Depends on and Definition of done ("Done when") from each line. Add the "Subtasks" as a checklist under the task.
 
 Section P0 · Handoff checklist (Day -30 to 0)
-- 0.01 Research brief from company URL | Owner: Phil | Client-facing: No | before Day 0, check at the handoff
+- 0.01 Research brief from company URL | Module: Core | Owner: Phil | Client-facing: No | before Day 0, check at the handoff
   Done when: Website URL on the deal; research brief attached as a note before the Fit call.
-- 0.02 FigJam canvas after Fit call | Owner: Phil | Client-facing: No | before Day 0, check at the handoff | Depends on: 0.01
+- 0.02 FigJam canvas after Fit call | Module: Core | Owner: Phil | Client-facing: No | before Day 0, check at the handoff | Depends on: 0.01
   Done when: Covers strategic motivation, tactical outcomes, progress measures and fee range. Link saved on the deal.
-- 0.03 From→To statement captured | Owner: Phil | Client-facing: No | before Day 0, check at the handoff | Depends on: 0.02
+- 0.03 From→To statement captured | Module: Core | Owner: Phil | Client-facing: No | before Day 0, check at the handoff | Depends on: 0.02
   Done when: One sentence: from where they are today to where they want to be. Every weekly update ties back to it.
-- 0.04 Tech stack & team capacity survey | Owner: Client POC | Client-facing: Yes | before Day 0, check at the handoff | Depends on: 0.02
+- 0.04 Tech stack & team capacity survey | Module: Core | Owner: Client POC | Client-facing: Yes | before Day 0, check at the handoff | Depends on: 0.02
   Done when: Client gave HubSpot access and finished the survey: tools beyond HubSpot, internal processes and cadences, current KPIs.
-- 0.05 Products and quote on the deal | Owner: Phil | Client-facing: No | before Day 0, check at the handoff | Depends on: 0.04
-  Done when: Pricing calculator used, line items added, quote created. Hub tier is Pro or Enterprise.
-- 0.06 Progress measures picked | Owner: Phil | Client-facing: No | before Day 0, check at the handoff | Depends on: 0.05
-  Done when: Core set (0.1, 1.1, 1.2, 1.3) plus any optional ones bought (1.0, 2.1). Baselines noted if known.
-- 0.07 POC and supporters identified | Owner: Phil | Client-facing: Yes | before Day 0, check at the handoff | Depends on: 0.05
+- 0.05 Products and quote on the deal | Module: Core | Owner: Phil | Client-facing: No | before Day 0, check at the handoff | Depends on: 0.04
+  Done when: Pricing calculator used, line items added, quote created. Each hub bought is Pro or Enterprise.
+- 0.06 Progress measures picked | Module: Core | Owner: Phil | Client-facing: No | before Day 0, check at the handoff | Depends on: 0.05
+  Done when: The standard progress measures for each hub bought (Progress Measures tab), plus any optional ones. Baselines noted if known.
+- 0.07 POC and supporters identified | Module: Core | Owner: Phil | Client-facing: Yes | before Day 0, check at the handoff | Depends on: 0.05
   Done when: Contacts on the deal with labels (POC, Supporter, Billing, Decision maker). POC gets the weekly email.
-- 0.08 Agreement signed | Owner: Client POC | Client-facing: Yes | before Day 0, check at the handoff | Depends on: 0.07
+- 0.08 Agreement signed | Module: Core | Owner: Client POC | Client-facing: Yes | before Day 0, check at the handoff | Depends on: 0.07
   Done when: Includes AI terms, escalation path, how progress is measured, POC and supporters, strategic job → tactical outcomes → progress measures, and request handling ($250 per request, urgency classes).
 
 Section P1 · Close & welcome (Day 0 to 3)
-- 1.01 Pick the Architect | Owner: Phil | Client-facing: No | Day 0–1 | Depends on: 0.08
+- 1.01 Pick the Architect | Module: Core | Owner: Phil | Client-facing: No | Day 0–1 | Depends on: 0.08
   Done when: Phil checks the Capacity report (active customers per Architect) and picks the Architect.
-- 1.02 Add the customer in HubSpot Work | Owner: Ops | Client-facing: No | Day 0–1 | Depends on: 1.01
-  Done when: Add a Customers row: Customer, Company, Deal, Architect, Program length, Start date, tier, From→To goal, FigJam and Supered links. Check that the Task Generator created the customer's tasks (Tasks created = Yes).
-- 1.03 Welcome email #1: welcome + Action Plan | Owner: Ops | Client-facing: Yes | Day 0 | Depends on: 0.08
+- 1.02 Add the customer in HubSpot Work | Module: Core | Owner: Ops | Client-facing: No | Day 0–1 | Depends on: 1.01
+  Done when: Add a Customers row: Customer, Company, Deal, Architect, Program length, Start date (the payment date), Products purchased, hub tiers, From→To goal, FigJam and Supered links. Tick Create tasks and check the Task Generator filled Tasks created for.
+- 1.03 Welcome email #1: welcome + Action Plan | Module: Core | Owner: Ops | Client-facing: Yes | Day 0 | Depends on: 0.08
   Done when: Sent from Phil on Day 0: Supered Action Plan link, kickoff booking link, first to-dos (grant HubSpot access, fill the intake form).
-- 1.04 Build the Supered Action Plan | Owner: Ops | Client-facing: Yes | Day 0–1 | Depends on: 1.02
-  Done when: Duplicate the Marketing Hub Action Plan template; add the agreement, FigJam, client to-dos and access checklist.
-- 1.05 Phil ↔ Architect handoff (30 min) | Owner: Phil | Client-facing: No | Day 1–3 | Depends on: 1.01
+- 1.04 Build the Supered Action Plan | Module: Core | Owner: Ops | Client-facing: Yes | Day 0–1 | Depends on: 1.02
+  Done when: Duplicate the Action Plan template for the products bought; add the agreement, FigJam, client to-dos and access checklist.
+- 1.05 Phil ↔ Architect handoff (30 min) | Module: Core | Owner: Phil | Client-facing: No | Day 1–3 | Depends on: 1.01
   Done when: Walk through FigJam, customer context, products, the From→To goal, progress measures and KPIs, schedule. Architect checks the Handoff checklist section. Strategy lead moves to the Architect after this call.
-- 1.06 Set up progress measures | Owner: Architect | Client-facing: No | Day 1–3 | Depends on: 1.05
+- 1.06 Set up progress measures | Module: Core | Owner: Architect | Client-facing: No | Day 1–3 | Depends on: 1.05
   Done when: Add the customer's progress measures to their Customers row (name '<Client> 1.1 Visitor to Lead' etc.) with baseline, target and schedule.
-- 1.07 Office hours booking link | Owner: Architect | Client-facing: Yes | Day 1–2 | Depends on: 1.01
+- 1.07 Office hours booking link | Module: Core | Owner: Architect | Client-facing: Yes | Day 1–2 | Depends on: 1.01
   Done when: Architect's HubSpot meetings link (office-hours type) added to the Supered plan.
-- 1.08 Welcome email #2: how we work | Owner: Ops | Client-facing: Yes | Day 2 | Depends on: 1.03
+- 1.08 Welcome email #2: how we work | Module: Core | Owner: Ops | Client-facing: Yes | Day 2 | Depends on: 1.03
   Done when: Day 2: office hours, Friday updates, how to send a request and the urgency classes, escalation path, how we use AI.
-- 1.09 Kickoff booked | Owner: Client POC | Client-facing: Yes | Day 0–5 | Depends on: 1.03
+- 1.09 Kickoff booked | Module: Core | Owner: Client POC | Client-facing: Yes | Day 0–5 | Depends on: 1.03
   Done when: Client books the 15-minute kickoff from welcome email #1. Chase on Day 3 if not booked.
 
 Section P2 · Access & intake (Day 1 to 7)
-- 2.01 HubSpot access granted | Owner: Client POC | Client-facing: Yes | Day 1–3 | Depends on: 1.03
+- 2.01 HubSpot access granted | Module: Core | Owner: Client POC | Client-facing: Yes | Day 1–3 | Depends on: 1.03
   Done when: Partner access or a Super Admin user for the Architect. Confirm Pro or Enterprise per hub.
-- 2.02 Intake form submitted | Owner: Client POC | Client-facing: Yes | Day 1–5 | Depends on: 1.03
+- 2.02 Intake form submitted | Module: Core | Owner: Client POC | Client-facing: Yes | Day 1–5 | Depends on: 1.03
   Done when: Short form with only what pre-sale didn't capture (Intake Form tab).
-- 2.03 Access to connected systems | Owner: Client POC | Client-facing: Yes | Day 1–7 | Depends on: 2.02
-  Done when: DNS/IT contact, website CMS, GA4/GTM, ad accounts, social accounts, and the old email/marketing tool we migrate from.
-- 2.04 Brand & content assets shared | Owner: Client POC | Client-facing: Yes | Day 1–7 | Depends on: 2.02
+- 2.03 Access to connected systems | Module: Core | Owner: Client POC | Client-facing: Yes | Day 1–7 | Depends on: 2.02
+  Done when: DNS/IT contact, website CMS, GA4/GTM, ad and social accounts, and every old tool we migrate from (email tool, CRM, help desk).
+- 2.04 Brand & content assets shared | Module: Core | Owner: Client POC | Client-facing: Yes | Day 1–7 | Depends on: 2.02
   Done when: Brand guide, logos, fonts, colors, email templates, key content, lists to import.
-- 2.05 Supered announcement to POC | Owner: Architect | Client-facing: Yes | Day 2–3 | Depends on: 1.04
+- 2.05 Supered announcement to POC | Module: Core | Owner: Architect | Client-facing: Yes | Day 2–3 | Depends on: 1.04
   Done when: Short video: how Supered works (Bases, announcements, documentation) and where updates show up.
-- 2.06 Portal audit | Owner: Architect | Client-facing: No | Day 3–7 | Depends on: 2.01
+- 2.06 Portal audit | Module: Core | Owner: Architect | Client-facing: No | Day 3–7 | Depends on: 2.01
   Done when: Data health, email health, existing assets, tracking, workflows, properties, old tool inventory. 1-page summary for kickoff.
-- 2.07 Baseline numbers | Owner: Architect | Client-facing: No | Day 5–7 | Depends on: 2.06
+- 2.07 Baseline numbers | Module: Core | Owner: Architect | Client-facing: No | Day 5–7 | Depends on: 2.06
   Done when: Record the 'before' number for each progress measure.
 
 Section P3 · Kickoff (Day 5 to 10)
-- 3.01 Kickoff agenda | Owner: Architect | Client-facing: No | Day 5–7 | Depends on: 2.02, 2.06
+- 3.01 Kickoff agenda | Module: Core | Owner: Architect | Client-facing: No | Day 5–7 | Depends on: 2.02, 2.06
   Done when: Plan summary, missing items, decisions needed. Drafted from intake + audit.
-- 3.02 Kickoff session (15 min) | Owner: Architect | Client-facing: Yes | Day 5–10 | Depends on: 3.01
+- 3.02 Kickoff session (15 min) | Module: Core | Owner: Architect | Client-facing: Yes | Day 5–10 | Depends on: 3.01
   Done when: Architect & team intro; confirm the goal and plan; walk through missing items; explain office hours, Friday updates, MBRs and how to send requests.
-- 3.03 Book MBRs and the 'what's next' call | Owner: Architect | Client-facing: Yes | Day 5–10 | Depends on: 3.02
+- 3.03 Book MBRs and the 'what's next' call | Module: Core | Owner: Architect | Client-facing: Yes | Day 5–10 | Depends on: 3.02
   Done when: MBR #1 ≈ Day 30, MBR #2 ≈ Day 60, 'what's next' ≈ Day 60–65, final results review ≈ Day 85 (scaled to program length).
-- 3.04 Kickoff recap within 24h | Owner: Architect | Client-facing: Yes | Day 6–11 | Depends on: 3.02
+- 3.04 Kickoff recap within 24h | Module: Core | Owner: Architect | Client-facing: Yes | Day 6–11 | Depends on: 3.02
   Done when: Decisions, owners, dates, client to-dos. Supered plan updated.
 
 Section P4 · Foundations (Day 7 to 30)
-- 4.01 Account, users & security | Owner: Architect | Client-facing: No | Day 7–12 | Depends on: 2.01
+- 4.01 Account, users & security | Module: Core | Owner: Architect | Client-facing: No | Day 7–12 | Depends on: 2.01
   Done when: Users, permission sets, 2FA; Enterprise extras where bought.
   Subtasks: Users & permission sets; Require 2FA; Single sign-on (SSO) (Enterprise only); Brands / business units (Enterprise only); Sandbox account (Enterprise only)
-- 4.02 Tracking & consent | Owner: Architect | Client-facing: No | Day 7–14 | Depends on: 2.03
-  Done when: Tracking code on every domain, internal traffic excluded, cookie banner set.
-  Subtasks: Tracking code on every domain; Exclude internal traffic; Cookie consent banner
-- 4.03 Domains & email authentication | Owner: Architect | Client-facing: No | Day 7–18 | Depends on: 2.03
-  Done when: Content domain connected; sending domain authenticated (SPF, DKIM, DMARC) with the client's DNS contact.
-  Subtasks: Connect content domain; Email sending domain authentication
-- 4.04 Email foundations | Owner: Architect | Client-facing: No | Day 10–18 | Depends on: 2.04
-  Done when: Subscription types, footer and address, brand kit, email templates, default sender.
-  Subtasks: Subscription types; Footer, address, default sender; Brand kit & email templates
-- 4.05 Data model | Owner: Architect | Client-facing: No | Day 10–21 | Depends on: 2.06
+- 4.05 Data model | Module: Core | Owner: Architect | Client-facing: No | Day 10–21 | Depends on: 2.06
   Done when: Property audit, lifecycle stage definitions, lead status, marketing-contact rules.
   Subtasks: Property audit; Lifecycle stages & lead status; Marketing contact rules; Custom behavioral events (Enterprise only)
-- 4.06 Migration plan & export | Owner: Architect | Client-facing: No | Day 8–16 | Depends on: 2.03
-  Done when: Inventory and export from the old tool: lists, consent, unsubscribes and bounces, templates, active automations.
-  Subtasks: Old tool inventory; Export lists with consent
-- 4.07 Data import & cleanup | Owner: Architect | Client-facing: No | Day 14–25 | Depends on: 4.05, 4.06
-  Done when: Import contacts/companies (including migrated lists with consent mapped and unsubscribes suppressed), dedupe, associations, marketing contacts.
+- 4.07 Data import & cleanup | Module: Core | Owner: Architect | Client-facing: No | Day 14–25 | Depends on: 4.05
+  Done when: Import contacts and companies (including migrated data, with consent mapped and unsubscribes suppressed), dedupe, associations, marketing contacts.
   Subtasks: Import contacts & companies; Data hygiene workflows
-- 4.08 Website connection | Owner: Architect | Client-facing: No | Day 14–28 | Depends on: 4.02
-  Done when: HubSpot forms, CTAs, chat and meetings on the current website; landing page and blog templates.
-  Subtasks: HubSpot forms on the site; CTAs, chat & meetings on the site; Landing page & blog templates
-- 4.09 Integrations | Owner: Architect | Client-facing: No | Day 14–28 | Depends on: 2.03
-  Done when: GA4, ad accounts, social, webinar tool, Slack, CRM sync if their CRM isn't HubSpot.
+- 4.09 Integrations | Module: Core | Owner: Architect | Client-facing: No | Day 14–28 | Depends on: 2.03
+  Done when: Every integration the intake lists: GA4, ad and social accounts, webinar tool, Slack, CRM sync if their CRM isn't HubSpot. Mark the ones this customer doesn't need as not applicable.
   Subtasks: GA4; Ad accounts; Social accounts; Webinar, Slack, other apps; CRM sync (if CRM isn't HubSpot)
-- 4.10 Baseline dashboard | Owner: Architect | Client-facing: Yes | Day 18–28 | Depends on: 2.07
+- 4.10 Baseline dashboard | Module: Core | Owner: Architect | Client-facing: Yes | Day 18–28 | Depends on: 2.07
   Done when: One report per progress measure, showing baseline vs now. Used in every weekly update.
   Subtasks: Baseline dashboard
-- 4.11 Foundation QA | Owner: Architect | Client-facing: No | Day 25–30 | Depends on: 4.02, 4.03, 4.04, 4.07
-  Done when: Test visit → form → contact → email → notification end to end; test email rendering and deliverability.
+- 4.11 Foundation QA | Module: Core | Owner: Architect | Client-facing: No | Day 25–30 | Depends on: 4.07 and each hub's foundation tasks
+  Done when: Test the main flow end to end for each hub bought (Marketing: visit → form → contact → email; Sales: lead → owner → deal; Service: email → ticket → reply).
   Subtasks: End-to-end test
-- 4.12 Supered video: foundations done | Owner: Architect | Client-facing: Yes | Day 28–30 | Depends on: 4.11
+- 4.12 Supered video: foundations done | Module: Core | Owner: Architect | Client-facing: Yes | Day 28–30 | Depends on: 4.11
   Done when: What changed for the customer and why it matters.
+- MH-4.02 Tracking & consent | Module: Marketing Hub | Owner: Architect | Client-facing: No | Day 7–14 | Depends on: 2.03
+  Done when: Tracking code on every domain, internal traffic excluded, cookie banner set.
+  Subtasks: Tracking code on every domain; Exclude internal traffic; Cookie consent banner
+- MH-4.03 Domains & email authentication | Module: Marketing Hub | Owner: Architect | Client-facing: No | Day 7–18 | Depends on: 2.03
+  Done when: Content domain connected; sending domain authenticated (SPF, DKIM, DMARC) with the client's DNS contact.
+  Subtasks: Connect content domain; Email sending domain authentication
+- MH-4.04 Email foundations | Module: Marketing Hub | Owner: Architect | Client-facing: No | Day 10–18 | Depends on: 2.04
+  Done when: Subscription types, footer and address, brand kit, email templates, default sender.
+  Subtasks: Subscription types; Footer, address, default sender; Brand kit & email templates
+- MH-4.06 Migration plan & export | Module: Marketing Hub | Owner: Architect | Client-facing: No | Day 8–16 | Depends on: 2.03
+  Done when: Inventory and export from the old tool: lists, consent, unsubscribes and bounces, templates, active automations.
+  Subtasks: Old tool inventory; Export lists with consent
+- MH-4.08 Website connection | Module: Marketing Hub | Owner: Architect | Client-facing: No | Day 14–28 | Depends on: MH-4.02
+  Done when: HubSpot forms, CTAs, chat and meetings on the current website; landing page and blog templates.
+  Subtasks: HubSpot forms on the site; CTAs, chat & meetings on the site; Landing page & blog templates
+- SH-4.01 Sales users, seats & inboxes | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 7–12 | Depends on: 2.01
+  Done when: Sales Hub seats assigned, teams and permission sets set, every rep's inbox and calendar connected, email tracking and logging on.
+  Subtasks: Assign Sales Hub seats; Teams & permission sets; Connect rep inboxes & calendars
+- SH-4.02 Deal pipelines & stages | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 8–18 | Depends on: 2.06
+  Done when: One pipeline per sales motion. Each stage has exit criteria, a probability and required properties, agreed with the sales lead.
+  Subtasks: One pipeline per sales motion; Stage exit criteria & probabilities; Required properties per stage
+- SH-4.03 Lead management & assignment | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 10–21 | Depends on: 4.05
+  Done when: Lead status and lifecycle definitions agreed with marketing, assignment rules (rotation or territory), follow-up SLA.
+  Subtasks: Lead status & lifecycle definitions; Assignment rules
+- SH-4.04 Products, quotes & e-signature | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 14–25 | Depends on: SH-4.02
+  Done when: Product library, quote templates, e-signature, payments if they use them.
+  Subtasks: Product library; Quote templates & e-signature
+- SH-4.05 CRM migration | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 10–25 | Depends on: 2.03
+  Done when: Companies, contacts, open deals, owners and activity history moved from the old CRM or spreadsheets, using a field map the client approved.
+  Subtasks: Field map approved by the client; Import companies, contacts & open deals; Import activity history
+- SH-4.06 Sales integrations | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 14–28 | Depends on: 2.03
+  Done when: Calling, Zoom or Teams, LinkedIn Sales Navigator, accounting or ERP if needed.
+  Subtasks: Calling and video meetings; LinkedIn Sales Navigator
+- SV-4.01 Service users, seats & help desk | Module: Service Hub | Owner: Architect | Client-facing: No | Day 7–12 | Depends on: 2.01
+  Done when: Service Hub seats, teams and permission sets, the help desk workspace and business hours.
+  Subtasks: Assign Service Hub seats; Help desk workspace & business hours
+- SV-4.02 Support channels | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 8–18 | Depends on: 2.03
+  Done when: Support email, chat, forms and calling connected to the help desk, plus WhatsApp or Messenger if used.
+  Subtasks: Support email connected; Chat & support form
+- SV-4.03 Ticket pipelines & routing | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 10–21 | Depends on: SV-4.01
+  Done when: Ticket pipelines and stages, priority and category properties, required fields, routing rules.
+  Subtasks: Ticket pipelines & stages; Priority, category & routing rules
+- SV-4.04 Help desk migration | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 10–25 | Depends on: 2.03
+  Done when: Open tickets, ticket history, knowledge base articles and saved replies moved from the old help desk.
+  Subtasks: Import open tickets & history; Import knowledge base articles
+- SV-4.05 SLAs & escalation | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 14–25 | Depends on: SV-4.03
+  Done when: First-response and time-to-close SLAs by priority, escalation rules, business hours.
+  Subtasks: SLA rules by priority
 
 Section P5 · Build & launch (Day 21 to 75)
-- 5.01 Build 1.1 Visitor → Lead | Owner: Architect | Client-facing: No | Day 21–40 | Depends on: 4.08, 4.11
+- 5.11 Client sign-off per progress measure | Module: Core | Owner: Client POC | Client-facing: Yes | Day 35–75 | Depends on: Each hub's build tasks
+  Done when: Client approves each build before it goes live.
+- 5.12 Supered video per delivery | Module: Core | Owner: Architect | Client-facing: Yes | Day 35–75 | Repeats: After each delivery | Depends on: 5.11
+  Done when: What was built, how to use it, why it matters.
+- MH-5.01 Build 1.1 Visitor → Lead | Module: Marketing Hub | Owner: Architect | Client-facing: No | Day 21–40 | Depends on: MH-4.08, 4.11
   Done when: Forms, CTAs, landing and thank-you pages live on the right pages. Measure: visit-to-contact rate.
   Subtasks: Forms, CTAs, landing & thank-you pages
-- 5.02 Build 1.2 Lead → MQL | Owner: Architect | Client-facing: Yes | Day 30–55 | Depends on: 5.01, 4.07
+- MH-5.02 Build 1.2 Lead → MQL | Module: Marketing Hub | Owner: Architect | Client-facing: Yes | Day 30–55 | Depends on: MH-5.01, 4.07
   Done when: Segments, nurture emails and workflows, lead scoring, lifecycle automation. Client approves copy. Measure: lead-to-MQL rate.
   Subtasks: Core segments; Nurture workflows & emails; Lead scoring
-- 5.03 Build 1.3 MQL → Meeting | Owner: Architect | Client-facing: Yes | Day 35–60 | Depends on: 5.02
+- MH-5.03 Build 1.3 MQL → Meeting | Module: Marketing Hub | Owner: Architect | Client-facing: Yes | Day 35–60 | Depends on: MH-5.02
   Done when: MQL definition agreed with sales, owner assignment, notifications, follow-up SLA, meetings link in nurture. Measure: MQL-to-meeting rate.
   Subtasks: MQL handoff
-- 5.04 Build 2.1 Subscriber → Engaged (if bought) | Owner: Architect | Client-facing: No | Day 35–60 | Depends on: 4.04
+- MH-5.04 Build 1.4 Subscriber → Engaged (if bought) | Module: Marketing Hub | Owner: Architect | Client-facing: No | Day 35–60 | Depends on: MH-4.04
   Done when: Newsletter or content program, subscription preferences, re-engagement and sunset flows. Measure: email click rate, engaged contacts.
   Subtasks: Re-engagement & sunset flows
-- 5.05 Build 1.0 Stranger → Visitor (if bought) | Owner: Architect | Client-facing: No | Day 30–60 | Depends on: 4.09
+- MH-5.05 Build 1.0 Stranger → Visitor (if bought) | Module: Marketing Hub | Owner: Architect | Client-facing: No | Day 30–60 | Depends on: 4.09
   Done when: Campaigns and UTMs, ad audiences and conversion events, social publishing, SEO recommendations. Measure: sessions by source.
   Subtasks: Campaigns, UTMs & ad audiences
-- 5.06 Migration: rebuild and switch off old tool | Owner: Architect | Client-facing: Yes | Day 25–50 | Depends on: 4.06, 4.07
+- MH-5.06 Migration: rebuild and switch off old tool | Module: Marketing Hub | Owner: Architect | Client-facing: Yes | Day 25–50 | Depends on: MH-4.06, 4.07
   Done when: Rebuild templates and active automations from the old tool, send in parallel once, then switch the old tool off.
   Subtasks: Rebuild templates & automations; Parallel send, then switch off the old tool
-- 5.07 Website: landing pages & blog | Owner: Architect | Client-facing: Yes | Day 30–60 | Depends on: 4.08
+- MH-5.07 Website: landing pages & blog | Module: Marketing Hub | Owner: Architect | Client-facing: Yes | Day 30–60 | Depends on: MH-4.08
   Done when: Migrate landing pages and blog posts within the agreed limit; redirects set.
   Subtasks: Migrate landing pages & blog
-- 5.08 First campaign live | Owner: Architect | Client-facing: Yes | Day 40–65 | Depends on: 5.01, 5.02
+- MH-5.08 First campaign live | Module: Marketing Hub | Owner: Architect | Client-facing: Yes | Day 40–65 | Depends on: MH-5.01, MH-5.02
   Done when: Campaign with UTMs and assets, launched with the client.
-- 5.09 Performance reporting | Owner: Architect | Client-facing: Yes | Day 45–70 | Depends on: 4.10
+- MH-5.09 Performance reporting | Module: Marketing Hub | Owner: Architect | Client-facing: Yes | Day 45–70 | Depends on: 4.10
   Done when: Marketing performance dashboard and funnel by progress measure; revenue attribution on Enterprise.
   Subtasks: Marketing performance dashboard; Revenue attribution reports (Enterprise only)
-- 5.10 AI / Breeze setup | Owner: Architect | Client-facing: No | Day 45–70 | Depends on: 4.04
+- MH-5.10 AI / Breeze setup | Module: Marketing Hub | Owner: Architect | Client-facing: No | Day 45–70 | Depends on: MH-4.04
   Done when: Brand voice and content tools, only within the AI terms in the agreement.
   Subtasks: Breeze / AI settings
-- 5.11 Client sign-off per progress measure | Owner: Client POC | Client-facing: Yes | Day 35–75 | Depends on: 5.01–5.07
-  Done when: Client approves each build before it goes live.
-- 5.12 Supered video per delivery | Owner: Architect | Client-facing: Yes | Day 35–75 | Repeats: After each delivery | Depends on: 5.11
-  Done when: What was built, how to use it, why it matters.
+- SH-5.01 Build 2.1 Lead → Contacted | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 21–40 | Depends on: SH-4.03, 4.11
+  Done when: Lead rotation, task queues, a first-touch sequence and new-lead notifications. Measure: share of leads contacted within 24 hours.
+  Subtasks: Lead rotation & task queues; First-touch sequence
+- SH-5.02 Build 2.2 Meeting → Qualified deal | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 28–50 | Depends on: SH-5.01
+  Done when: Meetings links per rep, qualification properties, deal creation from meetings, call playbooks. Measure: meeting-to-deal rate.
+  Subtasks: Qualification properties & playbooks
+- SH-5.03 Build 3.1 Deal → Proposal sent (if bought) | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 35–55 | Depends on: SH-4.02
+  Done when: Stage-based tasks and reminders, deal workflows, quote steps in the pipeline. Measure: stage conversion and days in stage.
+- SH-5.04 Build 3.2 Proposal → Closed won | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 35–60 | Depends on: SH-4.04
+  Done when: Quotes and e-signature in the flow, a closed-won handoff workflow, closed-lost reasons. Measure: win rate and sales cycle length.
+  Subtasks: Closed-won handoff workflow; Closed-lost reasons
+- SH-5.05 Templates, snippets & sequences | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 30–55 | Depends on: SH-5.01
+  Done when: Email templates, snippets and sequences per persona and stage, approved by the sales lead.
+- SH-5.06 Sales reporting & forecasting | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 45–70 | Depends on: 4.10
+  Done when: Pipeline dashboard, forecast, goals or quotas, rep activity report.
+  Subtasks: Pipeline dashboard & forecast
+- SH-5.07 AI / Breeze for sales | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 45–70 | Depends on: SH-4.01
+  Done when: Prospecting and deal tools, only within the AI terms in the agreement.
+- SV-5.01 Build 4.1 Ticket → Resolved | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 21–45 | Depends on: SV-4.05, 4.11
+  Done when: Routing, SLA alerts, ticket automation, snippets and templates, escalation workflows. Measure: time to first response and time to close.
+  Subtasks: Ticket automation & snippets
+- SV-5.02 Build 4.2 Question → Self-served | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 30–60 | Depends on: SV-4.04
+  Done when: Knowledge base structure and the top 20 articles, customer portal if bought, AI chat within the AI terms. Measure: knowledge base views vs new tickets.
+  Subtasks: Structure & top 20 articles
+- SV-5.03 Build 4.3 Customer → Renewed (if bought) | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 35–65 | Depends on: SV-4.01
+  Done when: CSAT or NPS surveys, customer success workspace, health scores, renewal reminders. Measure: survey response, health score and renewal rate.
+  Subtasks: CSAT or NPS surveys; Customer success workspace & health scores (Enterprise only)
+- SV-5.04 Service reporting | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 45–70 | Depends on: 4.10
+  Done when: Help desk dashboard, SLA report, agent performance, CSAT trend.
+  Subtasks: Help desk & SLA dashboard
+- SV-5.05 AI / Breeze for service | Module: Service Hub | Owner: Architect | Client-facing: No | Day 45–70 | Depends on: SV-5.02
+  Done when: Customer agent and help desk AI tools, only within the AI terms in the agreement.
 
 Section P6 · Training & adoption (Day 14 to 85)
-- 6.01 Confirm training plan | Owner: Architect | Client-facing: Yes | Day 10–14 | Depends on: 2.02
+- 6.01 Confirm training plan | Module: Core | Owner: Architect | Client-facing: Yes | Day 10–14 | Depends on: 2.02
   Done when: Who needs which modules (Training tab), from the intake.
-- 6.02 Deliver training modules | Owner: Architect | Client-facing: Yes | Day 14–85 | Depends on: 6.01
-  Done when: Supered videos + practice in office hours, timed to when each feature ships.
-- 6.03 Adoption check #1 | Owner: Architect | Client-facing: No | Day 45 | Depends on: 6.02
+- 6.03 Adoption check #1 | Module: Core | Owner: Architect | Client-facing: No | Day 45 | Depends on: 6.01
   Done when: Logins, emails sent, workflows active, dashboards viewed. Flag low adoption in the weekly update.
-- 6.04 Admin handbook (Supered Base) | Owner: Architect | Client-facing: Yes | Day 60–85 | Depends on: 5.11
+- 6.04 Admin handbook (Supered Base) | Module: Core | Owner: Architect | Client-facing: Yes | Day 60–85 | Depends on: 5.11
   Done when: How the portal is set up: naming, properties, workflows, who owns what.
-- 6.05 Adoption check #2 | Owner: Architect | Client-facing: No | Day 75 | Depends on: 6.03
+- 6.05 Adoption check #2 | Module: Core | Owner: Architect | Client-facing: No | Day 75 | Depends on: 6.03
   Done when: Same check before the final results review.
+- MH-6.02 Deliver Marketing Hub training | Module: Marketing Hub | Owner: Architect | Client-facing: Yes | Day 14–85 | Depends on: 6.01
+  Done when: Modules T1–T9 as Supered videos + practice in office hours, timed to when each feature ships.
+  Subtasks: T1 · HubSpot basics; T2 · Contacts & segments; T3 · Email marketing; T4 · Forms, landing pages & CTAs; T5 · Workflows & nurture; T6 · Campaigns, ads & social; T7 · Reporting & dashboards; T8 · Lead handoff; T9 · Admin handbook
+- SH-6.02 Deliver Sales Hub training | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 14–85 | Depends on: 6.01
+  Done when: Modules S1–S5 as Supered videos + practice in office hours, timed to when each feature ships.
+  Subtasks: S1 · CRM every day; S2 · Pipeline & deals; S3 · Sequences & templates; S4 · Quotes & closing; S5 · Forecast & reports
+- SV-6.02 Deliver Service Hub training | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 14–85 | Depends on: 6.01
+  Done when: Modules V1–V5 as Supered videos + practice in office hours, timed to when each feature ships.
+  Subtasks: V1 · Help desk basics; V2 · SLAs & routing; V3 · Knowledge base; V4 · Feedback & customer success; V5 · Service reports
 
 Section P7 · Run cadence (Day 7 to 90)
-- 7.01 Office hours | Owner: Architect | Client-facing: Yes | Day 7–90 | Repeats: Weekly | Depends on: 1.07
+- 7.01 Office hours | Module: Core | Owner: Architect | Client-facing: Yes | Day 7–90 | Repeats: Weekly | Depends on: 1.07
   Done when: Bookable slots for questions, coaching and training practice.
-- 7.02 Weekly update | Owner: Architect | Client-facing: Yes | Day 7–90 | Repeats: Weekly (Friday) | Depends on: 4.10
+- 7.02 Weekly update | Module: Core | Owner: Architect | Client-facing: Yes | Day 7–90 | Repeats: Weekly (Friday) | Depends on: 4.10
   Done when: Drafted with AI, reviewed and sent by the Architect: work done and the strategic issue it moves, numbers vs baseline, issues found outside scope, next week, client to-dos.
-- 7.03 Handle requests by urgency | Owner: Architect | Client-facing: Yes | Day 7–90 | Repeats: As they come in
+- 7.03 Handle requests by urgency | Module: Core | Owner: Architect | Client-facing: Yes | Day 7–90 | Repeats: As they come in
   Done when: Every request gets logged with an urgency class and handled in that time ($250 per request; see Request Classes).
-- 7.04 Log issues and 'not now' ideas | Owner: Architect | Client-facing: No | Day 7–90 | Repeats: As they come in
+- 7.04 Log issues and 'not now' ideas | Module: Core | Owner: Architect | Client-facing: No | Day 7–90 | Repeats: As they come in
   Done when: Out-of-scope issues and client ideas go to the Request table as 'Not now', to sell later.
-- 7.05 Health check | Owner: Architect | Client-facing: No | Day 7–90 | Repeats: Weekly
+- 7.05 Health check | Module: Core | Owner: Architect | Client-facing: No | Day 7–90 | Repeats: Weekly
   Done when: Set Health (On track / At risk / Off track) and blockers. Escalate per the escalation path.
-- 7.06 Monthly Business Review | Owner: Architect | Client-facing: Yes | Day 30–60 | Repeats: Monthly | Depends on: 3.03
+- 7.06 Monthly Business Review | Module: Core | Owner: Architect | Client-facing: Yes | Day 30–60 | Repeats: Monthly | Depends on: 3.03
   Done when: Progress vs baseline, numbers trend, issues and opportunities. Architect leads; Phil optional.
-- 7.07 Internal delivery review | Owner: Phil | Client-facing: No | Day 7–90 | Repeats: Weekly
+- 7.07 Internal delivery review | Module: Core | Owner: Phil | Client-facing: No | Day 7–90 | Repeats: Weekly
   Done when: Phil + Architects: at-risk customers, capacity, blockers.
 
 Section P8 · What's next (Day 60 to 90)
-- 8.01 Prep next-phase options | Owner: Architect | Client-facing: No | Day 55–60 | Depends on: 7.04
+- 8.01 Prep next-phase options | Module: Core | Owner: Architect | Client-facing: No | Day 55–60 | Depends on: 7.04
   Done when: Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews before the call.
-- 8.02 'What's next' call | Owner: Architect | Client-facing: Yes | Day 60–65 | Depends on: 8.01
+- 8.02 'What's next' call | Module: Core | Owner: Architect | Client-facing: Yes | Day 60–65 | Depends on: 8.01
   Done when: Architect explains the long-term vision and the next phase as an A/B choice.
-- 8.03 Next-phase proposal | Owner: Architect | Client-facing: Yes | Day 62–70 | Depends on: 8.02
+- 8.03 Next-phase proposal | Module: Core | Owner: Architect | Client-facing: Yes | Day 62–70 | Depends on: 8.02
   Done when: New deal in the Sales Pipeline for the chosen offer.
-- 8.04 Final results review | Owner: Architect | Client-facing: Yes | Day 80–88 | Depends on: 5.11
+- 8.04 Final results review | Module: Core | Owner: Architect | Client-facing: Yes | Day 80–88 | Depends on: 5.11
   Done when: Before vs after for every progress measure, what we built, what's still open.
-- 8.05 Close the program | Owner: Architect | Client-facing: Yes | Day 85–90 | Depends on: 8.04
+- 8.05 Close the program | Module: Core | Owner: Architect | Client-facing: Yes | Day 85–90 | Depends on: 8.04
   Done when: Supered plan archived, project marked Completed, feedback and testimonial asked for.
 
 Section P9 · After the program (Day 90 to 270)
-- 9.01 Monthly KPI snapshot | Owner: Architect | Client-facing: Yes | Day 90–270 | Repeats: Monthly × 6 | Depends on: 8.05
+- 9.01 Monthly KPI snapshot | Module: Core | Owner: Architect | Client-facing: Yes | Day 90–270 | Repeats: Monthly × 6 | Depends on: 8.05
   Done when: Progress-measure dashboard emailed with 3 short notes from the Architect.
-- 9.02 Portal health alerts | Owner: Architect | Client-facing: Yes | Day 90–270 | Repeats: Ongoing | Depends on: 8.05
+- 9.02 Portal health alerts | Module: Core | Owner: Architect | Client-facing: Yes | Day 90–270 | Repeats: Ongoing | Depends on: 8.05
   Done when: Watch for deliverability drops, workflow errors, form submissions down 30%+. Tell the client when one fires.
-- 9.03 Check-in call: month 3 | Owner: Architect | Client-facing: Yes | Day 180 | Depends on: 9.01
+- 9.03 Check-in call: month 3 | Module: Core | Owner: Architect | Client-facing: Yes | Day 180 | Depends on: 9.01
   Done when: 30 minutes: numbers, what's working, what's next.
-- 9.04 Paid offer conversation: month 5 | Owner: Architect | Client-facing: Yes | Day 240 | Depends on: 9.03
+- 9.04 Paid offer conversation: month 5 | Module: Core | Owner: Architect | Client-facing: Yes | Day 240 | Depends on: 9.03
   Done when: Present team support, internal capacity and one-initiative-a-month before monitoring ends.
-- 9.05 Check-in call: month 6 | Owner: Architect | Client-facing: Yes | Day 270 | Depends on: 9.04
+- 9.05 Check-in call: month 6 | Module: Core | Owner: Architect | Client-facing: Yes | Day 270 | Depends on: 9.04
   Done when: Final monitoring check-in; confirm the paid offer or close monitoring.
 
 PROJECT 2: "Onboarding Portfolio"
 
-Table "Customers", one row per customer. Columns: Customer (Text: client name); Company (CRM company); Deal (CRM deal); Architect (HubSpot user); Program length (Number: 60, 75 or 90); Start date (Date: Day 0 = the day the deal reached Start Payment Received, not the kickoff date); Target end date (Date); Marketing Hub tier (Dropdown: Professional, Enterprise); Health (Dropdown: On track, At risk, Off track); Current section (Dropdown: P0–P9, Completed); Next MBR (Date, filled by the Architect when booked); Next due task (Text); Tasks created (Yes/No); From→To goal (Long text); Progress measures (Long text: name, baseline, target); FigJam link (URL); Supered Action Plan link (URL).
+Table "Customers", one row per customer. Columns: Customer (Text: client name); Company (CRM company); Deal (CRM deal); Architect (HubSpot user); Program length (Number: 60, 75 or 90); Start date (Date: Day 0 = the day the deal reached Start Payment Received, not the kickoff date); Target end date (Date); Hub tiers (Text, e.g. Marketing Pro, Sales Enterprise); Health (Dropdown: On track, At risk, Off track); Current section (Dropdown: P0–P9, Completed); Next MBR (Date, filled by the Architect when booked); Next due task (Text); Products purchased (Multi-select: Marketing Hub Onboarding, Sales Hub Onboarding, Service Hub Onboarding); Create tasks (Checkbox: Ops ticks it to create or add tasks); Tasks created for (Multi-select, same options: set by the Task Generator); From→To goal (Long text); Progress measures (Long text: name, baseline, target); FigJam link (URL); Supered Action Plan link (URL).
 Views and reports:
 - Capacity: Report: active customers per Architect. Phil uses it to pick the Architect.
 - Health board: Columns = Health.
 - Ending soon: Target end date in the next 35 days (time for the 'what's next' call).
 
-Table "Customer Task": every customer's tasks in one table. Same columns as the template's Tasks table (including the Due date formula, both helper columns, and subtasks), plus "Customer" (link to the Customers row) as the second column. Statuses: Not started, In progress, Waiting on client, In review, Done, Won't do.
-Main table: show Task ID, Customer, Task, Status, Owner role, Assignee, Due date, Client-facing, Repeats, Depends on, Definition of done, Notes. Hide Section, Start day, Due day, Start date, Project Day 0, Program length.
+Table "Customer Task": every customer's tasks in one table. Same columns as the Task Library table (including the Due date formula, both helper columns, Module and subtasks), plus "Customer" (link to the Customers row) as the second column. Statuses: Not started, In progress, Waiting on client, In review, Done, Won't do.
+Main table: show Task ID, Customer, Task, Module, Status, Owner role, Assignee, Due date, Client-facing, Repeats, Depends on, Definition of done, Notes. Hide Section, Start day, Due day, Start date, Project Day 0, Program length.
 Views:
 - Board: Columns = Status. Cards show Customer, Task ID, Task, Assignee, Due date.
 - By customer: List grouped by Customer, then Section, sorted by Task ID.
 - By section: List grouped by Section (P0 → P9), sorted by Task ID.
+- By module: Grouped by Module, then Section.
 - Timeline: Start date → Due date, grouped by Customer.
 - Calendar: By Due date.
 - My tasks: Assignee = me, Status not Done / Won't do.
 - Client to-dos: Owner role = Client POC, Status not Done.
 - This week: Due date in the next 7 days, Status not Done.
 - Overdue: Due date before today, Status not Done / Won't do.
-Leave it empty; the Task Generator fills it for each new customer.
+Leave it empty; the Onboarding Task Generator agent fills it.
 
 Table "Request": every customer's requests. Columns: Customer (Link to Customers row); Owner (HubSpot user, defaults to the customer's Architect); Request (Text); Urgency (Dropdown: Critical, High, Standard, Not now); Type (Dropdown: Client request, Issue found, Client idea); Status (Dropdown: New, Quoted, In progress, Done, Parked); Price (Number in USD, default 250); Logged on (Date); Due date (Date); Notes (Long text).
 Views: "Board by urgency" (columns = Urgency) and "Open requests" (Status not Done or Parked, sorted by Due date).
@@ -270,4 +340,4 @@ Views:
 - By customer: Grouped by Customer, newest first.
 
 CHECK
-When you show me the plan, confirm: 2 projects; the template has 10 sections, 74 tasks and 44 subtasks; Onboarding Portfolio has 4 tables (Customers, Customer Task, Request, Update) and Customer Task has 9 views. Show me the plan and wait for my approval before you create anything.
+When you show me the plan, confirm: 2 projects; the library has 99 tasks (58 Core, 16 Marketing Hub, 14 Sales Hub, 11 Service Hub) and 98 subtasks; Onboarding Portfolio has 4 tables (Customers, Customer Task, Request, Update). Show me the plan and wait for my approval before you create anything.

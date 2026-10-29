@@ -1,0 +1,41 @@
+Add the Service Hub module to the "Task Library" table in the "Onboarding Task Library" project. Add each task to its section with Module = Service Hub, Status = Not started, and Task ID, Owner role, Client-facing, Start day, Due day, Repeats, Depends on and Definition of done ("Done when") from its line. Add the "Subtasks" as a checklist under the task. Don't change any existing task.
+
+Section P4 · Foundations (Day 7 to 30)
+- SV-4.01 Service users, seats & help desk | Module: Service Hub | Owner: Architect | Client-facing: No | Day 7–12 | Depends on: 2.01
+  Done when: Service Hub seats, teams and permission sets, the help desk workspace and business hours.
+  Subtasks: Assign Service Hub seats; Help desk workspace & business hours
+- SV-4.02 Support channels | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 8–18 | Depends on: 2.03
+  Done when: Support email, chat, forms and calling connected to the help desk, plus WhatsApp or Messenger if used.
+  Subtasks: Support email connected; Chat & support form
+- SV-4.03 Ticket pipelines & routing | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 10–21 | Depends on: SV-4.01
+  Done when: Ticket pipelines and stages, priority and category properties, required fields, routing rules.
+  Subtasks: Ticket pipelines & stages; Priority, category & routing rules
+- SV-4.04 Help desk migration | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 10–25 | Depends on: 2.03
+  Done when: Open tickets, ticket history, knowledge base articles and saved replies moved from the old help desk.
+  Subtasks: Import open tickets & history; Import knowledge base articles
+- SV-4.05 SLAs & escalation | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 14–25 | Depends on: SV-4.03
+  Done when: First-response and time-to-close SLAs by priority, escalation rules, business hours.
+  Subtasks: SLA rules by priority
+
+Section P5 · Build & launch (Day 21 to 75)
+- SV-5.01 Build 4.1 Ticket → Resolved | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 21–45 | Depends on: SV-4.05, 4.11
+  Done when: Routing, SLA alerts, ticket automation, snippets and templates, escalation workflows. Measure: time to first response and time to close.
+  Subtasks: Ticket automation & snippets
+- SV-5.02 Build 4.2 Question → Self-served | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 30–60 | Depends on: SV-4.04
+  Done when: Knowledge base structure and the top 20 articles, customer portal if bought, AI chat within the AI terms. Measure: knowledge base views vs new tickets.
+  Subtasks: Structure & top 20 articles
+- SV-5.03 Build 4.3 Customer → Renewed (if bought) | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 35–65 | Depends on: SV-4.01
+  Done when: CSAT or NPS surveys, customer success workspace, health scores, renewal reminders. Measure: survey response, health score and renewal rate.
+  Subtasks: CSAT or NPS surveys; Customer success workspace & health scores (Enterprise only)
+- SV-5.04 Service reporting | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 45–70 | Depends on: 4.10
+  Done when: Help desk dashboard, SLA report, agent performance, CSAT trend.
+  Subtasks: Help desk & SLA dashboard
+- SV-5.05 AI / Breeze for service | Module: Service Hub | Owner: Architect | Client-facing: No | Day 45–70 | Depends on: SV-5.02
+  Done when: Customer agent and help desk AI tools, only within the AI terms in the agreement.
+
+Section P6 · Training & adoption (Day 14 to 85)
+- SV-6.02 Deliver Service Hub training | Module: Service Hub | Owner: Architect | Client-facing: Yes | Day 14–85 | Depends on: 6.01
+  Done when: Modules V1–V5 as Supered videos + practice in office hours, timed to when each feature ships.
+  Subtasks: V1 · Help desk basics; V2 · SLAs & routing; V3 · Knowledge base; V4 · Feedback & customer success; V5 · Service reports
+
+Show me the plan and wait for my approval before you change anything. When you're done, confirm: 11 new Service Hub tasks and 19 subtasks.

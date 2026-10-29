@@ -16,8 +16,10 @@ data = {
     "roles": d.ROLES,
     "decisions": d.DECISIONS,
     "phases": d.PHASES,
-    "tasks": [dict(zip(["id", "phase", "task", "details", "owner", "client", "start", "due", "dep", "where", "repeats"], t))
+    "tasks": [{**dict(zip(["id", "phase", "task", "details", "owner", "client", "start", "due", "dep", "where", "repeats"], t)),
+               "module": "Core" if d.module_of(t[0]) == "Core" else d.MODULES[d.module_of(t[0])]}
               for t in d.TASKS],
+    "modules": ["Core"] + [v for k, v in d.MODULES.items() if k != "Core"],
     "where": d.WHERE_IT_LIVES,
     "factories": d.FACTORIES,
     "requestRules": d.REQUEST_RULES,
@@ -176,14 +178,14 @@ footer { font-size: 13px; color: var(--muted); }
   <section aria-labelledby="t-phases">
     <div class="eyebrow">Step by step</div>
     <h2 id="t-phases">Sections and tasks</h2>
-    <p class="muted" style="font-size:14px">These are the sections of the HubSpot Work template. Dates follow the program length above.</p>
+    <p class="muted" style="font-size:14px">The task library: Core tasks every customer gets, plus one module per hub bought. Dates follow the program length above.</p>
     <div class="filters" id="filters" role="group" aria-label="Filter tasks"></div>
     <div id="phases" style="display:grid;gap:10px"></div>
   </section>
 
   <section aria-labelledby="t-fac">
     <div class="eyebrow">Progress measures</div>
-    <h2 id="t-fac">The standard Factories for Marketing Hub</h2>
+    <h2 id="t-fac">The standard Factories for each hub</h2>
     <p class="muted" style="font-size:14px">Named like the existing records, e.g. "&lt;Client&gt; 1.1 Visitor to Lead". Core ones go into every program.</p>
     <div class="box scroll"><table id="factories" style="min-width:720px"></table></div>
   </section>
@@ -237,7 +239,8 @@ const post = D.tasks.filter(t => t.phase !== "P0");
 $("facts").innerHTML = [
   [`${D.minDays}–${D.planDays} days`, "program"],
   [D.phases.length, "sections"],
-  [D.tasks.length, "tasks"],
+  [D.tasks.length, "library tasks"],
+  [D.modules.length - 1, "hub modules"],
   [post.filter(t => t.client === "Yes").length, "client-facing"],
   [D.agents.length, "agents"],
 ].map(([n, l]) => `<span><b>${n}</b> ${l}</span>`).join("");
@@ -281,9 +284,11 @@ $("where").innerHTML = D.where.map(([t, j]) => `<div class="box card${t.startsWi
 
 // Phases
 const owners = ["All", ...Object.keys(D.roles)];
-let fOwner = "All", fClient = false;
+let fOwner = "All", fClient = false, fHub = "All";
 function renderFilters() {
-  $("filters").innerHTML = `<span class="lab">Owner</span>` +
+  $("filters").innerHTML = `<span class="lab">Hub</span>` +
+    ["All", ...D.modules].map(h => `<button type="button" class="chip" data-h="${esc(h)}" aria-pressed="${h === fHub}">${esc(h)}</button>`).join("") +
+    `<span class="lab" style="margin-left:10px">Owner</span>` +
     owners.map(o => `<button type="button" class="chip" data-o="${esc(o)}" aria-pressed="${o === fOwner}">${esc(o)}</button>`).join("") +
     `<span class="lab" style="margin-left:10px">View</span><button type="button" class="chip" id="cfbtn" aria-pressed="${fClient}">Client-facing only</button>`;
 }
@@ -291,9 +296,9 @@ function renderPhases() {
   const open = new Set([...document.querySelectorAll("details.phase[open]")].map(e => e.dataset.p));
   if (!document.querySelector("details.phase")) open.add("P1");
   $("phases").innerHTML = D.phases.map(p => {
-    const ts = D.tasks.filter(t => t.phase === p.id && (fOwner === "All" || t.owner === fOwner) && (!fClient || t.client === "Yes"));
+    const ts = D.tasks.filter(t => t.phase === p.id && (fOwner === "All" || t.owner === fOwner) && (!fClient || t.client === "Yes") && (fHub === "All" || t.module === fHub));
     const when = (t) => t.phase === "P0" ? "Before Day 0" : dayLabel(scale(t.phase, t.start), scale(t.phase, t.due));
-    const rows = ts.map(t => `<tr><td class="mono">${t.id}</td><td>${esc(t.task)}${t.client === "Yes" ? '<span class="cf">Client</span>' : ""}<div class="sub">${esc(t.details)}</div></td>
+    const rows = ts.map(t => `<tr><td class="mono">${t.id}</td><td>${esc(t.task)}${t.module !== "Core" ? `<span class="tag" style="margin-left:6px">${esc(t.module)}</span>` : ""}${t.client === "Yes" ? '<span class="cf">Client</span>' : ""}<div class="sub">${esc(t.details)}</div></td>
       <td><span class="owner">${esc(t.owner)}</span></td><td class="mono">${when(t)}${t.repeats ? `<div class="sub" style="font-family:var(--body)">${esc(t.repeats)}</div>` : ""}</td><td style="font-size:13px">${esc(t.where)}</td></tr>`).join("");
     const table = ts.length ? `<div class="scroll"><table style="min-width:760px"><thead><tr><th>ID</th><th>Task</th><th>Owner</th><th>When</th><th>Lives in</th></tr></thead><tbody>${rows}</tbody></table></div>`
                             : `<div class="empty">No tasks match the current filter.</div>`;
@@ -305,12 +310,12 @@ function renderPhases() {
 }
 $("filters").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
-  if (b.id === "cfbtn") fClient = !fClient; else fOwner = b.dataset.o;
+  if (b.id === "cfbtn") fClient = !fClient; else if (b.dataset.h) fHub = b.dataset.h; else fOwner = b.dataset.o;
   renderFilters(); renderPhases();
 });
 
 $("factories").innerHTML = `<thead><tr><th>ID</th><th>Progress measure</th><th>When</th><th>What it measures</th><th>Built by</th></tr></thead><tbody>` +
-  D.factories.map(([id, n, w, m, r, b]) => `<tr><td class="mono">${id}</td><td style="font-weight:600">${esc(n)}</td><td><span class="tag${w === "Every customer" ? " core" : ""}">${w === "Every customer" ? "Core" : "Optional"}</span><div class="sub">${esc(w)}</div></td><td>${esc(m)}<div class="sub">${esc(r)}</div></td><td class="mono">${esc(b)}</td></tr>`).join("") + `</tbody>`;
+  D.factories.map(([id, n, w, m, r, b]) => `<tr><td class="mono">${id}</td><td style="font-weight:600">${esc(n)}</td><td><span class="tag${w.startsWith("Every") ? " core" : ""}">${w.startsWith("Every") ? "Standard" : "Optional"}</span><div class="sub">${esc(w)}</div></td><td>${esc(m)}<div class="sub">${esc(r)}</div></td><td class="mono">${esc(b)}</td></tr>`).join("") + `</tbody>`;
 
 $("rules").innerHTML = D.requestRules.map(r => `<li>${esc(r)}</li>`).join("");
 $("classes").innerHTML = `<thead><tr><th>Urgency</th><th>What it is</th><th>Response</th><th>Price</th></tr></thead><tbody>` +
