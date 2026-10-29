@@ -94,7 +94,7 @@ def start_here(wb):
           f"Built from the FigJam session and the answers from review. Day 0 = deal reaches 'Start Payment Received'. "
           f"Programs run {d.PROGRAM_MIN_DAYS}–{d.PROGRAM_DAYS} days; the plan is laid out for {d.PROGRAM_DAYS}.")
     rows = [
-        ("Decisions", "Your answers, what each one changed, scope limits, and the questions still open."),
+        ("Decisions", "Your answers, what each one changed, and the scope limits."),
         ("Roadmap", "Phases on a week-by-week timeline, mapped to the FigJam stickies."),
         ("Task Template", "Every task by section. Set Program length (60–90) at the top and the due days compress."),
         ("Progress Measures", "The standard progress measures (Factories) every Marketing Hub program builds."),
@@ -104,7 +104,7 @@ def start_here(wb):
         ("Tech Setup", "Marketing Hub Pro & Enterprise setup checklist; each item belongs to a task."),
         ("Training", "Training modules by audience and timing."),
         ("Comms", "Every customer touchpoint, including the weekly update outline."),
-        ("HubSpot Work Setup", "The structure to build in HubSpot Work: project fields, task columns, board, views, requests, portfolio."),
+        ("HubSpot Work Setup", "What to build in HubSpot Work: project fields, task columns, board, views, requests, portfolio, agents."),
         ("Tool Fit", "The Work vs Projects vs Tickets comparison (decision: HubSpot Work only)."),
     ]
     last = table(ws, 4, ["Tab", "What's in it"], rows, [24, 110], freeze=False)
@@ -144,6 +144,9 @@ def decisions(wb):
     last = table_at(ws, r + 1, ["#", "Area", "Limit", ""], [(i, a, l, "") for i, (a, l) in enumerate(d.SCOPE_LIMITS, start=1)], fill=TEAL)
     r = last + 2
     heading(ws, r, "Still open")
+    if not d.OPEN_QUESTIONS:
+        ws.cell(row=r + 1, column=1, value="Nothing open. Every question has been answered.").font = Font(name=FONT, size=10)
+        return
     last = table_at(ws, r + 1, ["#", "Topic", "Question", "What it changes", "Answer"],
                     [(i, t, q, w, "") for i, (t, q, w) in enumerate(d.OPEN_QUESTIONS, start=1)])
     ws.column_dimensions["E"].width = 45
@@ -274,7 +277,7 @@ def requests(wb):
 
 def work_setup(wb):
     ws = wb.create_sheet("HubSpot Work Setup")
-    title(ws, "HubSpot Work Setup", "The structure the HubSpot Work prompt builds. Decision: onboarding lives only in HubSpot Work.")
+    title(ws, "HubSpot Work Setup", "What the HubSpot Work prompt builds. Decision: onboarding lives only in HubSpot Work.")
     widths(ws, [26, 26, 70])
     r = 4
     heading(ws, r, "Where each part lives")
@@ -291,7 +294,9 @@ def work_setup(wb):
     r = table_at(ws, r + 1, ["Column", "Type", ""], [(c, t, "") for c, t in d.WORK_REQUEST_COLUMNS]) + 2
     heading(ws, r, "Portfolio project: 'Onboarding Portfolio' — one row per customer")
     r = table_at(ws, r + 1, ["Column", "Type", ""], [(c, t, "") for c, t in d.WORK_PORTFOLIO_COLUMNS]) + 2
-    table_at(ws, r, ["Portfolio view", "", "Setup"], [(v, "", s) for v, s in d.WORK_PORTFOLIO_VIEWS])
+    r = table_at(ws, r, ["Portfolio view", "", "Setup"], [(v, "", s) for v, s in d.WORK_PORTFOLIO_VIEWS]) + 2
+    heading(ws, r, "Agents (draft, fill dates or flag only; none sends anything to a customer)")
+    table_at(ws, r + 1, ["Agent", "Trigger", "What it does"], d.WORK_AGENTS, fill=TEAL)
 
 
 def tool_fit(wb):

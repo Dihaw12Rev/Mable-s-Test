@@ -25,6 +25,7 @@ data = {
     "scope": d.SCOPE_LIMITS,
     "post": d.POST_PROGRAM,
     "questions": d.OPEN_QUESTIONS,
+    "agents": d.WORK_AGENTS,
 }
 
 TEMPLATE = r"""<title>Marketing Hub Onboarding Roadmap</title>
@@ -142,7 +143,7 @@ footer { font-size: 13px; color: var(--muted); }
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">RevGravy · v2 after review</div>
+    <div class="eyebrow">RevGravy · v3 approved</div>
     <h1>Marketing Hub Onboarding Roadmap</h1>
     <p>Everything that happens after a customer buys a Marketing Hub onboarding, from the FigJam session and the answers from review. It all runs in HubSpot Work; the customer sees it through Supered.</p>
     <div class="facts" id="facts"></div>
@@ -202,7 +203,14 @@ footer { font-size: 13px; color: var(--muted); }
     <div class="cards" id="post"></div>
   </section>
 
-  <section aria-labelledby="t-q">
+  <section aria-labelledby="t-ag">
+    <div class="eyebrow">Agents in HubSpot Work</div>
+    <h2 id="t-ag">They draft, fill dates and flag</h2>
+    <p class="muted" style="font-size:14px">None of them sends anything to a customer. The Architect reviews every draft.</p>
+    <div class="cards" id="agents"></div>
+  </section>
+
+  <section aria-labelledby="t-q" id="qsec">
     <div class="eyebrow">Still open</div>
     <h2 id="t-q">Questions left</h2>
     <ol class="q" id="questions"></ol>
@@ -231,7 +239,7 @@ $("facts").innerHTML = [
   [D.phases.length, "sections"],
   [D.tasks.length, "tasks"],
   [post.filter(t => t.client === "Yes").length, "client-facing"],
-  [D.questions.length, "open questions"],
+  [D.agents.length, "agents"],
 ].map(([n, l]) => `<span><b>${n}</b> ${l}</span>`).join("");
 
 $("decisions").innerHTML = `<thead><tr><th>Topic</th><th>Answer</th><th>What changed</th></tr></thead><tbody>` +
@@ -311,6 +319,8 @@ $("scope").innerHTML = D.scope.map(([a, l]) => `<div class="box card"><h3>${esc(
 
 $("post").innerHTML = D.post.map(([o, p, w]) => `<div class="box card"><h3>${esc(o)}</h3><div class="price">${esc(p)}</div><p>${esc(w)}</p></div>`).join("");
 
+$("agents").innerHTML = D.agents.map(([n, t, w]) => `<div class="box card"><h3>${esc(n)}</h3><div class="price">${esc(t)}</div><p>${esc(w)}</p></div>`).join("");
+$("qsec").hidden = D.questions.length === 0;
 $("questions").innerHTML = D.questions.map(([t, q, w]) => `<li>${esc(q)}<span>${esc(t)} · changes: ${esc(w)}</span></li>`).join("");
 
 renderTimeline(); renderFilters(); renderPhases();

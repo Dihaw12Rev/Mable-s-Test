@@ -1,22 +1,29 @@
 # HubSpot Work prompt: Marketing Hub Onboarding
 
-`hubspot-work-prompt.txt` has the exact text to paste into HubSpot Work. It only builds structure: the template project, 10 sections, 74 tasks, 44 subtasks, the board and views, a Requests table and a Portfolio for Phil. No agents, documents or forms.
+`hubspot-work-prompt.txt` has the exact text to paste into HubSpot Work. It builds the template project (10 sections, 74 tasks, 44 subtasks), the board and views, a Requests table, a Portfolio for Phil, and 8 agents. No documents or forms.
 
 It's generated from `process_data.py` by `build_prompt.py`. Edit the data and re-run the script; don't edit the text by hand.
 
-## How to use it
+There are two prompts:
+
+- `hubspot-work-prompt.txt` builds everything from scratch, in a new workspace.
+- `hubspot-work-update-prompt.txt` is for the workspace already built from the earlier prompt. Paste it in that workspace's chat. It adds the agents, applies the owner change for the "what's next" call, and puts Task IDs first.
+
+## How to use the full prompt
 
 1. Open HubSpot Work and start a new workspace from a blank prompt.
 2. Paste everything in `hubspot-work-prompt.txt`.
 3. HubSpot Work shows a plan first. Check the counts against the CHECK line at the end, then approve.
 4. For each new customer, duplicate the template project, rename it, fill the project fields, and add a row to the Portfolio.
 
+Agents spend HubSpot Credits. The Delay Flagger and Portfolio Sync run every weekday, so check the credit balance before turning them on.
+
 If HubSpot Work says the prompt is too long, paste everything up to the line "Create these sections and tasks" first. Then send the sections in two or three messages, each starting with "Add these sections and tasks to the Tasks table in the template project:".
 
 ## The prompt
 
 ```text
-Build a workspace called "Client Onboarding" for RevGravy, a HubSpot consultancy. It holds the structure we use to run every Marketing Hub onboarding. Only build the structure described below: projects, task sections, tasks, subtasks, columns, board and views. Do not create agents, documents or forms.
+Build a workspace called "Client Onboarding" for RevGravy, a HubSpot consultancy. It holds the structure we use to run every Marketing Hub onboarding. Build only what is described below: projects, task sections, tasks, subtasks, columns, board, views and agents. Do not create documents or forms.
 
 HOW WE WILL USE IT
 - Each customer gets a copy of the template project, named "<Client> · Marketing Hub Onboarding".
@@ -226,10 +233,10 @@ Section P7 · Run cadence (Day 7 to 90)
 
 Section P8 · What's next (Day 60 to 90)
 - 8.01 Prep next-phase options | Owner: Architect | Client-facing: No | Day 55–60 | Depends on: 7.04
-  Done when: Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews.
-- 8.02 'What's next' call | Owner: Phil | Client-facing: Yes | Day 60–65 | Depends on: 8.01
-  Done when: Phil explains the next phase with an A/B choice; Architect joins.
-- 8.03 Next-phase proposal | Owner: Phil | Client-facing: Yes | Day 62–70 | Depends on: 8.02
+  Done when: Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews before the call.
+- 8.02 'What's next' call | Owner: Architect | Client-facing: Yes | Day 60–65 | Depends on: 8.01
+  Done when: Architect explains the long-term vision and the next phase as an A/B choice.
+- 8.03 Next-phase proposal | Owner: Architect | Client-facing: Yes | Day 62–70 | Depends on: 8.02
   Done when: New deal in the Sales Pipeline for the chosen offer.
 - 8.04 Final results review | Owner: Architect | Client-facing: Yes | Day 80–88 | Depends on: 5.11
   Done when: Before vs after for every progress measure, what we built, what's still open.
@@ -243,7 +250,7 @@ Section P9 · After the program (Day 90 to 270)
   Done when: Watch for deliverability drops, workflow errors, form submissions down 30%+. Tell the client when one fires.
 - 9.03 Check-in call: month 3 | Owner: Architect | Client-facing: Yes | Day 180 | Depends on: 9.01
   Done when: 30 minutes: numbers, what's working, what's next.
-- 9.04 Paid offer conversation: month 5 | Owner: Phil | Client-facing: Yes | Day 240 | Depends on: 9.03
+- 9.04 Paid offer conversation: month 5 | Owner: Architect | Client-facing: Yes | Day 240 | Depends on: 9.03
   Done when: Present team support, internal capacity and one-initiative-a-month before monitoring ends.
 - 9.05 Check-in call: month 6 | Owner: Architect | Client-facing: Yes | Day 270 | Depends on: 9.04
   Done when: Final monitoring check-in; confirm the paid offer or close monitoring.
@@ -264,6 +271,46 @@ Views:
 - Health board: Columns = Health.
 - Ending soon: Target end date in the next 35 days (time for the 'what's next' call).
 
+AGENTS
+Every agent only drafts, fills dates or flags. None of them sends anything to a customer or changes a deal. Run them on the customer projects made from the template and on the Portfolio.
+- Date Setter. Trigger: A customer project's Start date or Program length is set or changed. What it does: Fill Start date and Due date on every task: date = project Start date + day. For programs shorter than 90 days, days above 10 become day × Program length ÷ 90, rounded; P9 tasks use day − 90 + Program length; P0 tasks get no date. Assign every task with Owner role 'Architect' to the project's Architect. Set Target end date = Start date + Program length.
+- Handoff Brief. Trigger: A new row in the Portfolio. What it does: Read the linked deal's history, notes, meetings and emails. Write a one-page brief for the Architect in the customer project: who the customer is, the From→To goal, what they bought, the progress measures, the people involved, risks and open questions. Notify the Architect.
+- Weekly Update Drafter. Trigger: Every Thursday, for each customer project in sections P2 to P8. What it does: Draft the Friday update in five parts: 1) work done this week and the strategic issue it moves, 2) numbers vs baseline, 3) issues found outside scope, 4) next week, 5) client to-dos. Use tasks marked Done this week, tasks due next week, and Requests logged this week. Save the draft in the project and notify the Architect, who reviews and sends it.
+- Delay Flagger. Trigger: Every weekday morning. What it does: Flag tasks past their Due date and tasks 'Waiting on client' for more than 3 days. If a project has 3 or more overdue tasks, set Health to At risk. Notify the Architect, and notify Phil when Health becomes At risk or Off track.
+- Request Triage. Trigger: A new row in a customer's Requests table. What it does: Suggest the Urgency class and Price from the urgency rules, and set Due date from that class's turnaround. If it looks bigger than about 2 hours of work, mark it 'Quoted' and say why. Notify the Architect at once for Critical requests.
+- Portfolio Sync. Trigger: Every day. What it does: For each customer project, update its Portfolio row: Current section (earliest section with open tasks), Health, Next MBR and Next due task.
+- What's Next Prep. Trigger: 35 days before a customer's Target end date. What it does: Summarize results vs baseline, issues found and 'not now' requests into Option A and Option B for the next phase. Save it in the project, notify the Architect, and ask Phil to review before the call.
+- KPI Snapshot Drafter. Trigger: Monthly for 6 months after a customer's Target end date. What it does: Draft the monthly KPI snapshot notes (3 short notes on the progress measures) for the Architect to review and send with the dashboard email.
+
 CHECK
-When you show me the plan, confirm the counts: 2 projects, 10 sections, 74 tasks, 44 subtasks, 8 views on Tasks, 1 Requests table. Show me the plan and wait for my approval before you create anything.
+When you show me the plan, confirm the counts: 2 projects, 10 sections, 74 tasks, 44 subtasks, 8 views on Tasks, 1 Requests table, 8 agents. Show me the plan and wait for my approval before you create anything.
+```
+
+## The update prompt (for the workspace you already built)
+
+```text
+Update the existing "Client Onboarding" workspace. Don't recreate or duplicate anything that already exists; only make the changes below.
+
+1. TASK IDS
+In the Tasks table of "Marketing Hub Onboarding (Template)", make sure every task has its Task ID filled (0.01 to 9.05, matching the order of the tasks). Move the Task ID column to the far left, before Task, so "Depends on" can be read. Then order the visible columns: Task ID, Task, Status, Owner role, Assignee, Due date, Client-facing, Repeats, Depends on, Definition of done, Notes. Keep Section, Start day, Due day and Start date, but hide them in the Main table view.
+
+2. TASK CHANGES
+The Architect now runs the "what's next" call. Update these tasks:
+- 8.01 Prep next-phase options: Owner role = Architect. Definition of done = "Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews before the call."
+- 8.02 'What's next' call: Owner role = Architect. Definition of done = "Architect explains the long-term vision and the next phase as an A/B choice."
+- 8.03 Next-phase proposal: Owner role = Architect. Definition of done = "New deal in the Sales Pipeline for the chosen offer."
+- 9.04 Paid offer conversation: month 5: Owner role = Architect. Definition of done = "Present team support, internal capacity and one-initiative-a-month before monitoring ends."
+
+3. AGENTS
+Add these agents. Every agent only drafts, fills dates or flags. None of them sends anything to a customer or changes a deal. Run them on the customer projects made from the template and on the Portfolio.
+- Date Setter. Trigger: A customer project's Start date or Program length is set or changed. What it does: Fill Start date and Due date on every task: date = project Start date + day. For programs shorter than 90 days, days above 10 become day × Program length ÷ 90, rounded; P9 tasks use day − 90 + Program length; P0 tasks get no date. Assign every task with Owner role 'Architect' to the project's Architect. Set Target end date = Start date + Program length.
+- Handoff Brief. Trigger: A new row in the Portfolio. What it does: Read the linked deal's history, notes, meetings and emails. Write a one-page brief for the Architect in the customer project: who the customer is, the From→To goal, what they bought, the progress measures, the people involved, risks and open questions. Notify the Architect.
+- Weekly Update Drafter. Trigger: Every Thursday, for each customer project in sections P2 to P8. What it does: Draft the Friday update in five parts: 1) work done this week and the strategic issue it moves, 2) numbers vs baseline, 3) issues found outside scope, 4) next week, 5) client to-dos. Use tasks marked Done this week, tasks due next week, and Requests logged this week. Save the draft in the project and notify the Architect, who reviews and sends it.
+- Delay Flagger. Trigger: Every weekday morning. What it does: Flag tasks past their Due date and tasks 'Waiting on client' for more than 3 days. If a project has 3 or more overdue tasks, set Health to At risk. Notify the Architect, and notify Phil when Health becomes At risk or Off track.
+- Request Triage. Trigger: A new row in a customer's Requests table. What it does: Suggest the Urgency class and Price from the urgency rules, and set Due date from that class's turnaround. If it looks bigger than about 2 hours of work, mark it 'Quoted' and say why. Notify the Architect at once for Critical requests.
+- Portfolio Sync. Trigger: Every day. What it does: For each customer project, update its Portfolio row: Current section (earliest section with open tasks), Health, Next MBR and Next due task.
+- What's Next Prep. Trigger: 35 days before a customer's Target end date. What it does: Summarize results vs baseline, issues found and 'not now' requests into Option A and Option B for the next phase. Save it in the project, notify the Architect, and ask Phil to review before the call.
+- KPI Snapshot Drafter. Trigger: Monthly for 6 months after a customer's Target end date. What it does: Draft the monthly KPI snapshot notes (3 short notes on the progress measures) for the Architect to review and send with the dashboard email.
+
+Show me the plan and wait for my approval before you change anything. When you're done, confirm: 74 tasks with a Task ID, 4 tasks updated, 8 agents.
 ```

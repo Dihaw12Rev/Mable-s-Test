@@ -25,8 +25,8 @@ def scaled_due(phase, due, program_days):
 
 
 ROLES = {
-    "Phil": "Strategy lead through the sale and the handoff. Picks the Architect based on capacity. Comes back for the 'what's next' call.",
-    "Architect": "Takes over as strategy lead after the handoff. Owns delivery, weekly updates, office hours and MBRs.",
+    "Phil": "Strategy lead through the sale and the handoff. Picks the Architect based on capacity. Reviews next-phase options.",
+    "Architect": "Takes over as strategy lead after the handoff. Owns delivery, weekly updates, office hours, MBRs and the 'what's next' call.",
     "Ops": "RevGravy operations. Owns the templates, Supered setup and the welcome emails.",
     "Client POC": "Main point of contact at the customer. Owns approvals, access and client to-dos.",
 }
@@ -35,7 +35,7 @@ ROLES = {
 DECISIONS = [
     ("Program length", "60 to 90 days.", "The plan is laid out for 90 days. Each customer project has a Program length; later due dates compress to fit 60 or 75 days."),
     ("Hub tiers", "Marketing Hub Professional and Enterprise.", "Starter removed. Setup items are tagged 'Pro & Ent' or 'Ent only'."),
-    ("Strategy lead", "Phil leads through the sale, then the Architect takes over.", "Architect owns MBRs, weekly updates and strategy after the handoff. Phil returns for the 'what's next' call."),
+    ("Strategy lead", "Phil leads through the sale, then the Architect takes over.", "Architect owns MBRs, weekly updates, strategy and the 'what's next' call after the handoff. Phil reviews the next-phase options."),
     ("Picking the Architect", "Phil decides, based on capacity.", "Portfolio table has a capacity view (active customers per Architect)."),
     ("HubSpot Work beta", "Enrolled.", "Build in HubSpot Work now."),
     ("Where onboarding lives", "Only in HubSpot Work.", "No Projects pipeline and no tickets for onboarding. Tasks, board and requests all live in Work."),
@@ -44,6 +44,9 @@ DECISIONS = [
     ("$250 requests", "Per request. Urgency classes not defined yet.", "Recommended classes added: Critical, High, Standard, Not now."),
     ("Migrations & website work", "In scope.", "Migration and website tasks added to Foundations and Build & launch, with suggested limits."),
     ("Post-program offers", "Free for 6 months. Contents not defined yet.", "Suggested contents for the free KPI monitoring and the three paid offers."),
+    ("'What's next' call", "The Architect runs it.", "Tasks 8.02, 8.03 and 9.04 owned by the Architect; Phil reviews the options in 8.01."),
+    ("Suggestions from review", "Approved: urgency classes, 2-hour request size, migration and website limits, standard progress measures, $1,670/mo Monthly Plan for team support.", "Applied as written."),
+    ("Agents", "HubSpot Work can build agents.", "8 agents added to the prompt. They only draft, fill dates or flag; none sends anything to a customer."),
 ]
 
 PHASES = [
@@ -90,7 +93,7 @@ PHASES = [
     {"id": "P8", "name": "What's next", "start": 60, "end": 90,
      "figjam": "30 Days Before We Finish, Explain What's Next",
      "goal": "The customer sees the long-term vision and picks the next phase before the program ends.",
-     "client_sees": "'What's next' call with Phil and the Architect, A/B options, final results review.",
+     "client_sees": "'What's next' call with the Architect, A/B options, final results review.",
      "exit": "Next phase chosen (A, B or KPI monitoring only), results reviewed, project closed."},
     {"id": "P9", "name": "After the program", "start": 90, "end": 270,
      "figjam": "Post-1st Program Offers + Goal: keep relationship 6–12 months",
@@ -183,9 +186,9 @@ TASKS = [
     ("7.07", "P7", "Internal delivery review", "Phil + Architects: at-risk customers, capacity, blockers.", "Phil", "No", 7, 90, "", "Work: Portfolio", "Weekly"),
 
     # P8 — What's next
-    ("8.01", "P8", "Prep next-phase options", "Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews.", "Architect", "No", 55, 60, "7.04", "Work: customer project (notes)", ""),
-    ("8.02", "P8", "'What's next' call", "Phil explains the next phase with an A/B choice; Architect joins.", "Phil", "Yes", 60, 65, "8.01", "Meeting", ""),
-    ("8.03", "P8", "Next-phase proposal", "New deal in the Sales Pipeline for the chosen offer.", "Phil", "Yes", 62, 70, "8.02", "Deal", ""),
+    ("8.01", "P8", "Prep next-phase options", "Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews before the call.", "Architect", "No", 55, 60, "7.04", "Work: customer project (notes)", ""),
+    ("8.02", "P8", "'What's next' call", "Architect explains the long-term vision and the next phase as an A/B choice.", "Architect", "Yes", 60, 65, "8.01", "Meeting", ""),
+    ("8.03", "P8", "Next-phase proposal", "New deal in the Sales Pipeline for the chosen offer.", "Architect", "Yes", 62, 70, "8.02", "Deal", ""),
     ("8.04", "P8", "Final results review", "Before vs after for every progress measure, what we built, what's still open.", "Architect", "Yes", 80, 88, "5.11", "Meeting + dashboard", ""),
     ("8.05", "P8", "Close the program", "Supered plan archived, project marked Completed, feedback and testimonial asked for.", "Architect", "Yes", 85, 90, "8.04", "Work + Supered", ""),
 
@@ -193,7 +196,7 @@ TASKS = [
     ("9.01", "P9", "Monthly KPI snapshot", "Progress-measure dashboard emailed with 3 short notes from the Architect.", "Architect", "Yes", 90, 270, "8.05", "Scheduled dashboard email", "Monthly × 6"),
     ("9.02", "P9", "Portal health alerts", "Watch for deliverability drops, workflow errors, form submissions down 30%+. Tell the client when one fires.", "Architect", "Yes", 90, 270, "8.05", "HubSpot alerts", "Ongoing"),
     ("9.03", "P9", "Check-in call: month 3", "30 minutes: numbers, what's working, what's next.", "Architect", "Yes", 180, 180, "9.01", "Meeting", ""),
-    ("9.04", "P9", "Paid offer conversation: month 5", "Present team support, internal capacity and one-initiative-a-month before monitoring ends.", "Phil", "Yes", 240, 240, "9.03", "Deal", ""),
+    ("9.04", "P9", "Paid offer conversation: month 5", "Present team support, internal capacity and one-initiative-a-month before monitoring ends.", "Architect", "Yes", 240, 240, "9.03", "Deal", ""),
     ("9.05", "P9", "Check-in call: month 6", "Final monitoring check-in; confirm the paid offer or close monitoring.", "Architect", "Yes", 270, 270, "9.04", "Meeting", ""),
 ]
 
@@ -231,7 +234,7 @@ SCOPE_LIMITS = [
 # offer, price, what's included
 POST_PROGRAM = [
     ("KPI monitoring (6 months)", "Free", "Monthly KPI snapshot with Architect notes; portal health alerts; check-in calls at month 3 and month 6; requests still available at $250 each."),
-    ("Team support", "Suggest the existing 'Monthly Plan – Standard' ($1,670/mo, 1 task at a time)", "Same Architect, ongoing requests one at a time, weekly office hours."),
+    ("Team support", "$1,670/mo (existing 'Monthly Plan – Standard', 1 task at a time)", "Same Architect, ongoing requests one at a time, weekly office hours."),
     ("Build internal capacity", "To be priced", "Coach their in-house marketer or admin: monthly training plan, admin office hours, HubSpot certification path, help hiring a marketing ops role."),
     ("One initiative a month", "To be priced", "One scoped project per month from the 'not now' list (a new nurture, a campaign, a report pack, another tool migration)."),
 ]
@@ -340,7 +343,7 @@ COMMS = [
     ("Delivery announcement", "Each delivery", "Supered video", "Architect", "What was built, how to use it, why it matters."),
     ("Office hours", "Weekly slots", "Booking link", "Architect", "Questions, coaching, training practice."),
     ("MBR", "Monthly (≈ Day 30 and 60)", "Video call", "Architect (Phil optional)", "Progress vs baseline, numbers trend, issues and opportunities."),
-    ("What's next", "≈ 30 days before the end", "Video call", "Phil + Architect", "Long-term vision, A/B next phase."),
+    ("What's next", "≈ 30 days before the end", "Video call", "Architect", "Long-term vision, A/B next phase."),
     ("Final results review", "Last week of the program", "Video call", "Architect", "Before vs after, what we built, what's open."),
     ("KPI snapshot", "Monthly for 6 months after", "Scheduled dashboard email", "Architect", "Progress measures + 3 short notes."),
 ]
@@ -415,10 +418,25 @@ WORK_PORTFOLIO_VIEWS = [
     ("Ending soon", "Target end date in the next 35 days (time for the 'what's next' call)."),
 ]
 
-OPEN_QUESTIONS = [
-    ("Roles", "Phil runs the 'what's next' call (as in the FigJam), or does the Architect lead it now that strategy moves to them?", "Owner of task 8.02"),
-    ("Requests", "OK with the urgency classes and 'one request = up to about 2 hours of work'?", "Request Classes tab, welcome email #2"),
-    ("Scope", "OK with the limits for migration (one tool, 5 templates) and website (10 landing pages + blog import)?", "Tasks 4.06, 5.06, 5.07"),
-    ("Offers", "Prices for 'build internal capacity' and 'one initiative a month'. Use the $1,670/mo Monthly Plan for team support?", "After-program offers"),
-    ("Progress measures", "Agree with the standard set (0.1, 1.1, 1.2, 1.3 always; 1.0 and 2.1 when bought)?", "Build & launch section"),
+# HubSpot Work agents. Every agent only drafts, fills dates or flags; none sends anything to a customer.
+# name, trigger, what it does
+WORK_AGENTS = [
+    ("Date Setter", "A customer project's Start date or Program length is set or changed",
+     "Fill Start date and Due date on every task: date = project Start date + day. For programs shorter than 90 days, days above 10 become day × Program length ÷ 90, rounded; P9 tasks use day − 90 + Program length; P0 tasks get no date. Assign every task with Owner role 'Architect' to the project's Architect. Set Target end date = Start date + Program length."),
+    ("Handoff Brief", "A new row in the Portfolio",
+     "Read the linked deal's history, notes, meetings and emails. Write a one-page brief for the Architect in the customer project: who the customer is, the From→To goal, what they bought, the progress measures, the people involved, risks and open questions. Notify the Architect."),
+    ("Weekly Update Drafter", "Every Thursday, for each customer project in sections P2 to P8",
+     "Draft the Friday update in five parts: 1) work done this week and the strategic issue it moves, 2) numbers vs baseline, 3) issues found outside scope, 4) next week, 5) client to-dos. Use tasks marked Done this week, tasks due next week, and Requests logged this week. Save the draft in the project and notify the Architect, who reviews and sends it."),
+    ("Delay Flagger", "Every weekday morning",
+     "Flag tasks past their Due date and tasks 'Waiting on client' for more than 3 days. If a project has 3 or more overdue tasks, set Health to At risk. Notify the Architect, and notify Phil when Health becomes At risk or Off track."),
+    ("Request Triage", "A new row in a customer's Requests table",
+     "Suggest the Urgency class and Price from the urgency rules, and set Due date from that class's turnaround. If it looks bigger than about 2 hours of work, mark it 'Quoted' and say why. Notify the Architect at once for Critical requests."),
+    ("Portfolio Sync", "Every day",
+     "For each customer project, update its Portfolio row: Current section (earliest section with open tasks), Health, Next MBR and Next due task."),
+    ("What's Next Prep", "35 days before a customer's Target end date",
+     "Summarize results vs baseline, issues found and 'not now' requests into Option A and Option B for the next phase. Save it in the project, notify the Architect, and ask Phil to review before the call."),
+    ("KPI Snapshot Drafter", "Monthly for 6 months after a customer's Target end date",
+     "Draft the monthly KPI snapshot notes (3 short notes on the progress measures) for the Architect to review and send with the dashboard email."),
 ]
+
+OPEN_QUESTIONS = []

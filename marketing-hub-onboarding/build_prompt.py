@@ -1,8 +1,8 @@
 """Build the exact HubSpot Work prompt from process_data.py.
 
-The prompt only builds structure: the template project, its sections and
-tasks (with setup items as subtasks), columns, board and views, the requests
-table, and the portfolio. No agents, documents or forms.
+The prompt builds the template project, its sections and tasks (with setup
+items as subtasks), columns, board and views, the requests table, the
+portfolio, and the agents. No documents or forms.
 
 Writes hubspot-work-prompt.txt (the text to paste) and hubspot-work-prompt.md
 (the same text plus how to use it).
@@ -49,10 +49,11 @@ request_classes = "\n".join(f"- {u}: {w} {t} Price: {p}." for u, w, t, p in d.RE
 portfolio_columns = "; ".join(f"{c} ({t})" for c, t in d.WORK_PORTFOLIO_COLUMNS)
 portfolio_views = "\n".join(f"- {v}: {s}" for v, s in d.WORK_PORTFOLIO_VIEWS)
 statuses = ", ".join(d.WORK_STATUSES)
+agents = "\n".join(f"- {n}. Trigger: {t}. What it does: {w}" for n, t, w in d.WORK_AGENTS)
 n_tasks = len(d.TASKS)
 n_sub = sum(len(v) for v in subtasks.values())
 
-PROMPT = f"""Build a workspace called "Client Onboarding" for RevGravy, a HubSpot consultancy. It holds the structure we use to run every Marketing Hub onboarding. Only build the structure described below: projects, task sections, tasks, subtasks, columns, board and views. Do not create agents, documents or forms.
+PROMPT = f"""Build a workspace called "Client Onboarding" for RevGravy, a HubSpot consultancy. It holds the structure we use to run every Marketing Hub onboarding. Build only what is described below: projects, task sections, tasks, subtasks, columns, board, views and agents. Do not create documents or forms.
 
 HOW WE WILL USE IT
 - Each customer gets a copy of the template project, named "<Client> · Marketing Hub Onboarding".
@@ -88,22 +89,55 @@ Table "Customers", one row per customer, with these columns: {portfolio_columns}
 Views:
 {portfolio_views}
 
+AGENTS
+Every agent only drafts, fills dates or flags. None of them sends anything to a customer or changes a deal. Run them on the customer projects made from the template and on the Portfolio.
+{agents}
+
 CHECK
-When you show me the plan, confirm the counts: 2 projects, {len(d.PHASES)} sections, {n_tasks} tasks, {n_sub} subtasks, {len(d.WORK_VIEWS)} views on Tasks, 1 Requests table. Show me the plan and wait for my approval before you create anything.
+When you show me the plan, confirm the counts: 2 projects, {len(d.PHASES)} sections, {n_tasks} tasks, {n_sub} subtasks, {len(d.WORK_VIEWS)} views on Tasks, 1 Requests table, {len(d.WORK_AGENTS)} agents. Show me the plan and wait for my approval before you create anything.
+"""
+
+# Follow-up prompt for a workspace that was already built from the v2 prompt (no agents yet).
+CHANGED_TASKS = ["8.01", "8.02", "8.03", "9.04"]   # owner/text changed in v3
+changed = "\n".join(
+    f"- {t[0]} {t[2]}: Owner role = {t[4]}. Definition of done = \"{t[3]}\""
+    for t in d.TASKS if t[0] in CHANGED_TASKS)
+
+UPDATE = f"""Update the existing "Client Onboarding" workspace. Don't recreate or duplicate anything that already exists; only make the changes below.
+
+1. TASK IDS
+In the Tasks table of "Marketing Hub Onboarding (Template)", make sure every task has its Task ID filled (0.01 to 9.05, matching the order of the tasks). Move the Task ID column to the far left, before Task, so "Depends on" can be read. Then order the visible columns: Task ID, Task, Status, Owner role, Assignee, Due date, Client-facing, Repeats, Depends on, Definition of done, Notes. Keep Section, Start day, Due day and Start date, but hide them in the Main table view.
+
+2. TASK CHANGES
+The Architect now runs the "what's next" call. Update these tasks:
+{changed}
+
+3. AGENTS
+Add these agents. Every agent only drafts, fills dates or flags. None of them sends anything to a customer or changes a deal. Run them on the customer projects made from the template and on the Portfolio.
+{agents}
+
+Show me the plan and wait for my approval before you change anything. When you're done, confirm: {len(d.TASKS)} tasks with a Task ID, {len(CHANGED_TASKS)} tasks updated, {len(d.WORK_AGENTS)} agents.
 """
 
 GUIDE = f"""# HubSpot Work prompt: Marketing Hub Onboarding
 
-`hubspot-work-prompt.txt` has the exact text to paste into HubSpot Work. It only builds structure: the template project, {len(d.PHASES)} sections, {n_tasks} tasks, {n_sub} subtasks, the board and views, a Requests table and a Portfolio for Phil. No agents, documents or forms.
+`hubspot-work-prompt.txt` has the exact text to paste into HubSpot Work. It builds the template project ({len(d.PHASES)} sections, {n_tasks} tasks, {n_sub} subtasks), the board and views, a Requests table, a Portfolio for Phil, and {len(d.WORK_AGENTS)} agents. No documents or forms.
 
 It's generated from `process_data.py` by `build_prompt.py`. Edit the data and re-run the script; don't edit the text by hand.
 
-## How to use it
+There are two prompts:
+
+- `hubspot-work-prompt.txt` builds everything from scratch, in a new workspace.
+- `hubspot-work-update-prompt.txt` is for the workspace already built from the earlier prompt. Paste it in that workspace's chat. It adds the agents, applies the owner change for the "what's next" call, and puts Task IDs first.
+
+## How to use the full prompt
 
 1. Open HubSpot Work and start a new workspace from a blank prompt.
 2. Paste everything in `hubspot-work-prompt.txt`.
 3. HubSpot Work shows a plan first. Check the counts against the CHECK line at the end, then approve.
 4. For each new customer, duplicate the template project, rename it, fill the project fields, and add a row to the Portfolio.
+
+Agents spend HubSpot Credits. The Delay Flagger and Portfolio Sync run every weekday, so check the credit balance before turning them on.
 
 If HubSpot Work says the prompt is too long, paste everything up to the line "Create these sections and tasks" first. Then send the sections in two or three messages, each starting with "Add these sections and tasks to the Tasks table in the template project:".
 
@@ -114,5 +148,12 @@ If HubSpot Work says the prompt is too long, paste everything up to the line "Cr
 """
 
 (HERE / "hubspot-work-prompt.txt").write_text(PROMPT, encoding="utf-8")
-(HERE / "hubspot-work-prompt.md").write_text(GUIDE, encoding="utf-8")
-print(f"Prompt: {len(PROMPT):,} characters, {n_tasks} tasks, {n_sub} subtasks")
+(HERE / "hubspot-work-update-prompt.txt").write_text(UPDATE, encoding="utf-8")
+(HERE / "hubspot-work-prompt.md").write_text(GUIDE + f"""
+## The update prompt (for the workspace you already built)
+
+```text
+{UPDATE}```
+""", encoding="utf-8")
+print(f"Update prompt: {len(UPDATE):,} characters")
+print(f"Prompt: {len(PROMPT):,} characters, {n_tasks} tasks, {n_sub} subtasks, {len(d.WORK_AGENTS)} agents")
