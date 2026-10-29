@@ -1,0 +1,28 @@
+Restructure the task template in "Client Onboarding" into a task library that covers Marketing, Sales and Service Hub onboarding. Don't create agents, documents or forms. Don't touch the Onboarding Portfolio project in this step.
+
+1. RENAME
+Rename the project "Marketing Hub Onboarding (Template)" to "Onboarding Task Library", and its Tasks table to "Task Library".
+
+2. MODULE COLUMN
+Add a "Module" column (Dropdown: Core, Marketing Hub, Sales Hub, Service Hub) right after Task, and a view "By module" (grouped by Module, then Section).
+
+3. MARKETING HUB MODULE
+These 16 tasks only apply to Marketing Hub customers. Set Module = Marketing Hub and rename their Task IDs: 4.02 → MH-4.02, 4.03 → MH-4.03, 4.04 → MH-4.04, 4.06 → MH-4.06, 4.08 → MH-4.08, 5.01 → MH-5.01, 5.02 → MH-5.02, 5.03 → MH-5.03, 5.04 → MH-5.04, 5.05 → MH-5.05, 5.06 → MH-5.06, 5.07 → MH-5.07, 5.08 → MH-5.08, 5.09 → MH-5.09, 5.10 → MH-5.10, 6.02 → MH-6.02. Update every "Depends on" value that points to the old IDs.
+Also update these two:
+- MH-5.04: Task = "Build 1.4 Subscriber → Engaged (if bought)".
+- MH-6.02: Task = "Deliver Marketing Hub training". Definition of done = "Modules T1–T9 as Supered videos + practice in office hours, timed to when each feature ships." Subtasks: T1 · HubSpot basics; T2 · Contacts & segments; T3 · Email marketing; T4 · Forms, landing pages & CTAs; T5 · Workflows & nurture; T6 · Campaigns, ads & social; T7 · Reporting & dashboards; T8 · Lead handoff; T9 · Admin handbook.
+
+4. CORE TASKS
+Set Module = Core on every other task (58 tasks). Update these to be hub-neutral:
+- 0.05: Task = "Products and quote on the deal". Depends on = "0.04". Definition of done = "Pricing calculator used, line items added, quote created. Each hub bought is Pro or Enterprise."
+- 0.06: Task = "Progress measures picked". Depends on = "0.05". Definition of done = "The standard progress measures for each hub bought (Progress Measures tab), plus any optional ones. Baselines noted if known."
+- 1.02: Task = "Add the customer in HubSpot Work". Depends on = "1.01". Definition of done = "Add a Customers row: Customer, Company, Deal, Architect, Program length, Start date (the payment date), Products purchased, hub tiers, From→To goal, FigJam and Supered links. Tick Create tasks and check the Task Generator filled Tasks created for."
+- 1.04: Task = "Build the Supered Action Plan". Depends on = "1.02". Definition of done = "Duplicate the Action Plan template for the products bought; add the agreement, FigJam, client to-dos and access checklist."
+- 2.03: Task = "Access to connected systems". Depends on = "2.02". Definition of done = "DNS/IT contact, website CMS, GA4/GTM, ad and social accounts, and every old tool we migrate from (email tool, CRM, help desk)."
+- 4.07: Task = "Data import & cleanup". Depends on = "4.05". Definition of done = "Import contacts and companies (including migrated data, with consent mapped and unsubscribes suppressed), dedupe, associations, marketing contacts."
+- 4.09: Task = "Integrations". Depends on = "2.03". Definition of done = "Every integration the intake lists: GA4, ad and social accounts, webinar tool, Slack, CRM sync if their CRM isn't HubSpot. Mark the ones this customer doesn't need as not applicable."
+- 4.11: Task = "Foundation QA". Depends on = "4.07 and each hub's foundation tasks". Definition of done = "Test the main flow end to end for each hub bought (Marketing: visit → form → contact → email; Sales: lead → owner → deal; Service: email → ticket → reply)."
+- 5.11: Task = "Client sign-off per progress measure". Depends on = "Each hub's build tasks". Definition of done = "Client approves each build before it goes live."
+- 6.03: Task = "Adoption check #1". Depends on = "6.01". Definition of done = "Logins, emails sent, workflows active, dashboards viewed. Flag low adoption in the weekly update."
+
+Show me the plan and wait for my approval before you change anything. When you're done, confirm: 58 Core tasks, 16 Marketing Hub tasks, no task without a Module, and no "Depends on" pointing to an ID that no longer exists.
