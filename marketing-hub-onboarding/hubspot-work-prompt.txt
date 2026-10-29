@@ -4,7 +4,7 @@ HOW WE'LL USE IT
 - Day 0 is the day the customer's deal reaches "Start Payment Received" in our Sales Pipeline. Programs last 60 to 90 days; the task days below are for a 90-day program.
 - All customers share the same tables, and each row links to its Customers row, so agents work across all customers.
 1. Add a row to Customers: Customer, Company, Deal, Architect, Program length, Start date, tier, From→To goal, FigJam and Supered links.
-2. The Task Generator agent copies the template tasks into Customer Tasks for that customer, fills the dates, assigns the Architect and sets Tasks created = Yes.
+2. The Task Generator (a workflow) copies the template tasks into Customer Task for that customer, fills the dates, assigns the Architect and sets Tasks created = Yes.
 3. To work on one customer, filter any view by Customer. 'My tasks' shows an Architect's work across all their customers.
 4. Share the workspace with Phil and the Architects (it's private by default).
 
@@ -202,7 +202,7 @@ Section P7 · Run cadence (Day 7 to 90)
 - 7.03 Handle requests by urgency | Owner: Architect | Client-facing: Yes | Day 7–90 | Repeats: As they come in
   Done when: Every request gets logged with an urgency class and handled in that time ($250 per request; see Request Classes).
 - 7.04 Log issues and 'not now' ideas | Owner: Architect | Client-facing: No | Day 7–90 | Repeats: As they come in
-  Done when: Out-of-scope issues and client ideas go to the Requests table as 'Not now', to sell later.
+  Done when: Out-of-scope issues and client ideas go to the Request table as 'Not now', to sell later.
 - 7.05 Health check | Owner: Architect | Client-facing: No | Day 7–90 | Repeats: Weekly
   Done when: Set Health (On track / At risk / Off track) and blockers. Escalate per the escalation path.
 - 7.06 Monthly Business Review | Owner: Architect | Client-facing: Yes | Day 30–60 | Repeats: Monthly | Depends on: 3.03
@@ -236,13 +236,13 @@ Section P9 · After the program (Day 90 to 270)
 
 PROJECT 2: "Onboarding Portfolio"
 
-Table "Customers", one row per customer. Columns: Customer (Text: client name); Company (CRM company); Deal (CRM deal); Architect (HubSpot user); Program length (Number: 60, 75 or 90); Start date (Date, Day 0); Target end date (Date); Marketing Hub tier (Dropdown: Professional, Enterprise); Health (Dropdown: On track, At risk, Off track); Current section (Dropdown: P0–P9, Completed); Next MBR (Date, filled by the Architect when booked); Next due task (Text); Tasks created (Yes/No); From→To goal (Long text); Progress measures (Long text: name, baseline, target); FigJam link (URL); Supered Action Plan link (URL).
+Table "Customers", one row per customer. Columns: Customer (Text: client name); Company (CRM company); Deal (CRM deal); Architect (HubSpot user); Program length (Number: 60, 75 or 90); Start date (Date: Day 0 = the day the deal reached Start Payment Received, not the kickoff date); Target end date (Date); Marketing Hub tier (Dropdown: Professional, Enterprise); Health (Dropdown: On track, At risk, Off track); Current section (Dropdown: P0–P9, Completed); Next MBR (Date, filled by the Architect when booked); Next due task (Text); Tasks created (Yes/No); From→To goal (Long text); Progress measures (Long text: name, baseline, target); FigJam link (URL); Supered Action Plan link (URL).
 Views and reports:
 - Capacity: Report: active customers per Architect. Phil uses it to pick the Architect.
 - Health board: Columns = Health.
 - Ending soon: Target end date in the next 35 days (time for the 'what's next' call).
 
-Table "Customer Tasks": every customer's tasks in one table. Same columns as the template's Tasks table (including the Due date formula, both helper columns, and subtasks), plus "Customer" (link to the Customers row) as the second column. Statuses: Not started, In progress, Waiting on client, In review, Done, Won't do.
+Table "Customer Task": every customer's tasks in one table. Same columns as the template's Tasks table (including the Due date formula, both helper columns, and subtasks), plus "Customer" (link to the Customers row) as the second column. Statuses: Not started, In progress, Waiting on client, In review, Done, Won't do.
 Main table: show Task ID, Customer, Task, Status, Owner role, Assignee, Due date, Client-facing, Repeats, Depends on, Definition of done, Notes. Hide Section, Start day, Due day, Start date, Project Day 0, Program length.
 Views:
 - Board: Columns = Status. Cards show Customer, Task ID, Task, Assignee, Due date.
@@ -254,20 +254,20 @@ Views:
 - Client to-dos: Owner role = Client POC, Status not Done.
 - This week: Due date in the next 7 days, Status not Done.
 - Overdue: Due date before today, Status not Done / Won't do.
-Leave it empty; the Onboarding Task Generator agent fills it for each new customer.
+Leave it empty; the Task Generator fills it for each new customer.
 
-Table "Requests": every customer's requests. Columns: Customer (Link to Customers row); Request (Text); Urgency (Dropdown: Critical, High, Standard, Not now); Type (Dropdown: Client request, Issue found, Client idea); Status (Dropdown: New, Quoted, In progress, Done, Parked); Price (Number, default 250); Logged on (Date); Due date (Date); Notes (Long text).
+Table "Request": every customer's requests. Columns: Customer (Link to Customers row); Owner (HubSpot user, defaults to the customer's Architect); Request (Text); Urgency (Dropdown: Critical, High, Standard, Not now); Type (Dropdown: Client request, Issue found, Client idea); Status (Dropdown: New, Quoted, In progress, Done, Parked); Price (Number in USD, default 250); Logged on (Date); Due date (Date); Notes (Long text).
 Views: "Board by urgency" (columns = Urgency) and "Open requests" (Status not Done or Parked, sorted by Due date).
 Use these as the descriptions of the Urgency options:
 - Critical: Something live is broken: forms not submitting, emails not sending, a workflow sending the wrong email, tracking down. Reply within 4 business hours; fixed within 1 business day. Price: Free if it's in something we built; otherwise $250.
-- High: Needed for a launch or deadline in the next 2 weeks. Started within 2 business days; done within 5. Price: $250.
-- Standard: A small new request with no hard deadline. Planned into next week; done within 10 business days. Price: $250.
+- High: Needed for a launch or deadline in the next 2 weeks. Reply within 1 business day; done within 5 business days. Price: $250.
+- Standard: A small new request with no hard deadline. Reply within 1 business day; done within 10 business days. Price: $250.
 - Not now: An idea or a bigger project for later. Logged and reviewed at MBRs and the 'what's next' call. Price: Quoted when scoped.
 
-Table "Updates": drafts the agents write for the Architect. Columns: Customer (Link to Customers row); Type (Dropdown: Handoff brief, Weekly update, What's next options, KPI snapshot); Period (Date: week of, or month); Draft (Long text); Status (Dropdown: Draft, Reviewed, Sent); Notes (Long text).
+Table "Update": drafts the agents write for the Architect. Columns: Customer (Link to Customers row); Type (Dropdown: Handoff brief, Weekly update, What's next options, KPI snapshot, Delay flag); Period (Date: week of, or month); Draft (Long text); Status (Dropdown: Draft (an agent wrote it), Reviewed (the Architect checked it), Sent (the Architect sent it to the customer)); Notes (Long text).
 Views:
 - To review: Status = Draft, grouped by Customer.
 - By customer: Grouped by Customer, newest first.
 
 CHECK
-When you show me the plan, confirm: 2 projects; the template has 10 sections, 74 tasks and 44 subtasks; Onboarding Portfolio has 4 tables (Customers, Customer Tasks, Requests, Updates) and Customer Tasks has 9 views. Show me the plan and wait for my approval before you create anything.
+When you show me the plan, confirm: 2 projects; the template has 10 sections, 74 tasks and 44 subtasks; Onboarding Portfolio has 4 tables (Customers, Customer Task, Request, Update) and Customer Task has 9 views. Show me the plan and wait for my approval before you create anything.

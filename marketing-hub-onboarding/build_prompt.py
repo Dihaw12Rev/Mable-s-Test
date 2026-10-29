@@ -68,18 +68,18 @@ PORTFOLIO_TABLES = f"""Table "Customers", one row per customer. Columns: {custom
 Views and reports:
 {portfolio_views}
 
-Table "Customer Tasks": every customer's tasks in one table. Same columns as the template's Tasks table (including the Due date formula, both helper columns, and subtasks), plus "Customer" (link to the Customers row) as the second column. Statuses: {statuses}.
+Table "Customer Task": every customer's tasks in one table. Same columns as the template's Tasks table (including the Due date formula, both helper columns, and subtasks), plus "Customer" (link to the Customers row) as the second column. Statuses: {statuses}.
 Main table: show {visible_ct}. Hide {hidden}.
 Views:
 {views}
-Leave it empty; the Onboarding Task Generator agent fills it for each new customer.
+Leave it empty; the Task Generator fills it for each new customer.
 
-Table "Requests": every customer's requests. Columns: {request_cols}.
+Table "Request": every customer's requests. Columns: {request_cols}.
 Views: "Board by urgency" (columns = Urgency) and "Open requests" (Status not Done or Parked, sorted by Due date).
 Use these as the descriptions of the Urgency options:
 {request_classes}
 
-Table "Updates": drafts the agents write for the Architect. Columns: {update_cols}.
+Table "Update": drafts the agents write for the Architect. Columns: {update_cols}.
 Views:
 {update_views}"""
 
@@ -94,7 +94,7 @@ Keep "Marketing Hub Onboarding (Template)" and its Tasks table as the master tas
 - Update these tasks:
 {changed}
 - Check that the Due date formula follows this rule, and fix it if it doesn't: {due_rule}
-- If the template's Requests table has no rows, remove it. Requests now live in the Onboarding Portfolio.
+- If the template's Request table has no rows, remove it. Requests now live in the Onboarding Portfolio.
 
 2. ONBOARDING PORTFOLIO PROJECT
 Make it hold these four tables.
@@ -104,7 +104,7 @@ Make it hold these four tables.
 3. HOW WE'LL USE IT
 {new_customer}
 
-Show me the plan and wait for my approval before you change anything. When you're done, confirm: 4 tables in Onboarding Portfolio (Customers, Customer Tasks, Requests, Updates), {len(d.WORK_VIEWS)} views on Customer Tasks, 0 rows in Customer Tasks, and tasks 1.01 and 1.02 updated in the template.
+Show me the plan and wait for my approval before you change anything. When you're done, confirm: 4 tables in Onboarding Portfolio (Customers, Customer Task, Request, Update), {len(d.WORK_VIEWS)} views on Customer Task, 0 rows in Customer Task, and tasks 1.01 and 1.02 updated in the template.
 """
 
 PROMPT = f"""Build a workspace called "Client Onboarding" for RevGravy, a HubSpot consultancy, to run every Marketing Hub onboarding. Build only the projects, tables, columns, views, sections, tasks and subtasks below. Don't create agents (I'll create them in the agent builder), documents or forms.
@@ -136,7 +136,7 @@ PROJECT 2: "Onboarding Portfolio"
 {PORTFOLIO_TABLES}
 
 CHECK
-When you show me the plan, confirm: 2 projects; the template has {len(d.PHASES)} sections, {n_tasks} tasks and {n_sub} subtasks; Onboarding Portfolio has 4 tables (Customers, Customer Tasks, Requests, Updates) and Customer Tasks has {len(d.WORK_VIEWS)} views. Show me the plan and wait for my approval before you create anything.
+When you show me the plan, confirm: 2 projects; the template has {len(d.PHASES)} sections, {n_tasks} tasks and {n_sub} subtasks; Onboarding Portfolio has 4 tables (Customers, Customer Task, Request, Update) and Customer Task has {len(d.WORK_VIEWS)} views. Show me the plan and wait for my approval before you create anything.
 """
 
 COMMON_RULE = "Only draft, fill fields or flag. Never send anything to a customer and never change a CRM deal."
@@ -144,7 +144,7 @@ COMMON_RULE = "Only draft, fill fields or flag. Never send anything to a custome
 
 def agent_prompt(a):
     lines = [f"Name: {a['name']}",
-             "Where: \"Client Onboarding\" workspace, \"Onboarding Portfolio\" project. Tables: Customers, Customer Tasks, Requests, Updates. Each row in Customer Tasks, Requests and Updates links to its Customers row through the Customer column.",
+             "Where: \"Client Onboarding\" workspace, \"Onboarding Portfolio\" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column.",
              f"Trigger: {a['trigger']}",
              "What to do:"]
     lines += [f"{i}. {s}" for i, s in enumerate(a["steps"], start=1)]
@@ -159,9 +159,9 @@ for i, a in enumerate(d.WORK_AGENTS, start=1):
 
 AGENTS_MD = f"""# HubSpot Work agent prompts
 
-One prompt per agent for HubSpot Work's agent builder ("What kind of agent do you want to create?"). Create them only after the workspace has the shared tables (Customers, Customer Tasks, Requests, Updates).
+One prompt per agent for HubSpot Work's agent builder ("What kind of agent do you want to create?"). Create them only after the workspace has the shared tables (Customers, Customer Task, Request, Update).
 
-Create the **Onboarding Task Generator** first and test it with a fake customer before adding the rest. The other agents read what it creates.
+Customer tasks are created by the task-seeding workflow (see the redesign prompt). The **Onboarding Task Generator** below is the agent version; use it only if the workflow can't be built. Test task creation with your next real customer before turning on the rest.
 
 Agents spend HubSpot Credits. Delay Flagger and Portfolio Sync run every day.
 
@@ -179,13 +179,13 @@ All of these are generated from `process_data.py` by `build_prompt.py`. Edit the
 
 ## Why shared tables
 
-HubSpot Work has no custom project fields, and copying a project doesn't copy its agents' workflows. With one project per customer, every agent would have to be set up again in each copy, and nothing could look across customers. With shared tables, each Customer Tasks, Requests and Updates row links to its Customers row, and one set of agents covers everyone.
+HubSpot Work has no custom project fields, and copying a project doesn't copy its agents' workflows. With one project per customer, every agent would have to be set up again in each copy, and nothing could look across customers. With shared tables, each Customer Task, Request and Update row links to its Customers row, and one set of agents covers everyone.
 
 ## Order
 
 1. Paste `hubspot-work-redesign-prompt.txt` in the workspace chat and approve the plan.
-2. Create the Onboarding Task Generator from `hubspot-work-agent-prompts.md`.
-3. Test it: add a Customers row "Test Co" with Start date today, Program length 60 and yourself as Architect. Expect {n_tasks} rows in Customer Tasks for Test Co, task 4.11 due in 20 days, 8.05 in 60, 9.05 in 240, P0 tasks undated, and Tasks created = Yes.
+2. Make sure the task-seeding workflow exists (or create the Onboarding Task Generator agent from `hubspot-work-agent-prompts.md`).
+3. Test it: add a Customers row "Test Co" with Start date today, Program length 60 and yourself as Architect. Expect {n_tasks} rows in Customer Task for Test Co, task 4.11 due in 20 days, 8.05 in 60, 9.05 in 240, P0 tasks undated, and Tasks created = Yes.
 4. Create the other {len(d.WORK_AGENTS) - 1} agents.
 5. Delete the Test Co row and its tasks. Share the workspace with Phil and the Architects.
 

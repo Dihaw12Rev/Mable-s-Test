@@ -285,15 +285,15 @@ def work_setup(wb):
     r = table_at(ws, r + 1, ["Tool", "", "Job"], [(t, "", j) for t, j in d.WHERE_IT_LIVES], fill=TEAL) + 2
     heading(ws, r, "Setting up a new customer (all customers share the same tables)")
     r = table_at(ws, r + 1, ["Step", "", "What to do"], [(i, "", st) for i, st in enumerate(d.NEW_CUSTOMER_STEPS, start=1)], fill=TEAL) + 2
-    heading(ws, r, "Task columns (template Tasks table and the shared Customer Tasks table, which adds a Customer link)")
+    heading(ws, r, "Task columns (template Tasks table and the shared Customer Task table, which adds a Customer link)")
     r = table_at(ws, r + 1, ["Column", "Type", "Notes"], d.WORK_TASK_COLUMNS) + 2
     heading(ws, r, "Board statuses")
     r = table_at(ws, r + 1, ["Status", "", ""], [(s, "", "") for s in d.WORK_STATUSES]) + 2
     heading(ws, r, "Views")
     r = table_at(ws, r + 1, ["View", "", "Setup"], [(v, "", s) for v, s in d.WORK_VIEWS]) + 2
-    heading(ws, r, "Requests table (shared, each row linked to its customer)")
+    heading(ws, r, "Request table (shared, each row linked to its customer)")
     r = table_at(ws, r + 1, ["Column", "Type", ""], [(c, t, "") for c, t in d.WORK_REQUEST_COLUMNS]) + 2
-    heading(ws, r, "Updates table (drafts the agents write for the Architect)")
+    heading(ws, r, "Update table (drafts the agents write for the Architect)")
     r = table_at(ws, r + 1, ["Column", "Type", ""], [(c, t, "") for c, t in d.WORK_UPDATE_COLUMNS]) + 2
     heading(ws, r, "Customers table, one row per customer")
     r = table_at(ws, r + 1, ["Column", "Type", ""], [(c, t, "") for c, t in d.WORK_PORTFOLIO_COLUMNS]) + 2

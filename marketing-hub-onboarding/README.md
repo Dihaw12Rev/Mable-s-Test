@@ -8,7 +8,7 @@ Nothing here has been built in the HubSpot portal. These are design files and a 
 
 | File | What it is |
 |---|---|
-| `hubspot-work-redesign-prompt.txt` | Paste into the workspace already built: switches it to shared tables (Customers, Customer Tasks, Requests, Updates) so agents work across customers |
+| `hubspot-work-redesign-prompt.txt` | Paste into the workspace already built: switches it to shared tables (Customers, Customer Task, Request, Update) so agents work across customers |
 | `hubspot-work-agent-prompts.md` | 8 prompts, one per agent, for HubSpot Work's agent builder |
 | `hubspot-work-prompt.txt` | Builds the whole workspace from scratch (no agents) |
 | `hubspot-work-prompt.md` | Which prompt to use when, and the order to set things up |
@@ -34,10 +34,12 @@ python3 build_workbook.py && python3 build_roadmap.py && python3 build_journey.p
   - Supered holds everything the customer sees.
   - Projects pipelines, tickets, the customer portal and Trello are not used for onboarding.
 - **Progress measures:** 0.1, 1.1, 1.2 and 1.3 for every customer. 1.0 and 2.1 only when bought.
-- **Requests:** $250 per request, with urgency classes Critical, High, Standard and Not now.
+- **Requests:** $250 (USD) per request, with urgency classes Critical, High, Standard and Not now. Each request has an Owner, by default the customer's Architect. High and Standard get a reply within 1 business day.
 - **Migrations and website work:** in scope, with suggested limits.
 - **After the program:** 6 months of free KPI monitoring, then the paid offers. Team support uses the existing $1,670/mo Monthly Plan.
-- **Agents:** 8 HubSpot Work agents draft, fill fields or flag. None sends anything to a customer.
-- **HubSpot Work setup:** all customers share one set of tables (Customers, Customer Tasks, Requests, Updates), each row linked to its customer, because Work has no custom project fields and project copies don't carry agents.
+- **Agents:** HubSpot Work agents draft, fill fields or flag, on Bogotá time. None sends anything to a customer. A customer's tasks are created by a fixed task-seeding workflow; the Task Generator agent prompt is a fallback.
+- **Day 0:** the day the deal reaches Start Payment Received, not the kickoff date.
+- **Update statuses:** Draft (an agent wrote it), Reviewed (the Architect checked it), Sent (it went to the customer).
+- **HubSpot Work setup:** all customers share one set of tables (Customers, Customer Task, Request, Update), each row linked to its customer, because Work has no custom project fields and project copies don't carry agents.
 
 All open questions are answered.

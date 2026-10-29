@@ -47,7 +47,12 @@ DECISIONS = [
     ("'What's next' call", "The Architect runs it.", "Tasks 8.02, 8.03 and 9.04 owned by the Architect; Phil reviews the options in 8.01."),
     ("Suggestions from review", "Approved: urgency classes, 2-hour request size, migration and website limits, standard progress measures, $1,670/mo Monthly Plan for team support.", "Applied as written."),
     ("Agents", "HubSpot Work can build agents.", "8 agents added. They only draft, fill dates or flag; none sends anything to a customer."),
-    ("HubSpot Work limits (found in the build)", "No custom project fields; copies of a project don't carry agent workflows.", "All customers share one Customer Tasks, Requests and Updates table, each row linked to its Customers row. The template project's Tasks table is the master list the Task Generator copies from."),
+    ("Agent schedules", "Bogotá time.", "Every scheduled agent runs on America/Bogota time."),
+    ("Creating a customer's tasks", "A fixed workflow, as HubSpot Work suggested.", "The Task Generator is a workflow that copies the 74 template tasks. The agent prompt stays as a fallback."),
+    ("Day 0", "The day the deal reaches Start Payment Received.", "Not the kickoff date. Kickoff happens on Days 5–10."),
+    ("Update statuses", "Draft, Reviewed, Sent.", "An agent writes Draft; the Architect sets Reviewed, and Sent once it goes to the customer."),
+    ("Request handling", "Owner column, USD, reply times.", "Each request has an Owner (default: the customer's Architect). Price is USD. High and Standard get a reply within 1 business day."),
+    ("HubSpot Work limits (found in the build)", "No custom project fields; copies of a project don't carry agent workflows.", "All customers share the Customer Task, Request and Update tables, each row linked to its Customers row. The template project's Tasks table is the master list the Task Generator copies from."),
 ]
 
 PHASES = [
@@ -133,11 +138,11 @@ TASKS = [
     ("2.03", "P2", "Access to connected systems", "DNS/IT contact, website CMS, GA4/GTM, ad accounts, social accounts, and the old email/marketing tool we migrate from.", "Client POC", "Yes", 1, 7, "2.02", "Supered to-do", ""),
     ("2.04", "P2", "Brand & content assets shared", "Brand guide, logos, fonts, colors, email templates, key content, lists to import.", "Client POC", "Yes", 1, 7, "2.02", "Supered upload", ""),
     ("2.05", "P2", "Supered announcement to POC", "Short video: how Supered works (Bases, announcements, documentation) and where updates show up.", "Architect", "Yes", 2, 3, "1.04", "Supered", ""),
-    ("2.06", "P2", "Portal audit", "Data health, email health, existing assets, tracking, workflows, properties, old tool inventory. 1-page summary for kickoff.", "Architect", "No", 3, 7, "2.01", "Work: Updates table", ""),
+    ("2.06", "P2", "Portal audit", "Data health, email health, existing assets, tracking, workflows, properties, old tool inventory. 1-page summary for kickoff.", "Architect", "No", 3, 7, "2.01", "Work: Update table", ""),
     ("2.07", "P2", "Baseline numbers", "Record the 'before' number for each progress measure.", "Architect", "No", 5, 7, "2.06", "Work: Customers row", ""),
 
     # P3 — Kickoff
-    ("3.01", "P3", "Kickoff agenda", "Plan summary, missing items, decisions needed. Drafted from intake + audit.", "Architect", "No", 5, 7, "2.02, 2.06", "Work: Updates table", ""),
+    ("3.01", "P3", "Kickoff agenda", "Plan summary, missing items, decisions needed. Drafted from intake + audit.", "Architect", "No", 5, 7, "2.02, 2.06", "Work: Update table", ""),
     ("3.02", "P3", "Kickoff session (15 min)", "Architect & team intro; confirm the goal and plan; walk through missing items; explain office hours, Friday updates, MBRs and how to send requests.", "Architect", "Yes", 5, 10, "3.01", "Meeting", ""),
     ("3.03", "P3", "Book MBRs and the 'what's next' call", "MBR #1 ≈ Day 30, MBR #2 ≈ Day 60, 'what's next' ≈ Day 60–65, final results review ≈ Day 85 (scaled to program length).", "Architect", "Yes", 5, 10, "3.02", "Meetings", ""),
     ("3.04", "P3", "Kickoff recap within 24h", "Decisions, owners, dates, client to-dos. Supered plan updated.", "Architect", "Yes", 6, 11, "3.02", "Email + Supered", ""),
@@ -180,14 +185,14 @@ TASKS = [
     # P7 — Run cadence (recurring)
     ("7.01", "P7", "Office hours", "Bookable slots for questions, coaching and training practice.", "Architect", "Yes", 7, 90, "1.07", "HubSpot Meetings", "Weekly"),
     ("7.02", "P7", "Weekly update", "Drafted with AI, reviewed and sent by the Architect: work done and the strategic issue it moves, numbers vs baseline, issues found outside scope, next week, client to-dos.", "Architect", "Yes", 7, 90, "4.10", "Email, logged on the deal", "Weekly (Friday)"),
-    ("7.03", "P7", "Handle requests by urgency", "Every request gets logged with an urgency class and handled in that time ($250 per request; see Request Classes).", "Architect", "Yes", 7, 90, "", "Work: Requests table", "As they come in"),
-    ("7.04", "P7", "Log issues and 'not now' ideas", "Out-of-scope issues and client ideas go to the Requests table as 'Not now', to sell later.", "Architect", "No", 7, 90, "", "Work: Requests table", "As they come in"),
+    ("7.03", "P7", "Handle requests by urgency", "Every request gets logged with an urgency class and handled in that time ($250 per request; see Request Classes).", "Architect", "Yes", 7, 90, "", "Work: Request table", "As they come in"),
+    ("7.04", "P7", "Log issues and 'not now' ideas", "Out-of-scope issues and client ideas go to the Request table as 'Not now', to sell later.", "Architect", "No", 7, 90, "", "Work: Request table", "As they come in"),
     ("7.05", "P7", "Health check", "Set Health (On track / At risk / Off track) and blockers. Escalate per the escalation path.", "Architect", "No", 7, 90, "", "Work: Customers row (Health)", "Weekly"),
     ("7.06", "P7", "Monthly Business Review", "Progress vs baseline, numbers trend, issues and opportunities. Architect leads; Phil optional.", "Architect", "Yes", 30, 60, "3.03", "Meeting", "Monthly"),
     ("7.07", "P7", "Internal delivery review", "Phil + Architects: at-risk customers, capacity, blockers.", "Phil", "No", 7, 90, "", "Work: Portfolio", "Weekly"),
 
     # P8 — What's next
-    ("8.01", "P8", "Prep next-phase options", "Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews before the call.", "Architect", "No", 55, 60, "7.04", "Work: Updates table", ""),
+    ("8.01", "P8", "Prep next-phase options", "Results so far, issues found and 'not now' list → Option A and Option B. Phil reviews before the call.", "Architect", "No", 55, 60, "7.04", "Work: Update table", ""),
     ("8.02", "P8", "'What's next' call", "Architect explains the long-term vision and the next phase as an A/B choice.", "Architect", "Yes", 60, 65, "8.01", "Meeting", ""),
     ("8.03", "P8", "Next-phase proposal", "New deal in the Sales Pipeline for the chosen offer.", "Architect", "Yes", 62, 70, "8.02", "Deal", ""),
     ("8.04", "P8", "Final results review", "Before vs after for every progress measure, what we built, what's still open.", "Architect", "Yes", 80, 88, "5.11", "Meeting + dashboard", ""),
@@ -221,8 +226,8 @@ REQUEST_RULES = [
 # class, what it is, response and turnaround, price
 REQUEST_CLASSES = [
     ("Critical", "Something live is broken: forms not submitting, emails not sending, a workflow sending the wrong email, tracking down.", "Reply within 4 business hours; fixed within 1 business day.", "Free if it's in something we built; otherwise $250"),
-    ("High", "Needed for a launch or deadline in the next 2 weeks.", "Started within 2 business days; done within 5.", "$250"),
-    ("Standard", "A small new request with no hard deadline.", "Planned into next week; done within 10 business days.", "$250"),
+    ("High", "Needed for a launch or deadline in the next 2 weeks.", "Reply within 1 business day; done within 5 business days.", "$250"),
+    ("Standard", "A small new request with no hard deadline.", "Reply within 1 business day; done within 10 business days.", "$250"),
     ("Not now", "An idea or a bigger project for later.", "Logged and reviewed at MBRs and the 'what's next' call.", "Quoted when scoped"),
 ]
 
@@ -356,12 +361,12 @@ TOOL_FIT = [
     ("Board, timeline, due dates", (2, "Board, timeline and calendar views"), (2, "Gantt, board, table, calendar"), (0, "Board only")),
     ("Sections per phase", (2, "Tasks grouped by section"), (1, "Pipeline stages"), (1, "Pipeline stages")),
     ("Client can see their plan", (0, "Internal only (Supered covers this)"), (2, "Customer portal"), (1, "Customer portal")),
-    ("Request log with urgency", (2, "Requests table in each project"), (0, "Not its job"), (2, "Ticket pipeline")),
+    ("Request log with urgency", (2, "Request table in each project"), (0, "Not its job"), (2, "Ticket pipeline")),
     ("Maturity", (0, "Public beta"), (2, "Generally available"), (2, "Generally available")),
 ]
 
 WHERE_IT_LIVES = [
-    ("HubSpot Work", "The whole onboarding: one shared set of tables for all customers (Customers, Customer Tasks, Requests, Updates), a template task list, board, timeline and agents."),
+    ("HubSpot Work", "The whole onboarding: one shared set of tables for all customers (Customers, Customer Task, Request, Update), a template task list, board, timeline and agents."),
     ("Supered", "Everything the customer sees: Action Plan, announcements, delivery and training videos, admin handbook."),
     ("HubSpot CRM", "The deal-stage gate, the two welcome emails, meetings links and the dashboards that report progress measures."),
     ("Not used for onboarding", "Projects object pipelines, tickets, HubSpot customer portal, Trello."),
@@ -370,8 +375,8 @@ WHERE_IT_LIVES = [
 # HubSpot Work structure — used by the sheet and the prompts.
 # Checked against the build (Oct 2026): HubSpot Work has no custom project fields, and project copies don't carry
 # agent workflows. So every customer shares the same tables, and each row links to its Customers row. The template
-# project's Tasks table is the master list the Task Generator agent copies from.
-WORK_TIMEZONE = "America/Phoenix"
+# project's Tasks table is the master list the Task Generator (a workflow; an agent version exists) copies from.
+WORK_TIMEZONE = "America/Bogota"   # the team works on Bogotá time
 WORK_STATUSES = ["Not started", "In progress", "Waiting on client", "In review", "Done", "Won't do"]
 WORK_TASK_COLUMNS = [
     ("Task ID", "Text", "e.g. 4.03. First column, so 'Depends on' can be read"),
@@ -404,16 +409,16 @@ WORK_VIEWS = [
     ("Overdue", "Due date before today, Status not Done / Won't do."),
 ]
 WORK_REQUEST_COLUMNS = [
-    ("Customer", "Link to Customers row"),
+    ("Customer", "Link to Customers row"), ("Owner", "HubSpot user, defaults to the customer's Architect"),
     ("Request", "Text"), ("Urgency", "Dropdown: Critical, High, Standard, Not now"),
     ("Type", "Dropdown: Client request, Issue found, Client idea"), ("Status", "Dropdown: New, Quoted, In progress, Done, Parked"),
-    ("Price", "Number, default 250"), ("Logged on", "Date"), ("Due date", "Date"), ("Notes", "Long text"),
+    ("Price", "Number in USD, default 250"), ("Logged on", "Date"), ("Due date", "Date"), ("Notes", "Long text"),
 ]
 WORK_UPDATE_COLUMNS = [
     ("Customer", "Link to Customers row"),
-    ("Type", "Dropdown: Handoff brief, Weekly update, What's next options, KPI snapshot"),
+    ("Type", "Dropdown: Handoff brief, Weekly update, What's next options, KPI snapshot, Delay flag"),
     ("Period", "Date: week of, or month"), ("Draft", "Long text"),
-    ("Status", "Dropdown: Draft, Reviewed, Sent"), ("Notes", "Long text"),
+    ("Status", "Dropdown: Draft (an agent wrote it), Reviewed (the Architect checked it), Sent (the Architect sent it to the customer)"), ("Notes", "Long text"),
 ]
 WORK_UPDATE_VIEWS = [
     ("To review", "Status = Draft, grouped by Customer."),
@@ -422,7 +427,7 @@ WORK_UPDATE_VIEWS = [
 WORK_PORTFOLIO_COLUMNS = [
     ("Customer", "Text: client name"),
     ("Company", "CRM company"), ("Deal", "CRM deal"), ("Architect", "HubSpot user"),
-    ("Program length", "Number: 60, 75 or 90"), ("Start date", "Date, Day 0"), ("Target end date", "Date"),
+    ("Program length", "Number: 60, 75 or 90"), ("Start date", "Date: Day 0 = the day the deal reached Start Payment Received, not the kickoff date"), ("Target end date", "Date"),
     ("Marketing Hub tier", "Dropdown: Professional, Enterprise"), ("Health", "Dropdown: On track, At risk, Off track"),
     ("Current section", "Dropdown: P0–P9, Completed"), ("Next MBR", "Date, filled by the Architect when booked"),
     ("Next due task", "Text"), ("Tasks created", "Yes/No"),
@@ -438,7 +443,7 @@ WORK_PORTFOLIO_VIEWS = [
 # How a new customer gets set up.
 NEW_CUSTOMER_STEPS = [
     "Add a row to Customers: Customer, Company, Deal, Architect, Program length, Start date, tier, From→To goal, FigJam and Supered links.",
-    "The Task Generator agent copies the template tasks into Customer Tasks for that customer, fills the dates, assigns the Architect and sets Tasks created = Yes.",
+    "The Task Generator (a workflow) copies the template tasks into Customer Task for that customer, fills the dates, assigns the Architect and sets Tasks created = Yes.",
     "To work on one customer, filter any view by Customer. 'My tasks' shows an Architect's work across all their customers.",
     "Share the workspace with Phil and the Architects (it's private by default).",
 ]
@@ -448,14 +453,14 @@ NEW_CUSTOMER_STEPS = [
 WORK_AGENTS = [
     {"name": "Onboarding Task Generator", "sample": "Auto-create customer onboarding",
      "trigger": "A row in the Customers table has Start date, Program length and Architect filled, and Tasks created is not Yes. Also run when Start date, Program length or Architect changes on a row where Tasks created is Yes.",
-     "summary": "Copies the template tasks into Customer Tasks for a new customer, fills the dates and assigns the Architect.",
+     "summary": "Copies the template tasks into Customer Task for a new customer, fills the dates and assigns the Architect. Use it only if the task-seeding workflow can't be built.",
      "steps": [
-         "New customer (Tasks created is not Yes): copy every row of the Tasks table in the 'Marketing Hub Onboarding (Template)' project into the Customer Tasks table. Keep Task ID, Task, Section, Owner role, Client-facing, Start day, Due day, Repeats, Depends on, Definition of done and the subtasks. Set Customer = this Customers row and Status = Not started.",
-         "On all of this customer's Customer Tasks rows, set Project Day 0 = the row's Start date and Program length = the row's Program length, so the Due date formula calculates.",
+         "New customer (Tasks created is not Yes): copy every row of the Tasks table in the 'Marketing Hub Onboarding (Template)' project into the Customer Task table. Keep Task ID, Task, Section, Owner role, Client-facing, Start day, Due day, Repeats, Depends on, Definition of done and the subtasks. Set Customer = this Customers row and Status = Not started.",
+         "On all of this customer's Customer Task rows, set Project Day 0 = the row's Start date and Program length = the row's Program length, so the Due date formula calculates.",
          "Set Assignee = the row's Architect on every task whose Owner role is Architect.",
          "On the Customers row, set Target end date = Start date + Program length days, Tasks created = Yes, Current section = P1 and Health = On track.",
          "Later changes (Tasks created is Yes): only update Project Day 0 and Program length on that customer's tasks and the Target end date. If the Architect changed, move the Architect's open tasks (Status not Done or Won't do) to the new Architect.",
-         "Notify the Architect with a link to Customer Tasks filtered to this customer.",
+         "Notify the Architect with a link to Customer Task filtered to this customer.",
      ],
      "rules": [
          "Never create a second set of tasks for a customer that already has them.",
@@ -469,7 +474,7 @@ WORK_AGENTS = [
          "Read the CRM deal on the Customers row: its notes, meetings, emails, quote and line items. Also read the row's From→To goal, Progress measures and FigJam link.",
          "Write a one-page brief: who the customer is, the From→To goal, what they bought, the progress measures, the people involved (POC, supporters, decision maker), risks, and open questions for the handoff call.",
          "List any pre-sale item that looks missing: FigJam link, From→To statement, products, progress measures, survey, POC and supporters, signed agreement.",
-         "Add it to the Updates table: Customer = this customer, Type = Handoff brief, Status = Draft.",
+         "Add it to the Update table: Customer = this customer, Type = Handoff brief, Status = Draft.",
          "Notify the Architect and Phil.",
      ],
      "rules": ["Internal only. Never contact the customer.", "If there's no deal on the row, write what you can and say the deal is missing."]},
@@ -477,39 +482,40 @@ WORK_AGENTS = [
      "trigger": f"Every Thursday at 9:00 AM ({WORK_TIMEZONE}).",
      "summary": "Drafts each customer's Friday update for the Architect to review and send.",
      "steps": [
-         "For each Customers row whose Current section is P2 to P8, look at that customer's Customer Tasks and Requests.",
+         "For each Customers row whose Current section is P2 to P8, look at that customer's Customer Task and Requests.",
          "Draft the update in five parts: 1) what we did this week and which strategic issue it moves (tie it to the From→To goal), 2) numbers vs baseline, 3) issues found that are outside scope, 4) what we'll do next week, 5) the client's to-dos.",
          "Use: tasks that became Done in the last 7 days; tasks due in the next 7 days; tasks with Owner role Client POC that aren't Done; Requests logged in the last 7 days with Type Issue found or Client idea.",
          "For part 2, write '[Architect: add this week's numbers from the dashboard]' unless numbers are in the row's Progress measures.",
-         "Add it to the Updates table: Customer, Type = Weekly update, Period = this Friday's date, Status = Draft. Notify the Architect.",
+         "Add it to the Update table: Customer, Type = Weekly update, Period = this Friday's date, Status = Draft. Notify the Architect.",
      ],
-     "rules": ["Short and plain: no more than about 200 words.", "One draft per customer per week. If one already exists, update it instead.", "Never send it to the customer. The Architect reviews and sends."]},
+     "rules": ["Short and plain: no more than about 200 words.", "One draft per customer per week. If one already exists and is still Draft, update it instead. Never change one that is Reviewed or Sent.", "Never send it to the customer. The Architect reviews it (Status = Reviewed), sends it, then sets Status = Sent."]},
     {"name": "Delay Flagger", "sample": None,
      "trigger": f"Every weekday at 8:00 AM ({WORK_TIMEZONE}).",
      "summary": "Flags overdue and stuck tasks and sets Health to At risk.",
      "steps": [
-         "For each Customers row that isn't Completed, find that customer's Customer Tasks that are past their Due date with Status not Done or Won't do, and tasks that have been 'Waiting on client' for more than 3 days.",
+         "For each Customers row that isn't Completed, find that customer's Customer Task that are past their Due date with Status not Done or Won't do, and tasks that have been 'Waiting on client' for more than 3 days.",
          "Send the Architect one message per customer listing those tasks, with links.",
          "If a customer has 3 or more overdue tasks and Health is On track, set Health = At risk.",
          "When Health changes to At risk or Off track, also notify Phil.",
      ],
      "rules": ["Don't change task dates, statuses or assignees.", "Send nothing when there's nothing to flag.", "Never set Health back to On track; the Architect does that."]},
     {"name": "Request Triage", "sample": "Auto-route requests",
-     "trigger": "A new row is added to the Requests table.",
+     "trigger": "A new row is added to the Request table.",
      "summary": "Suggests the urgency class, price and due date for each new request.",
      "steps": [
          "Read the Request and Notes and set Urgency: Critical = something live is broken (forms not submitting, emails not sending, a workflow sending the wrong email, tracking down). High = needed for a launch or deadline in the next 2 weeks. Standard = small, no hard deadline. Not now = an idea or a bigger project for later.",
+         "If Owner is empty, set it to the customer's Architect.",
          "Set Due date from Logged on: Critical = 1 business day, High = 5 business days, Standard = 10 business days, Not now = leave empty.",
          "Set Price: 250 for High and Standard. For Critical, 0 if it's in something we built, otherwise 250. Not now = empty.",
          "If it looks bigger than about 2 hours of work (one email, one form, one workflow change, one report), set Status = Quoted and explain why in Notes.",
-         "Notify the customer's Architect. For Critical, notify the Architect and Phil right away.",
+         "Notify the Owner, and remind them of the reply time: within 4 business hours for Critical, within 1 business day for High and Standard. For Critical, also notify Phil right away.",
      ],
-     "rules": ["The Architect can override anything you set.", "Never reply to the customer.", "If Customer is empty, ask the person who added the row to fill it."]},
+     "rules": ["The Architect can override anything you set.", "Never reply to the customer.", "If Customer is empty, ask the person who added the row to fill it.", "Price is in USD. The default 250 is not the customer's approval; paid work waits for their OK."]},
     {"name": "Portfolio Sync", "sample": None,
      "trigger": f"Every day at 6:00 AM ({WORK_TIMEZONE}).",
      "summary": "Keeps each customer's Current section and Next due task up to date.",
      "steps": [
-         "For each Customers row that isn't Completed, look at that customer's Customer Tasks.",
+         "For each Customers row that isn't Completed, look at that customer's Customer Task.",
          "Set Current section = the earliest section that still has open tasks (Status not Done or Won't do). Ignore P0 and P7, which run the whole program. Ignore P9 until the Target end date has passed.",
          "Set Next due task = the open task with the earliest Due date, written as 'Task ID Task (date)'.",
          "If every task in P1 to P8 is Done or Won't do and the Target end date has passed, set Current section = P9.",
@@ -521,7 +527,7 @@ WORK_AGENTS = [
      "steps": [
          "Read the customer's Weekly update drafts, their Progress measures, and their Requests with Type Issue found or Client idea, or Urgency Not now.",
          "Write: results so far vs baseline; issues found; ideas parked as 'not now'; then Option A and Option B for the next phase. Add which after-program offer fits: team support ($1,670/mo Monthly Plan), building internal capacity, or one initiative a month. Every customer also gets 6 months of free KPI monitoring.",
-         "Add it to the Updates table: Type = What's next options, Status = Draft.",
+         "Add it to the Update table: Type = What's next options, Status = Draft.",
          "Notify the Architect, and ask Phil to review it before the call.",
      ],
      "rules": ["One per customer.", "Internal only. Never contact the customer."]},
@@ -531,7 +537,7 @@ WORK_AGENTS = [
      "steps": [
          "Find Customers rows whose Target end date is in the past, but less than 6 months ago.",
          "For each one, draft 3 short notes on their progress measures: what moved, what didn't, one suggestion. Use '[Architect: add numbers]' where you don't have them.",
-         "Add it to the Updates table: Type = KPI snapshot, Period = this month, Status = Draft. Notify the Architect, who sends it with the dashboard email.",
+         "Add it to the Update table: Type = KPI snapshot, Period = this month, Status = Draft. Notify the Architect, who sends it with the dashboard email.",
      ],
      "rules": ["Stop for a customer once 6 months have passed since their Target end date.", "Never send it to the customer."]},
 ]
@@ -579,8 +585,8 @@ JOURNEY = [
      "architect": ["Gets two notifications: the tasks are ready, and the Handoff Brief draft is waiting."],
      "ops": ["Adds the Customers row within 4 business hours: Customer, Company, Deal, Architect, Program length, Start date (the payment date), tier, From→To goal, FigJam and Supered links.",
              "Builds the Supered Action Plan from the template and checks welcome email #1 went out."],
-     "work": ["Onboarding Task Generator creates 74 Customer Tasks with due dates, assigns the Architect's tasks, sets Target end date, Tasks created = Yes, Current section = P1 and Health = On track.",
-              "Handoff Brief writes a one-page draft in Updates for the Architect and Phil."],
+     "work": ["The Task Generator workflow creates 74 Customer Task rows with due dates, assigns the Architect's tasks, sets Target end date, Tasks created = Yes, Current section = P1 and Health = On track.",
+              "Handoff Brief writes a one-page draft in the Update table for the Architect and Phil."],
      "done": ["1.01", "1.02", "1.03", "1.04"]},
     {"stage": "Week 1", "start": 1, "end": 3, "title": "Handoff",
      "customer": ["Gets welcome email #2 on Day 2: how office hours, Friday updates, requests and escalation work.",
@@ -592,7 +598,7 @@ JOURNEY = [
                    "Sets Won't do on what this customer didn't buy (5.04 and 5.05 here, plus Enterprise-only subtasks for a Pro customer), with a note.",
                    "Adds the office hours link to Supered and marks the Handoff Brief Reviewed."],
      "ops": [],
-     "work": ["Handoff Brief moves to Reviewed in Updates.",
+     "work": ["Handoff Brief moves to Reviewed in the Update table.",
               "Portfolio Sync runs every day at 6:00 AM from now on, keeping Current section and Next due task current."],
      "done": ["0.01", "0.02", "0.03", "0.04", "0.05", "0.06", "0.07", "0.08", "1.05", "1.06", "1.07", "1.08", "1.09"],
      "wont": ["5.04", "5.05"]},
@@ -665,7 +671,7 @@ JOURNEY = [
      "phil": ["Reviews Option A and Option B before the call."],
      "architect": ["Edits the draft: results, issues found, 'not now' ideas, two next-phase options and the offer that fits."],
      "ops": [],
-     "work": ["What's Next Prep fires 35 days before the Target end date and writes the draft in Updates.",
+     "work": ["What's Next Prep fires 35 days before the Target end date and writes the draft in the Update table.",
               "The customer shows up in the Ending soon view."],
      "done": ["8.01"],
      "note": "In the example, Day 55 is Sunday, Dec 27. The agent still runs; the Architect edits the draft on Monday."},
