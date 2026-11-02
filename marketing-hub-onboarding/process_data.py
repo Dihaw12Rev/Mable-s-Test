@@ -53,6 +53,7 @@ DECISIONS = [
     ("Day 0", "The day the deal reaches Start Payment Received.", "Not the kickoff date. Kickoff happens on Days 5–10."),
     ("Update statuses", "Draft, Reviewed, Sent.", "An agent writes Draft; the Architect sets Reviewed, and Sent once it goes to the customer."),
     ("Request handling", "Owner column, USD, reply times.", "Each request has an Owner (default: the customer's Architect). Price is USD. High and Standard get a reply within 1 business day."),
+    ("Library tables", "Four tables, as built: Onboarding Library (Core), Marketing, Sales and Service Onboarding Library.", "The Task Generator reads the table that matches each module. The 13 Core tasks from P4–P6 that went missing in the split go back into the Onboarding Library."),
     ("HubSpot Work limits (found in the build)", "No custom project fields; copies of a project don't carry agent workflows.", "All customers share the Customer Task, Request and Update tables, each row linked to its Customers row. The template project's Tasks table is the master list the Task Generator copies from."),
 ]
 
@@ -474,7 +475,7 @@ WHERE_IT_LIVES = [
 # HubSpot Work structure — used by the sheet and the prompts.
 # Checked against the build (Oct 2026): HubSpot Work has no custom project fields, and project copies don't carry
 # agent workflows. So every customer shares the same tables, and each row links to its Customers row. The template
-# 'Onboarding Task Library' project's Task Library table is the master list (Core + one module per hub) the Task Generator copies from.
+# 'Onboarding Task Library' project's four library tables are the master list (Core + one module per hub) the Task Generator copies from.
 WORK_TIMEZONE = "America/Bogota"   # the team works on Bogotá time
 WORK_STATUSES = ["Not started", "In progress", "Waiting on client", "In review", "Done", "Won't do"]
 WORK_TASK_COLUMNS = [
@@ -562,7 +563,7 @@ WORK_AGENTS = [
      "steps": [
          "Check the row has Start date, Program length, Architect and at least one Products purchased value. If any is missing, untick Create tasks and tell the person who ticked it what's missing.",
          "Work out which modules to copy. Core: only if Tasks created for is empty. Then each product in Products purchased that isn't in Tasks created for yet: Marketing Hub Onboarding = Module 'Marketing Hub', Sales Hub Onboarding = 'Sales Hub', Service Hub Onboarding = 'Service Hub'.",
-         "For each of those modules, copy every row of the Task Library table (in the 'Onboarding Task Library' project) whose Module matches into Customer Task. Keep Task ID, Task, Module, Section, Owner role, Client-facing, Start day, Due day, Repeats, Depends on, Definition of done and the subtasks. Set Customer = this row and Status = Not started.",
+         "For each of those modules, copy every row of its library table (in the 'Onboarding Task Library' project) into Customer Task: Core = 'Onboarding Library', Marketing Hub = 'Marketing Onboarding Library', Sales Hub = 'Sales Onboarding Library', Service Hub = 'Service Onboarding Library'. Keep Task ID, Task, Module, Section, Owner role, Client-facing, Start day, Due day, Repeats, Depends on, Definition of done and the subtasks. Set Customer = this row and Status = Not started.",
          "On the new rows, set Program length = the row's Program length and Project Day 0 = the row's Start date. For a module added after the first run (an upsell), set Project Day 0 = today instead.",
          "Set Assignee = the row's Architect on every new task whose Owner role is Architect.",
          "On the Customers row: add the products just created to Tasks created for, set Target end date = Start date + Program length days if it's empty, set Current section = P1 and Health = On track on the first run, then untick Create tasks.",

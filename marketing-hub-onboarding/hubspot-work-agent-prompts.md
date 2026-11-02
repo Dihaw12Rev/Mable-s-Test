@@ -12,12 +12,12 @@ Copies the Core tasks plus one module per product purchased into Customer Task, 
 
 ```text
 Name: Onboarding Task Generator
-Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The master task list is the "Task Library" table in the "Onboarding Task Library" project.
+Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The task libraries are in the "Onboarding Task Library" project: Onboarding Library (Core), Marketing Onboarding Library, Sales Onboarding Library, Service Onboarding Library.
 Trigger: Create tasks is ticked on a Customers row.
 What to do:
 1. Check the row has Start date, Program length, Architect and at least one Products purchased value. If any is missing, untick Create tasks and tell the person who ticked it what's missing.
 2. Work out which modules to copy. Core: only if Tasks created for is empty. Then each product in Products purchased that isn't in Tasks created for yet: Marketing Hub Onboarding = Module 'Marketing Hub', Sales Hub Onboarding = 'Sales Hub', Service Hub Onboarding = 'Service Hub'.
-3. For each of those modules, copy every row of the Task Library table (in the 'Onboarding Task Library' project) whose Module matches into Customer Task. Keep Task ID, Task, Module, Section, Owner role, Client-facing, Start day, Due day, Repeats, Depends on, Definition of done and the subtasks. Set Customer = this row and Status = Not started.
+3. For each of those modules, copy every row of its library table (in the 'Onboarding Task Library' project) into Customer Task: Core = 'Onboarding Library', Marketing Hub = 'Marketing Onboarding Library', Sales Hub = 'Sales Onboarding Library', Service Hub = 'Service Onboarding Library'. Keep Task ID, Task, Module, Section, Owner role, Client-facing, Start day, Due day, Repeats, Depends on, Definition of done and the subtasks. Set Customer = this row and Status = Not started.
 4. On the new rows, set Program length = the row's Program length and Project Day 0 = the row's Start date. For a module added after the first run (an upsell), set Project Day 0 = today instead.
 5. Set Assignee = the row's Architect on every new task whose Owner role is Architect.
 6. On the Customers row: add the products just created to Tasks created for, set Target end date = Start date + Program length days if it's empty, set Current section = P1 and Health = On track on the first run, then untick Create tasks.
@@ -35,7 +35,7 @@ Writes a one-page brief for the Architect from the deal's history. Start from a 
 
 ```text
 Name: Handoff Brief
-Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The master task list is the "Task Library" table in the "Onboarding Task Library" project.
+Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The task libraries are in the "Onboarding Task Library" project: Onboarding Library (Core), Marketing Onboarding Library, Sales Onboarding Library, Service Onboarding Library.
 Trigger: Tasks created for changes from empty to having a value on a Customers row (the first time a customer's tasks are created).
 What to do:
 1. Read the CRM deal on the Customers row: its notes, meetings, emails, quote and line items. Also read the row's From→To goal, Progress measures and FigJam link.
@@ -55,7 +55,7 @@ Drafts each customer's Friday update for the Architect to review and send. Start
 
 ```text
 Name: Weekly Update Drafter
-Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The master task list is the "Task Library" table in the "Onboarding Task Library" project.
+Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The task libraries are in the "Onboarding Task Library" project: Onboarding Library (Core), Marketing Onboarding Library, Sales Onboarding Library, Service Onboarding Library.
 Trigger: Every Thursday at 9:00 AM (America/Bogota).
 What to do:
 1. For each Customers row whose Current section is P2 to P8, look at that customer's Customer Task and Requests.
@@ -76,7 +76,7 @@ Flags overdue and stuck tasks and sets Health to At risk. Start from a blank age
 
 ```text
 Name: Delay Flagger
-Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The master task list is the "Task Library" table in the "Onboarding Task Library" project.
+Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The task libraries are in the "Onboarding Task Library" project: Onboarding Library (Core), Marketing Onboarding Library, Sales Onboarding Library, Service Onboarding Library.
 Trigger: Every weekday at 8:00 AM (America/Bogota).
 What to do:
 1. For each Customers row that isn't Completed, find that customer's Customer Task that are past their Due date with Status not Done or Won't do, and tasks that have been 'Waiting on client' for more than 3 days.
@@ -96,7 +96,7 @@ Suggests the urgency class, price and due date for each new request. Start from 
 
 ```text
 Name: Request Triage
-Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The master task list is the "Task Library" table in the "Onboarding Task Library" project.
+Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The task libraries are in the "Onboarding Task Library" project: Onboarding Library (Core), Marketing Onboarding Library, Sales Onboarding Library, Service Onboarding Library.
 Trigger: A new row is added to the Request table.
 What to do:
 1. Read the Request and Notes and set Urgency: Critical = something live is broken (forms not submitting, emails not sending, a workflow sending the wrong email, tracking down). High = needed for a launch or deadline in the next 2 weeks. Standard = small, no hard deadline. Not now = an idea or a bigger project for later.
@@ -119,7 +119,7 @@ Keeps each customer's Current section and Next due task up to date. Start from a
 
 ```text
 Name: Portfolio Sync
-Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The master task list is the "Task Library" table in the "Onboarding Task Library" project.
+Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The task libraries are in the "Onboarding Task Library" project: Onboarding Library (Core), Marketing Onboarding Library, Sales Onboarding Library, Service Onboarding Library.
 Trigger: Every day at 6:00 AM (America/Bogota).
 What to do:
 1. For each Customers row that isn't Completed, look at that customer's Customer Task.
@@ -138,7 +138,7 @@ Prepares Option A and Option B for the 'what's next' call. Start from a blank ag
 
 ```text
 Name: What's Next Prep
-Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The master task list is the "Task Library" table in the "Onboarding Task Library" project.
+Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The task libraries are in the "Onboarding Task Library" project: Onboarding Library (Core), Marketing Onboarding Library, Sales Onboarding Library, Service Onboarding Library.
 Trigger: Every day at 7:00 AM (America/Bogota), for Customers rows whose Target end date is 35 days away or less and that don't have a 'What's next options' update yet.
 What to do:
 1. Read the customer's Weekly update drafts, their Progress measures, and their Requests with Type Issue found or Client idea, or Urgency Not now.
@@ -157,7 +157,7 @@ Drafts the monthly KPI notes during the 6 months of free monitoring. Start from 
 
 ```text
 Name: KPI Snapshot Drafter
-Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The master task list is the "Task Library" table in the "Onboarding Task Library" project.
+Where: "Client Onboarding" workspace, "Onboarding Portfolio" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The task libraries are in the "Onboarding Task Library" project: Onboarding Library (Core), Marketing Onboarding Library, Sales Onboarding Library, Service Onboarding Library.
 Trigger: The 1st of every month at 9:00 AM (America/Bogota).
 What to do:
 1. Find Customers rows whose Target end date is in the past, but less than 6 months ago.

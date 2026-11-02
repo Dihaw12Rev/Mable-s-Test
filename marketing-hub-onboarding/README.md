@@ -15,25 +15,27 @@ Nothing here has been built in the HubSpot portal. These are design files and a 
 | `Marketing_Hub_Onboarding_Process.xlsx` | The sheet: Decisions, Roadmap, Task Template (Program length input compresses dates), Progress Measures, Requests, After the Program, Intake Form, Tech Setup, Training, Comms, HubSpot Work Setup, Tool Fit |
 | `roadmap.html` | Visual roadmap for review, with a 60/75/90-day switch |
 | `journey.html` | The full experience start to end: what the customer, Phil, the Architect, Ops and HubSpot Work do at each moment, when to mark tasks Done, requests, statuses and exceptions |
+| `RevGravy_Customer_Onboarding_SOP.pdf` | The SOP as a designed PDF: procedure, roles, requests, statuses, rhythm, automation status, rollout checklist, and appendices with the full task library, progress measures, training, intake and setup checklist |
+| `hubspot-work-fix-prompt.txt` | Fix-up for the current build: restores 13 missing Core tasks, adds Products purchased / Create tasks, Bogotá schedules, Delay Flagger recipient, SOP updates |
 | `process_data.py` | Single source of truth for all content |
 | `build_workbook.py`, `build_roadmap.py`, `build_journey.py`, `build_prompt.py` | Regenerate the sheet, the roadmap, the journey and the prompts from `process_data.py` |
 
 To change the process, edit `process_data.py`, then run:
 
 ```bash
-python3 build_workbook.py && python3 build_roadmap.py && python3 build_journey.py && python3 build_prompt.py
+python3 build_workbook.py && python3 build_roadmap.py && python3 build_journey.py && python3 build_prompt.py && python3 build_sop_pdf.py && node render_pdf.js
 ```
 
 ## What the review decided
 
 - **Program length:** 60–90 days. The plan is laid out for 90. For shorter programs, week one stays fixed and later due dates compress in proportion.
-- **Tiers:** Marketing Hub Professional and Enterprise. Setup items are tagged "Pro & Ent" or "Ent only".
+- **Tiers:** Professional and Enterprise for every hub. Setup items are tagged "Pro & Ent" or "Ent only".
 - **Roles:** Phil leads strategy through the sale and the handoff, and picks the Architect based on capacity. The Architect takes over after that, including the "what's next" call. Phil reviews the next-phase options.
 - **Where it lives:**
   - HubSpot Work holds everything internal.
   - Supered holds everything the customer sees.
   - Projects pipelines, tickets, the customer portal and Trello are not used for onboarding.
-- **Progress measures:** 0.1, 1.1, 1.2 and 1.3 for every customer. 1.0 and 2.1 only when bought.
+- **Progress measures:** Marketing 0.1, 1.1, 1.2, 1.3 (+1.0, 1.4 if bought); Sales 2.1, 2.2, 3.2 (+3.1); Service 4.1, 4.2 (+4.3).
 - **Requests:** $250 (USD) per request, with urgency classes Critical, High, Standard and Not now. Each request has an Owner, by default the customer's Architect. High and Standard get a reply within 1 business day.
 - **Migrations and website work:** in scope, with suggested limits.
 - **After the program:** 6 months of free KPI monitoring, then the paid offers. Team support uses the existing $1,670/mo Monthly Plan.

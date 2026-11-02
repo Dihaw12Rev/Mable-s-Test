@@ -223,7 +223,7 @@ COMMON_RULE = "Only draft, fill fields or flag. Never send anything to a custome
 
 def agent_prompt(a):
     lines = [f"Name: {a['name']}",
-             f"Where: \"Client Onboarding\" workspace, \"Onboarding Portfolio\" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The master task list is the \"{LIBRARY_TABLE}\" table in the \"{LIBRARY_PROJECT}\" project.",
+             f"Where: \"Client Onboarding\" workspace, \"Onboarding Portfolio\" project. Tables: Customers, Customer Task, Request, Update. Each row in Customer Task, Request and Update links to its Customers row through the Customer column. The task libraries are in the \"{LIBRARY_PROJECT}\" project: Onboarding Library (Core), Marketing Onboarding Library, Sales Onboarding Library, Service Onboarding Library.",
              f"Trigger: {a['trigger']}",
              "What to do:"]
     lines += [f"{i}. {s}" for i, s in enumerate(a["steps"], start=1)]
@@ -253,6 +253,41 @@ FILES = [
     ("hubspot-work-library-4-customers.txt", LIB4, "Adds Products purchased, Create tasks and Tasks created for to Customers, and Module to Customer Task."),
 ]
 
+# ---- Fix-up after the four-table library split (Nov 2026) ----
+MISSING_CORE = ["4.01", "4.05", "4.07", "4.09", "4.10", "4.11", "4.12", "5.11", "5.12", "6.01", "6.03", "6.04", "6.05"]
+missing = [t for t in ORDERED if t[0] in MISSING_CORE]
+FIX = f"""Please make these fixes in "Client Onboarding". {CHECK_RULE}
+
+1. RESTORE THE 13 MISSING CORE TASKS
+Add these to the "Onboarding Library" table in the "{LIBRARY_PROJECT}" project, each in its section, with Module = Core, Status = Not started, and Task ID, Owner role, Client-facing, Start day, Due day, Repeats, Depends on and Definition of done ("Done when") from its line. Add the "Subtasks" as a checklist under the task.
+
+{sections_for(missing)}
+
+2. CUSTOMERS TABLE
+- Add "Products purchased" (Multi-select: {products}).
+- Add "Create tasks" (Checkbox). Ops ticks it to create or add a customer's tasks.
+- Replace "Tasks created" with "Tasks created for" (Multi-select, same options as Products purchased).
+- Replace "Marketing Hub tier" with "Hub tiers" (Text, e.g. "Marketing Pro, Sales Enterprise").
+- Add a "Module" column (Dropdown: Core, Marketing Hub, Sales Hub, Service Hub) to the Customer Task table, right after Task, and a "By module" view (grouped by Customer, then Module).
+- Change the Handoff Brief agent's trigger to "Tasks created for changes from empty to having a value". Keep its workflow off for now.
+
+3. AGENT SCHEDULES AND DELAY FLAGGER
+- Move every agent and workflow schedule to America/Bogota time, keeping the same local times.
+- Delay Flagger: send each customer's digest to that customer's Architect (from the Customers row), not to one fixed person. Turn its two workflows off until the first real customer has tasks, so it matches its paused agent.
+
+4. DOCUMENTS
+Make "RevGravy Customer Onboarding SOP Guide" the single source, and update it:
+- Scope: Marketing, Sales and Service Hub onboarding, Professional or Enterprise.
+- Step 2: Ops sets Products purchased and ticks Create tasks. Step 3: the Onboarding Task Generator agent copies the Onboarding Library once plus one library per product into Customer Task, then fills Tasks created for. Manual task creation is the fallback while the agent is paused.
+- Next MBR: about Day 30 and Day 60 (scaled for 60- or 75-day programs), not Day 45.
+- Requests: Critical = reply within 4 business hours, fixed within 1 business day (free if it's in something we built). High = reply within 1 business day, done within 5. Standard = reply within 1 business day, done within 10. Not now = reviewed at MBRs and the what's next call.
+- P9: 6 months of free KPI monitoring after the program (a monthly KPI snapshot email with the Architect's notes), check-ins at months 3 and 6 after the program, and a paid-offer conversation at month 5: team support ($1,670/mo Monthly Plan), building internal capacity, or one initiative a month.
+- Remove the "Coverage gap" note once step 1 is done.
+Then archive "End-to-End Customer Onboarding Experience", or replace its content with a link to the SOP. It's out of date (Day 0 as kickoff, Draft-only statuses, no Request owner, Phoenix time).
+
+When you're done, confirm: Onboarding Library has {count["Core"]} tasks; the four Customers changes and the Customer Task Module column exist; all schedules are on Bogotá time; Delay Flagger's workflows are off; and the SOP is updated.
+"""
+
 GUIDE = f"""# HubSpot Work prompts: client onboarding
 
 All of these are generated from `process_data.py` by `build_prompt.py`. Edit the data and re-run the script; don't edit the text by hand.
@@ -277,6 +312,7 @@ Paste steps 1–4 into the workspace chat one at a time, approving each plan. Te
 `hubspot-work-prompt.txt` builds the whole workspace (library with all three hubs, plus the Onboarding Portfolio tables) in a new workspace. Then create the agents.
 """
 
+(HERE / "hubspot-work-fix-prompt.txt").write_text(FIX, encoding="utf-8")
 for f, text, _ in FILES:
     (HERE / f).write_text(text, encoding="utf-8")
 (HERE / "hubspot-work-prompt.txt").write_text(PROMPT, encoding="utf-8")
@@ -284,5 +320,6 @@ for f, text, _ in FILES:
 (HERE / "hubspot-work-prompt.md").write_text(GUIDE, encoding="utf-8")
 for f, text, _ in FILES:
     print(f"{f}: {len(text):,} characters")
+print(f"Fix prompt: {len(FIX):,} characters, {len(missing)} tasks restored")
 print(f"Full prompt: {len(PROMPT):,} characters, {len(d.TASKS)} tasks, {n_sub(d.TASKS)} subtasks")
 print(f"Agent prompts: {len(d.WORK_AGENTS)}, longest {max(len(agent_prompt(a)) for a in d.WORK_AGENTS):,} characters")
