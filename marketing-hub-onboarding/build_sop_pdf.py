@@ -12,7 +12,7 @@ import process_data as d
 HERE = Path(__file__).parent
 OUT_HTML = HERE / "sop.html"
 E = html.escape
-VERSION_DATE = "2 November 2026"
+VERSION_DATE = "November 2026"
 
 PHASE = {p["id"]: p for p in d.PHASES}
 MODULE_LABEL = {"Core": "Core", "MH": "Marketing", "SH": "Sales", "SV": "Service"}
@@ -54,10 +54,10 @@ STEPS = [
             "It fills each task's Project Day 0 and Program length so the Due date formula calculates, and assigns the Architect's tasks.",
             "It sets Target end date, adds the products to Tasks created for, and unticks Create tasks.",
             f"Ops checks the count: Core {count['Core']}, plus Marketing {count['MH']}, Sales {count['SH']}, Service {count['SV']}.",
-            "Fallback while the agent is paused: Ops copies the rows by hand and fills the same fields."],
+            "If the tasks don't appear within 15 minutes, Ops copies them from the libraries by hand and fills the same fields."],
      "done": "Tasks created for lists every product purchased, and the task count matches."},
     {"n": 4, "title": "Run the internal handoff", "when": "Days 1–3", "who": ["Phil", "Architect"],
-     "do": ["Read the Handoff Brief draft in the Update table. Until that agent is switched on, Phil and the Architect prepare the brief by hand.",
+     "do": ["Read the Handoff Brief in the Update table. It's written from the deal's history; correct anything that's wrong before the call.",
             "Hold a 30-minute handoff call: what was bought, the outcome, baselines and targets, people and decision path, access needs, risks, the first customer commitment.",
             "The Architect walks the P0 checklist and marks each item Done only with evidence. Anything missing goes back to Phil, who fixes it within 24 hours.",
             "The Architect sets Won't do, with a reason, on anything the customer didn't buy (optional builds, Enterprise-only items for a Pro customer).",
@@ -104,7 +104,7 @@ STEPS = [
             "MBRs compare sourced actuals with baseline and target."],
      "done": "Recurring tasks stay In progress until close-out. Each Sent update is the record that the week happened."},
     {"n": 10, "title": "Handle requests", "when": "Any time", "who": ["Architect", "Customer"],
-     "do": [f"{h}: {t}" for h, t in d.REQUEST_FLOW],
+     "do": [f"{h}: {t.replace('Suggested: ', '')}" for h, t in d.REQUEST_FLOW],
      "done": "Done means the result is verified and communicated, with the customer's validation captured where needed."},
     {"n": 11, "title": "What's next", "when": "About 35 to 25 days before the end · P8", "who": ["Architect", "Phil"],
      "do": ["The Architect prepares Option A and Option B from results, issues found and 'not now' ideas, and Phil reviews them.",
@@ -157,27 +157,15 @@ DATA_RULES = [
 ]
 
 AUTOMATION = [
-    ("Onboarding Operations Agent", "Syncs task dates when Start date or Program length changes; fills a request's Owner from the customer's Architect; only lets weekly updates and KPI snapshots be Sent.", "On change", "None needed: data rules only", "Live"),
-    ("Onboarding Task Generator", "Copies the Onboarding Library plus one library per product into Customer Task, fills dates, assigns the Architect.", "Create tasks is ticked", "Ops checks the task count", "To build"),
-    ("Handoff Brief", "Writes a one-page brief from the deal for the Architect and Phil.", "Tasks created for gets its first value", "Phil and the Architect review it before the handoff call", "Paused; workflow off until a real dry run"),
-    ("Delay Flagger", "Flags overdue and stuck tasks; sets Health to At risk at 3+ overdue; alerts Phil on Health changes.", "Weekdays 8:00 AM Bogotá", "The Architect confirms impact and owns recovery", "Paused, but its workflows report on: turn them off until launch"),
-    ("Portfolio Sync", "Keeps Current section and Next due task current.", "Daily 6:00 AM Bogotá", "The Architect fixes the task data if the summary is wrong", "Paused: keep the summaries by hand"),
-    ("Weekly Update Drafter", "Drafts each customer's Friday update.", "Thursdays 9:00 AM Bogotá", "The Architect reviews, adds numbers, sends", "To build"),
-    ("Request Triage", "Suggests urgency, price and due date for each new request.", "New request row", "The Architect confirms with the customer", "To build"),
-    ("What's Next Prep", "Drafts Option A and Option B for the next phase.", "35 days before Target end date", "Phil and the Architect review", "Paused"),
-    ("KPI Snapshot Drafter", "Drafts monthly KPI notes during free monitoring.", "1st of the month, 9:00 AM Bogotá", "The Architect adds numbers and sends", "Paused"),
-]
-
-ROLLOUT = [
-    ("Paste the fix-up prompt", "Restores the 13 Core tasks lost in the library split, adds Products purchased, Create tasks and Tasks created for, moves schedules to Bogotá time, points Delay Flagger at each Architect, and updates the SOP.", "Manuel"),
-    ("Build the Onboarding Task Generator", "From the agent prompts file. It reads the four library tables.", "Manuel"),
-    ("Share the workspace", "Phil and every Architect need access. Phil currently can't open the project.", "Manuel"),
-    ("Add deal contact labels in HubSpot", "Supporter and Decision Maker, next to Projects POC and Billing Contact.", "HubSpot admin"),
-    ("Dry run with the first real customer", "The row starting 5 November 2026: tick Create tasks, check counts and dates, review the Handoff Brief output, then switch that workflow on.", "Ops + Architect"),
-    ("Switch on the delivery agents", "Delay Flagger and Portfolio Sync after the first week runs cleanly.", "Manuel"),
-    ("Build the Weekly Update Drafter and Request Triage", "Once two weeks of updates have been written by hand, so the drafts can be compared.", "Manuel"),
-    ("Set up the customer-facing pieces", "Welcome emails #1 and #2 in HubSpot, and a Supered Action Plan template per hub.", "Ops"),
-    ("Retire the older document", "Archive 'End-to-End Customer Onboarding Experience'. This SOP replaces it.", "Manuel"),
+    ("Task Generator", "Copies the Core library plus one library per product into Customer Task, fills the dates and assigns the Architect's tasks.", "When Ops ticks Create tasks", "Ops checks the task count."),
+    ("Handoff Brief", "Writes a one-page brief from the deal for the Architect and Phil.", "When a customer's tasks are first created", "Phil and the Architect review it before the handoff call."),
+    ("Weekly Update Drafter", "Drafts each customer's Friday update.", "Thursdays, 9:00 AM Bogotá", "The Architect checks it, adds numbers, sends it and marks it Sent."),
+    ("Delay Flagger", "Flags overdue and stuck tasks; sets Health to At risk at 3 or more overdue; alerts Phil when Health drops.", "Weekdays, 8:00 AM Bogotá", "The Architect confirms the impact and owns the recovery plan."),
+    ("Request Triage", "Suggests the urgency, price and due date for each new request, and fills its Owner.", "When a request is logged", "The Architect confirms it with the customer."),
+    ("Portfolio Sync", "Keeps each customer's Current section and Next due task up to date.", "Daily, 6:00 AM Bogotá", "If a summary looks wrong, fix the task data, not the summary."),
+    ("What's Next Prep", "Drafts Option A and Option B for the next phase.", "35 days before the Target end date", "Phil and the Architect review it before the call."),
+    ("KPI Snapshot Drafter", "Drafts the monthly KPI notes during free monitoring.", "1st of the month, 9:00 AM Bogotá", "The Architect adds the numbers and sends it."),
+    ("Data rules", "Re-dates a customer's tasks when Start date or Program length changes, and only lets weekly updates and KPI snapshots be marked Sent.", "On every change", "Nothing to do."),
 ]
 
 # ---------------------------------------------------------------- html parts
@@ -186,7 +174,7 @@ def step_html(s):
     return f"""<section class="step">
   <div class="step-head"><span class="num">{s['n']:02d}</span><div><h3>{E(s['title'])}</h3>
   <div class="meta"><span class="when">{E(s['when'])}</span>{who}</div></div></div>
-  {ul(s['do'])}
+  <ul class="check">{''.join(f"<li>{E(i)}</li>" for i in s['do'])}</ul>
   <p class="done"><b>Done when</b> {E(s['done'])}</p>
 </section>"""
 
@@ -306,7 +294,7 @@ li { margin:0 0 3pt; }
 .meta { display:flex; flex-wrap:wrap; gap:5pt; margin-top:3pt; align-items:center; }
 .when { font-family:"JetBrains Mono",monospace; font-size:7.8pt; color:var(--muted); margin-right:4pt; }
 .who { font-size:7.6pt; font-weight:600; padding:1pt 7pt; border-radius:999px; background:var(--chip); color:var(--navy); }
-.step ul { margin-left:36pt; padding-left:12pt; }
+.step ul { margin-left:36pt; padding-left:14pt; }
 .done { margin:5pt 0 0 36pt; padding:5pt 8pt; border-radius:4pt; background:var(--teal-soft); font-size:9pt; }
 .done b { color:var(--teal); margin-right:4pt; }
 
@@ -325,10 +313,6 @@ td .sub { color:var(--muted); font-size:8pt; margin-top:1pt; }
 .mod-MH { background:var(--teal-soft); color:var(--teal); }
 .mod-SH { background:var(--amber-soft); color:var(--amber); }
 .mod-SV { background:#ece6f8; color:var(--violet); }
-.status { font-size:7.6pt; font-weight:600; padding:1pt 7pt; border-radius:999px; white-space:nowrap; display:inline-block; }
-.s-live { background:var(--teal-soft); color:var(--teal); }
-.s-build { background:var(--amber-soft); color:var(--amber); }
-.s-paused { background:var(--chip); color:var(--muted); }
 .callout { border-left:3px solid var(--amber); background:var(--amber-soft); padding:8pt 10pt; border-radius:0 6pt 6pt 0; margin:8pt 0 12pt; font-size:9.2pt; break-inside:avoid; }
 .check li { list-style:none; position:relative; }
 .check li::before { content:""; position:absolute; left:-13pt; top:3pt; width:8pt; height:8pt; border:1.2px solid var(--teal); border-radius:2pt; }
@@ -337,17 +321,13 @@ ol.flow { padding-left:16pt; }
 
 toc_items = ["How to use this guide", "The program at a glance", "Roles and decision rights", "Where everything lives",
              "The procedure, step by step", "Requests", "Statuses and data rules", "The operating rhythm",
-             "Agents and automation", "When things don't go to plan", "Rollout checklist",
+             "Automation you'll work with", "When things don't go to plan", "After the program",
              "A · Task library", "B · Progress measures", "C · Training modules", "D · Intake questions", "E · Technical setup checklist"]
-
-
-def status_class(s):
-    return "s-live" if s.startswith("Live") else "s-build" if s.startswith("To build") else "s-paused"
 
 
 roles_rows = [[f"<b>{E(r)}</b>", E(t)] for r, t in d.ROLES.items()] + [
     ["<b>Supporters & decision maker</b>", "Customer people confirmed from contact labels or explicit conversations. If unclear, the role stays an open question for the handoff or kickoff."]]
-where_rows = [[f"<b>{E(t)}</b>", E(j)] for t, j in d.WHERE_IT_LIVES]
+where_rows = [[f"<b>{E(t)}</b>", E(j)] for t, j in d.WHERE_IT_LIVES if not t.startswith("Not used")]
 customers_rows = [[f"<b>{E(c)}</b>", E(t)] for c, t in d.WORK_PORTFOLIO_COLUMNS]
 taskcol_rows = [[f"<b>{E(c)}</b>", E(t), E(n)] for c, t, n in d.WORK_TASK_COLUMNS]
 
@@ -362,7 +342,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Rev
     <div class="bars">{''.join(f'<i style="width:{w}%;margin-left:{m}%;opacity:{o}"></i>' for w, m, o in [(20,0,.45),(3,20,1),(6,21,1),(5,23,1),(15,25,1),(36,34,1),(47,29,.8),(55,25,.6),(20,60,1),(20,80,.5)])}</div>
   </div>
   <div class="foot">
-    <div><b>Version</b>{VERSION_DATE}</div>
+    <div><b>Version</b>1.0 · {VERSION_DATE}</div>
     <div><b>Runs in</b>HubSpot Work · Supered · HubSpot CRM</div>
     <div><b>Owner</b>RevGravy Operations</div>
   </div>
@@ -375,9 +355,8 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Rev
 
   <div style="margin-top:22pt" class="eyebrow">01 · How to use this guide</div>
   <h2>Read it once, then work from the steps</h2>
-  <p class="lede">This guide replaces the earlier markdown documents. Chapter 05 is the procedure; everything else supports it. The appendices hold the full task library, so nobody has to open HubSpot Work to see what a hub includes.</p>
+  <p class="lede">Chapter 05 is the procedure: thirteen steps, each with a checklist and the condition that closes it. Everything else supports it. The appendices list every task, measure, training module, intake question and setup item, so you can see what a hub includes without opening HubSpot Work.</p>
   <div class="grid3">{''.join(f'<div class="card"><h4>{E(h)}</h4><p>{E(t)}</p></div>' for h, t in GOLDEN_RULES)}</div>
-  <div class="callout"><b>Status on {VERSION_DATE}.</b> The workspace structure and the data-rule workflows are live. Task creation, the handoff brief and the delivery agents are not yet running. Until they are, follow the manual fallback written into each step. Chapter 11 lists what's left before go-live.</div>
 </section>
 
 <section class="chapter">
@@ -391,7 +370,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Rev
   </div>
   {timeline()}
   {table(["Phase", "Goal", "What the customer sees", "Done when"],
-         [[f'<b>{p["id"]}</b><div class="sub">{E(p["name"])}</div>', E(p["goal"]), E(p["client_sees"]), E(p["exit"])] for p in d.PHASES])}
+         [[f'<b>{p["id"]}</b><div class="sub">{E(p["name"])}</div>', E(p["goal"].replace(" No Trello.", "")), E(p["client_sees"]), E(p["exit"])] for p in d.PHASES])}
 </section>
 
 <section class="chapter">
@@ -452,28 +431,30 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Rev
 </section>
 
 <section class="chapter">
-  <div class="eyebrow">09 · Agents and automation</div>
-  <h2>What runs, and where people stay in charge</h2>
-  <p class="lede">Agents only draft, fill fields or flag. None sends anything to a customer or changes a deal. Schedules run on Bogotá time. Check the live state in HubSpot Work before relying on one.</p>
-  {table(["Automation", "What it does", "Trigger", "Human gate", f"Status, {VERSION_DATE}"],
-         [[f"<b>{E(n)}</b>", E(w), E(t), E(g), f'<span class="status {status_class(s)}">{E(s)}</span>'] for n, w, t, g, s in AUTOMATION])}
+  <div class="eyebrow">09 · Automation you'll work with</div>
+  <h2>What HubSpot Work does for you, and what you still own</h2>
+  <p class="lede">Agents only draft, fill fields or flag. None of them sends anything to a customer or changes a deal. Every draft waits for a person.</p>
+  {table(["Automation", "What it does", "When it runs", "What you do"],
+         [[f"<b>{E(n)}</b>", E(w), E(t), E(g)] for n, w, t, g in AUTOMATION])}
 
   <div class="eyebrow" style="margin-top:14pt">10 · When things don't go to plan</div>
   <h2>Exceptions</h2>
-  {table(["Situation", "What to do"], [[f"<b>{E(s)}</b>", E(t)] for s, t in d.EXCEPTIONS] + [
+  {table(["Situation", "What to do"], [[f"<b>{E(s)}</b>", E(t.split(" In the example")[0])] for s, t in d.EXCEPTIONS] + [
       ["<b>Agreement or approval is missing</b>", "Keep the engagement out of active delivery until a start is authorized. Record the gap, an owner and the next action."],
       ["<b>A draft contains a wrong or unsupported claim</b>", "Don't share it. Fix the source record, revise the draft, and have the Architect confirm the evidence."],
       ["<b>The program ends with open items</b>", "Agree item by item: finish, hand to support, or park. Don't set Completed until each has an owner."]])}
 </section>
 
 <section class="chapter">
-  <div class="eyebrow">11 · Rollout checklist</div>
-  <h2>What's left before go-live</h2>
-  <p class="lede">In order. The prompts for steps 1 and 2 are in hubspot-work-fix-prompt.txt and hubspot-work-agent-prompts.md.</p>
-  {table(["#", "Action", "Why", "Who"], [[f'<span class="mono">{i}</span>', f"<b>{E(a)}</b>", E(w), E(o)] for i, (a, w, o) in enumerate(ROLLOUT, start=1)])}
-  <div class="eyebrow" style="margin-top:14pt">After the program</div>
-  <h3>6 months free, then a paid next step</h3>
-  {table(["Offer", "Price", "What's included"], [[f"<b>{E(o)}</b>", E(p), E(w)] for o, p, w in d.POST_PROGRAM])}
+  <div class="eyebrow">11 · After the program</div>
+  <h2>6 months free, then a paid next step</h2>
+  <p class="lede">Monitoring starts the day the program ends. The Architect runs every check-in and presents the paid options at month 5.</p>
+  {table(["Offer", "Price", "What's included"], [[f"<b>{E(o)}</b>", E(p.replace(" (existing 'Monthly Plan – Standard', 1 task at a time)", " (Monthly Plan – Standard, one task at a time)").replace("To be priced", "Quoted per customer")), E(w)] for o, p, w in d.POST_PROGRAM])}
+  {table(["When", "What happens"], [["<b>Monthly</b>", "KPI snapshot email: the progress-measure dashboard with 3 short notes from the Architect."],
+                                     ["<b>Any time</b>", "Portal health alerts: deliverability drops, workflow errors, form submissions falling. Tell the customer when one fires."],
+                                     ["<b>Month 3</b>", "30-minute check-in: numbers, what's working, what's next."],
+                                     ["<b>Month 5</b>", "Paid offer conversation: team support, building internal capacity, or one initiative a month."],
+                                     ["<b>Month 6</b>", "Last check-in. A paid offer becomes a new deal; otherwise set Current section to Completed."]])}
 </section>
 
 <section class="chapter">
@@ -486,7 +467,7 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Rev
 <section class="chapter">
   <div class="eyebrow">Appendix B</div>
   <h2>Progress measures</h2>
-  <p class="lede">Named like the existing Factory records, e.g. "&lt;Client&gt; 1.1 Visitor to Lead". 1.x is Marketing, 2.x and 3.x are Sales, 4.x is Service.</p>
+  <p class="lede">Name each one after the customer, e.g. "&lt;Client&gt; 1.1 Visitor to Lead". 1.x is Marketing, 2.x and 3.x are Sales, 4.x is Service. "Every" measures go into every program for that hub; the others only when bought.</p>
   {table(["ID", "Progress measure", "When", "What it measures", "HubSpot report", "Built by"], [[f'<span class="mono">{E(i)}</span>', f"<b>{E(n)}</b>", E(w), E(m), E(r), f'<span class="mono">{E(b)}</span>'] for i, n, w, m, r, b in d.FACTORIES])}
 
   <div class="eyebrow" style="margin-top:14pt">Appendix C</div>
