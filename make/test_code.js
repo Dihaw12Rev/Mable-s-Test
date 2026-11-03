@@ -220,13 +220,14 @@ test("mtmc_update_body: all guide fields, blanks dropped, primary team", () => {
     assert.strictEqual(p.gpo, "Vizient");
     assert.strictEqual(p.lead_source, "Trade show");
     assert.strictEqual(p.mtmc_rep_full_name, "Sam Rep");
-    assert.ok(!("dealstage" in p) && !("closed_lost_reason" in p) && !("mtmc_last_activity_date" in p));
+    assert.ok(!("dealstage" in p) && !("mtmc_closed_lost_reason" in p) && !("mtmc_last_activity_date" in p));
     const r2 = run("mtmc_update_body.js", { deal: { properties: { notes_last_updated: "2026-10-20", closed_lost_reason: "Budget" } }, owner: {}, nuanceStage: "123", lastActivityProperty: "mtmc_last_activity_date" });
     const p2 = JSON.parse(r2.body).properties;
     const r3 = run("mtmc_update_body.js", { deal: { hubspot_teams_nuance: "Northeast" }, owner: { teams: [{ name: "West", primary: true }] } });
     assert.strictEqual(JSON.parse(r3.body).properties.mtmc_team, "Northeast");   // ZIP team wins
     assert.strictEqual(p2.dealstage, "123");
-    assert.strictEqual(p2.closed_lost_reason, "Budget");
+    assert.strictEqual(p2.mtmc_closed_lost_reason, "Budget");
+    assert.ok(!("closed_lost_reason" in p2));   // Nuance's dropdown is never written
     assert.strictEqual(p2.mtmc_last_activity_date, "2026-10-20");
 });
 

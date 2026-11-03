@@ -201,6 +201,7 @@ The notes increase is the price of hourly notes with edits. Every 2 hours halves
 - **Line items:** copy only Nuance Medical line items (v2, same as the line-item backfill), or every line item on the deal (live)?
 - **MTMC Team:** the ZIP-based team when MTMC has one, otherwise the deal owner's team (v2)? Today the update scenario and the team scenarios overwrite each other.
 - **Notes schedule:** hourly (about 4,300 idle credits a month) or every 2 hours (about 2,200)?
+- **Closed Lost Reason** (LIVE since 2026-11-03 21:36 UTC): MTMC's reason is multi-line text and Nuance's `closed_lost_reason` is a dropdown, so updates failed on reasons that aren't dropdown options. Scenarios 2 and 3 now write it to the Nuance text property `mtmc_closed_lost_reason` (`NUANCE_CLOSED_LOST_REASON_PROPERTY`); Nuance's dropdown is left alone.
 - **Last Activity Date** (LIVE since 2026-10-29 22:19 UTC): Nuance's own *Last activity date* is read-only via the API, so MTMC's `notes_last_updated` goes to the custom Nuance deal property `mtmc_last_activity_date`.
   1. ~~Create the Nuance deal property~~ done 2026-10-29: **MTMC Last Activity Date** (`mtmc_last_activity_date`). It must be a **Date and time picker** (date-only rejects the timestamp).
   2. In MTMC, make the workflow that calls scenario 3's webhook also re-enroll when *Last activity date* changes, or the date only moves when another deal field changes.

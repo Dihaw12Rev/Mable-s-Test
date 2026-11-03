@@ -12497,7 +12497,7 @@
                         "value": "{{4.properties.closedate}}"
                     },
                     {
-                        "key": "closed_lost_reason",
+                        "key": "mtmc_closed_lost_reason",
                         "value": "{{4.properties.closed_lost_reason}}"
                     },
                     {

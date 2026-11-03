@@ -12,7 +12,8 @@ const props = {
     amount: d.amount,
     closedate: d.closedate,
     dealstage: input.nuanceStage,
-    closed_lost_reason: d.closed_lost_reason,
+    // MTMC's reason is free text; Nuance's closed_lost_reason is a dropdown, so it goes to a text property.
+    mtmc_closed_lost_reason: d.closed_lost_reason,
     distributor: d.distributor_name,
     gpo: d.gpo,
     lead_source: d.source,

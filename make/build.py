@@ -33,6 +33,8 @@ NUANCE_MTMC_SYNC_DEFAULT_STAGE = "1394921518"
 # Nuance deal property (Date and time picker) that receives MTMC's Last Activity Date. It must exist
 # in Nuance before scenario 3 is pushed, or every MTMC deal update fails with a HubSpot 400.
 NUANCE_LAST_ACTIVITY_PROPERTY = "mtmc_last_activity_date"
+# Nuance text property that receives MTMC's Closed Lost Reason (Nuance's own closed_lost_reason is a dropdown).
+NUANCE_CLOSED_LOST_REASON_PROPERTY = "mtmc_closed_lost_reason"
 MTMC_NUANCE_PIPELINE = "866607494"
 MTMC_STARTED_DISCOVERY = "1296904839"
 MTMC_NUANCE_SUPPLIER_ID = "47591994658"
@@ -418,6 +420,10 @@ def build_deal_in(phase1=False):
         stage = ds_get(36, DS_STAGE_MAP, "{{4.properties.dealstage}}", "Stage mapping")
     create = retry(reuse("deal_in", 14, name="Nuance: create MTMC Sync deal"))
     for p in create["mapper"]["properties"]:
+        # MTMC's Closed Lost Reason is free text; Nuance's closed_lost_reason is a dropdown that rejects
+        # unknown values, so it goes to Nuance's text property mtmc_closed_lost_reason instead.
+        if p["key"] == "closed_lost_reason":
+            p["key"] = NUANCE_CLOSED_LOST_REASON_PROPERTY
         if phase1:
             if p["key"] == "mtmc_deal_id":
                 p["value"] = "{{4.id}}"
