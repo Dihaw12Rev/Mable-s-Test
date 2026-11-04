@@ -491,5 +491,6 @@ HTML = f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Rev
 
 </body></html>"""
 
-OUT_HTML.write_text(HTML, encoding="utf-8")
-print(f"Saved {OUT_HTML}")
+if __name__ == "__main__":
+    OUT_HTML.write_text(HTML, encoding="utf-8")
+    print(f"Saved {OUT_HTML}")

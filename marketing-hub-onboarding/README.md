@@ -16,6 +16,8 @@ Nothing here has been built in the HubSpot portal. These are design files and a 
 | `roadmap.html` | Visual roadmap for review, with a 60/75/90-day switch |
 | `journey.html` | The full experience start to end: what the customer, Phil, the Architect, Ops and HubSpot Work do at each moment, when to mark tasks Done, requests, statuses and exceptions |
 | `RevGravy_Customer_Onboarding_SOP.pdf` | The SOP for anyone running an onboarding (no internal history): checklist-style procedure, roles, requests, statuses, rhythm, automation, exceptions, after-program offers, and appendices with the full task library, progress measures, training, intake and setup checklist |
+| `RevGravy_New_Client_Start_SOP.pdf` | How to start a new client: the goal, prep, a 45-minute launch meeting script with a decision log, Day 0 steps, the first ten days, a two-week check-in, and ready-to-send drafts |
+| `pilot-1on1.html` | 1:1 prep page for the client starting Nov 5 |
 | `hubspot-work-fix-prompt.txt` | Fix-up for the current build: restores 13 missing Core tasks, adds Products purchased / Create tasks, Bogotá schedules, Delay Flagger recipient, SOP updates |
 | `process_data.py` | Single source of truth for all content |
 | `build_workbook.py`, `build_roadmap.py`, `build_journey.py`, `build_prompt.py` | Regenerate the sheet, the roadmap, the journey and the prompts from `process_data.py` |
@@ -24,6 +26,7 @@ To change the process, edit `process_data.py`, then run:
 
 ```bash
 python3 build_workbook.py && python3 build_roadmap.py && python3 build_journey.py && python3 build_prompt.py && python3 build_sop_pdf.py && node render_pdf.js
+python3 build_start_pdf.py && node render_pdf.js start.html RevGravy_New_Client_Start_SOP.pdf "RevGravy · New Client Start SOP · v1.0"
 ```
 
 ## What the review decided
