@@ -1,0 +1,217 @@
+<title>Onboarding Journey</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a dated rail on the left, five swimlanes per moment on the right; lanes stack on phones. */
+:root {
+  --bg: #f6f8fa; --surface: #ffffff; --fg: #17222e; --muted: #5b6876; --line: #dbe2e9; --chip: #eef3f7;
+  --navy: #1f3a5f; --accent: #2e7d7a; --accent-soft: #dcefea;
+  --l-customer: #2e7d7a; --l-phil: #1f3a5f; --l-architect: #a85a0c; --l-ops: #5b6876; --l-work: #6a4bb5;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f151c; --surface: #16202a; --fg: #e4ebf1; --muted: #98a6b4; --line: #2a3744; --chip: #1e2a36;
+  --navy: #9cc0e8; --accent: #5cc2bb; --accent-soft: #173a38;
+  --l-customer: #5cc2bb; --l-phil: #9cc0e8; --l-architect: #f0a35a; --l-ops: #a7b4c2; --l-work: #b59cf0; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f151c; --surface: #16202a; --fg: #e4ebf1; --muted: #98a6b4; --line: #2a3744; --chip: #1e2a36;
+  --navy: #9cc0e8; --accent: #5cc2bb; --accent-soft: #173a38;
+  --l-customer: #5cc2bb; --l-phil: #9cc0e8; --l-architect: #f0a35a; --l-ops: #a7b4c2; --l-work: #b59cf0; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 48px; }
+h1, h2, h3 { font-family: var(--display); color: var(--navy); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 44px); }
+h2 { font-size: 24px; }
+h3 { font-size: 18px; }
+p { margin: 0; max-width: 70ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+section { display: grid; gap: 16px; min-width: 0; }
+header { display: grid; gap: 14px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.mono { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+
+/* Example customer */
+.example { padding: 16px 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px 20px; }
+.example div { min-width: 0; font-size: 14px; }
+.example dt { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.example dd { margin: 0; }
+.example .tag { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+
+/* Lane switch */
+.lens { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.lens .lab { font-size: 13px; color: var(--muted); margin-right: 4px; }
+.lens button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--fg);
+  padding: 5px 12px 5px 10px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.lens button[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: var(--bg); }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--lc, var(--muted)); }
+button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lanehelp { font-size: 14px; color: var(--muted); min-height: 1.5em; }
+
+/* Moments */
+.stagehead { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding-top: 8px; }
+.moments { display: grid; gap: 12px; }
+.moment { display: grid; grid-template-columns: 150px 1fr; gap: 0; overflow: hidden; }
+.when { padding: 16px; border-right: 1px solid var(--line); display: grid; align-content: start; gap: 4px; }
+.when .d { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--fg); font-variant-numeric: tabular-nums; }
+.when .c { font-size: 13px; color: var(--muted); }
+.body { padding: 16px 18px; display: grid; gap: 14px; min-width: 0; }
+.lanes { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.lanes.one { grid-template-columns: minmax(0, 1fr); }
+.lane { border-top: 3px solid var(--lc); padding-top: 8px; min-width: 0; }
+.lane h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--lc); font-weight: 600; }
+.lane ul { margin: 0; padding-left: 16px; display: grid; gap: 6px; font-size: 13.5px; }
+.lane.empty { opacity: .45; }
+.lane.empty p { font-size: 13px; color: var(--muted); }
+.lanes.one .lane ul { font-size: 14.5px; }
+details.done summary { cursor: pointer; font-size: 13px; color: var(--accent); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { font-size: 12.5px; padding: 2px 8px; border-radius: 6px; background: var(--accent-soft); color: var(--fg); }
+.chip b { font-family: var(--mono); font-weight: 500; color: var(--accent); margin-right: 4px; }
+.chip.wont { background: var(--chip); color: var(--muted); }
+.chip.wont b { color: var(--muted); }
+.note { font-size: 13px; color: var(--l-architect); border-left: 2px solid var(--l-architect); padding-left: 10px; }
+
+/* Reference sections */
+.cols2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+.who { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; font-weight: 600; font-size: 13px; }
+ol.flow { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; counter-reset: f; }
+ol.flow li { counter-increment: f; display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+ol.flow li:last-child { border-bottom: 0; }
+ol.flow li::before { content: counter(f); font-family: var(--mono); font-size: 13px; color: var(--accent); background: var(--accent-soft); border-radius: 50%; width: 26px; height: 26px; display: grid; place-items: center; }
+ol.flow b { display: block; }
+ol.flow span { color: var(--muted); font-size: 14px; }
+.status { padding: 14px 16px; display: grid; gap: 10px; }
+.status div { display: grid; grid-template-columns: 150px 1fr; gap: 12px; font-size: 14px; align-items: baseline; }
+.pill { display: inline-block; font-size: 12.5px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--chip); justify-self: start; }
+.pill.Done { background: var(--accent-soft); color: var(--accent); }
+.pill.Waiting { color: var(--l-architect); }
+.card { padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.card h3 { font-size: 15.5px; }
+.card p { font-size: 14px; color: var(--muted); }
+footer { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 1000px) {
+  .lanes { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+}
+@media (max-width: 640px) {
+  .moment { grid-template-columns: 1fr; }
+  .when { border-right: 0; border-bottom: 1px solid var(--line); grid-template-columns: auto 1fr; align-items: baseline; gap: 4px 12px; padding: 12px 16px; }
+  .lanes { grid-template-columns: 1fr; }
+  .lane.empty { display: none; }
+  .status div { grid-template-columns: 1fr; gap: 4px; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">RevGravy · Marketing Hub Onboarding</div>
+    <h1>Onboarding Journey</h1>
+    <p>One customer, start to end: what the customer experiences, what Phil, the Architect and Ops do, and what changes in HubSpot Work at each moment. Also covers when tasks get marked Done, how requests flow, and the 6 months after the program.</p>
+    <dl class="box example" id="example"></dl>
+  </header>
+
+  <section aria-labelledby="t-journey">
+    <h2 id="t-journey">From sale to month 6</h2>
+    <div class="lens" id="lens" role="group" aria-label="Whose view"></div>
+    <p class="lanehelp" id="lanehelp"></p>
+    <div class="moments" id="moments"></div>
+  </section>
+
+  <section aria-labelledby="t-week">
+    <div class="eyebrow">Day 7 to the end</div>
+    <h2 id="t-week">A normal week</h2>
+    <div class="box scroll"><table id="rhythm" style="min-width:560px"></table></div>
+  </section>
+
+  <section aria-labelledby="t-req">
+    <div class="eyebrow">Any time</div>
+    <h2 id="t-req">How a request moves</h2>
+    <ol class="box flow" id="requests"></ol>
+  </section>
+
+  <section aria-labelledby="t-status">
+    <div class="eyebrow">In HubSpot Work</div>
+    <h2 id="t-status">When to change a task's status</h2>
+    <p class="muted" style="font-size:14px">The Architect keeps every status current, including the customer's own tasks. The customer never touches HubSpot Work.</p>
+    <div class="box status" id="status"></div>
+  </section>
+
+  <section aria-labelledby="t-what">
+    <div class="eyebrow">Real life</div>
+    <h2 id="t-what">When things don't go to plan</h2>
+    <div class="cols2" id="exceptions"></div>
+  </section>
+
+  <footer>Dates assume a 90-day program starting on the example's Day 0. For a 60- or 75-day program, week one stays the same and later dates compress. Task IDs match the HubSpot Work template and the sheet.</footer>
+</div>
+
+<script>
+const D = {"example": {"customer": "Northpeak Outfitters", "note": "A made-up customer used to show the flow.", "day0": "2026-11-02", "tier": "Marketing Hub Professional", "program_days": 90, "measures": "0.1, 1.1, 1.2, 1.3 (didn't buy 1.0 or 1.4)", "migration": "Moving from Mailchimp; website on WordPress", "day0Label": "Mon Nov 2, 2026", "endLabel": "Sun Jan 31, 2027"}, "lanes": [["customer", "Customer", "The POC and their team. They see emails, Supered and calls. They never see HubSpot Work."], ["phil", "Phil", "Leads the sale and the handoff, picks the Architect, reviews next-phase options."], ["architect", "Architect", "Owns the customer after the handoff and keeps every status in HubSpot Work current."], ["ops", "Ops", "Adds the customer to HubSpot Work and sets up Supered."], ["work", "HubSpot Work", "What changes in the tables, and which agent runs."]], "moments": [{"stage": "Before the sale", "start": -30, "end": -1, "title": "The deal is being won", "customer": ["Watches the VSL, has the Fit call, fills the tech stack survey and watches the recommendation video.", "Joins the proposal Q&A, signs the agreement (AI terms, escalation path, $250 requests) and pays."], "phil": ["Writes the research brief, builds the FigJam after the Fit call and captures the From→To statement.", "Builds the quote, picks the progress measures and adds the POC and supporters to the deal.", "Checks the Capacity report when the proposal goes out, so an Architect is ready."], "architect": [], "ops": [], "work": ["Nothing yet. A customer only gets a row once they pay, so deals that don't close never clutter Work."], "done": [], "days": "Before Day 0", "dates": "Oct 3 – Nov 1", "wont": []}, {"stage": "Week 1", "start": 0, "end": 0, "title": "Payment lands", "customer": ["Gets welcome email #1 from Phil within minutes: the Supered Action Plan, the kickoff booking link and two to-dos (grant HubSpot access, fill the intake form)."], "phil": ["Opens the Capacity report, picks the Architect and tells Ops."], "architect": ["Gets two notifications: the tasks are ready, and the Handoff Brief draft is waiting."], "ops": ["Adds the Customers row within 4 business hours: Customer, Company, Deal, Architect, Program length, Start date (the payment date), Products purchased = Marketing Hub Onboarding, tier, From→To goal, FigJam and Supered links. Then ticks Create tasks.", "Builds the Supered Action Plan from the template and checks welcome email #1 went out."], "work": ["The Task Generator copies the Core tasks and the Marketing Hub module (74 rows) into Customer Task with due dates, assigns the Architect's tasks, sets Target end date, Tasks created for = Marketing Hub Onboarding, Current section = P1 and Health = On track, and unticks Create tasks.", "Handoff Brief writes a one-page draft in the Update table for the Architect and Phil."], "done": [["1.01", "Pick the Architect"], ["1.02", "Add the customer in HubSpot Work"], ["1.03", "Welcome email #1: welcome + Action Plan"], ["1.04", "Build the Supered Action Plan"]], "days": "Day 0", "dates": "Mon Nov 2", "wont": []}, {"stage": "Week 1", "start": 1, "end": 3, "title": "Handoff", "customer": ["Gets welcome email #2 on Day 2: how office hours, Friday updates, requests and escalation work.", "Books the 15-minute kickoff."], "phil": ["Runs the 30-minute handoff call with the Architect, using the Handoff Brief.", "Fixes any missing pre-sale item within 24 hours. From here on the Architect is the strategy lead."], "architect": ["Walks the P0 checklist: marks each item Done only if it's really there; anything missing goes back to Phil.", "Writes the progress measures with baselines and targets into the Customers row.", "Sets Won't do on what this customer didn't buy (MH-5.04 and MH-5.05 here, plus Enterprise-only subtasks for a Pro customer), with a note.", "Adds the office hours link to Supered and marks the Handoff Brief Reviewed."], "ops": [], "work": ["Handoff Brief moves to Reviewed in the Update table.", "Portfolio Sync runs every day at 6:00 AM from now on, keeping Current section and Next due task current."], "done": [["0.01", "Research brief from company URL"], ["0.02", "FigJam canvas after Fit call"], ["0.03", "From→To statement captured"], ["0.04", "Tech stack & team capacity survey"], ["0.05", "Products and quote on the deal"], ["0.06", "Progress measures picked"], ["0.07", "POC and supporters identified"], ["0.08", "Agreement signed"], ["1.05", "Phil ↔ Architect handoff (30 min)"], ["1.06", "Set up progress measures"], ["1.07", "Office hours booking link"], ["1.08", "Welcome email #2: how we work"], ["1.09", "Kickoff booked"]], "wont": [["MH-5.04", "Build 1.4 Subscriber → Engaged (if bought)"], ["MH-5.05", "Build 1.0 Stranger → Visitor (if bought)"]], "days": "Day 1–3", "dates": "Nov 3 – Nov 5"}, {"stage": "Week 1", "start": 1, "end": 7, "title": "Access and intake", "customer": ["Works through the Supered to-do list: grants HubSpot access, fills the intake form, shares DNS, WordPress, GA4, ad and social access and the Mailchimp login, uploads brand files.", "Gets a short Supered video on how updates and documentation will reach them."], "phil": [], "architect": ["Sets the customer's tasks to Waiting on client, and marks them Done only once the access works or the form is in.", "Chases on Day 3 if access isn't granted.", "Runs the portal audit and records the baseline numbers."], "ops": [], "work": ["Delay Flagger (weekdays, 8:00 AM) flags anything past due or Waiting on client for more than 3 days.", "The Customers row now holds the baselines."], "done": [["2.01", "HubSpot access granted"], ["2.02", "Intake form submitted"], ["2.03", "Access to connected systems"], ["2.04", "Brand & content assets shared"], ["2.05", "Supered announcement to POC"], ["2.06", "Portal audit"], ["2.07", "Baseline numbers"]], "days": "Day 1–7", "dates": "Nov 3 – Nov 9", "wont": []}, {"stage": "Week 1–2", "start": 5, "end": 10, "title": "Kickoff", "customer": ["Has a 15-minute call: meets the Architect and team, confirms the goal and plan, hears how office hours, Friday updates, MBRs and requests work.", "Gets calendar invites for MBR #1, MBR #2, the what's next call and the final review, and a recap within 24 hours."], "phil": ["Optional: joins for the first few minutes."], "architect": ["Drafts the agenda from the intake and the audit, then runs the call.", "Books the MBRs and fills Next MBR on the Customers row.", "Confirms who needs which training modules.", "Sends the recap and updates the Supered plan."], "ops": [], "work": ["Next MBR is filled. Current section moves to P4 as the P1–P3 tasks close."], "done": [["3.01", "Kickoff agenda"], ["3.02", "Kickoff session (15 min)"], ["3.03", "Book MBRs and the 'what's next' call"], ["3.04", "Kickoff recap within 24h"], ["6.01", "Confirm training plan"]], "days": "Day 5–10", "dates": "Nov 7 – Nov 12", "wont": []}, {"stage": "Weeks 2–4", "start": 7, "end": 30, "title": "Foundations", "customer": ["Their IT contact adds the DNS records for email authentication.", "Gets a Supered video when the foundations are done."], "phil": [], "architect": ["Works through 4.01–4.11, ticking subtasks. A task is Done when every subtask is ticked or marked not applicable.", "Moves tasks blocked on the customer's IT (like MH-4.03) to Waiting on client.", "Foundation QA (4.11): when the end-to-end test passes, foundations are done. Records the Supered video (4.12)."], "ops": [], "work": ["Tasks move across the Board from Not started to In progress to Done. The Overdue view and Delay Flagger catch anything slipping."], "done": [["4.01", "Account, users & security"], ["MH-4.02", "Tracking & consent"], ["MH-4.03", "Domains & email authentication"], ["MH-4.04", "Email foundations"], ["4.05", "Data model"], ["MH-4.06", "Migration plan & export"], ["4.07", "Data import & cleanup"], ["MH-4.08", "Website connection"], ["4.09", "Integrations"], ["4.10", "Baseline dashboard"], ["4.11", "Foundation QA"], ["4.12", "Supered video: foundations done"]], "days": "Day 7–30", "dates": "Nov 9 – Dec 2", "wont": []}, {"stage": "Every week", "start": 7, "end": 90, "title": "The weekly rhythm", "customer": ["Books office hours when they need help, and sends requests whenever they come up.", "Gets the Friday update: work done and why it matters, numbers vs baseline, issues found, next week, their to-dos."], "phil": ["Runs a weekly delivery review with the Architects using the Health board, the Overdue view and the Capacity report."], "architect": ["Monday: plans the week from My tasks and This week.", "Logs every request the day it arrives.", "Friday: opens the Weekly update draft, adds the week's numbers from the dashboard, sends it, marks it Sent and sets Health."], "ops": [], "work": ["Thursday 9:00 AM: Weekly Update Drafter writes the draft.", "Weekdays 8:00 AM: Delay Flagger. Daily 6:00 AM: Portfolio Sync.", "Recurring P7 tasks stay In progress until close-out; each Sent update is the record that the week happened."], "done": [], "days": "Day 7–90", "dates": "Nov 9, 2026 – Jan 31, 2027", "wont": []}, {"stage": "Weeks 3–11", "start": 21, "end": 75, "title": "Build and launch", "customer": ["Reviews and approves each build: copy, forms, nurture emails, and the MQL handoff with their sales team.", "Confirms Mailchimp can be switched off after one parallel send.", "Gets a Supered video per delivery, and the training module for each feature as it ships."], "phil": [], "architect": ["Builds one progress measure at a time: 1.1 Visitor → Lead, then 1.2 Lead → MQL, then 1.3 MQL → Meeting.", "Sets a build to In review while it waits for sign-off, and marks it Done only after sign-off and go-live.", "Moves the landing pages and blog within the limits, and launches the first campaign with the customer."], "ops": [], "work": ["In review shows what's waiting on the customer. The Client to-dos view lists everything they owe."], "done": [["MH-5.01", "Build 1.1 Visitor → Lead"], ["MH-5.02", "Build 1.2 Lead → MQL"], ["MH-5.03", "Build 1.3 MQL → Meeting"], ["MH-5.06", "Migration: rebuild and switch off old tool"], ["MH-5.07", "Website: landing pages & blog"], ["MH-5.08", "First campaign live"], ["MH-5.09", "Performance reporting"], ["MH-5.10", "AI / Breeze setup"], ["5.11", "Client sign-off per progress measure"], ["5.12", "Supered video per delivery"], ["MH-6.02", "Deliver Marketing Hub training"]], "note": "In the example, Thanksgiving (Day 24) and Christmas (Day 53) fall in this stretch. Plan customer sign-offs around them.", "days": "Day 21–75", "dates": "Nov 23, 2026 – Jan 16, 2027", "wont": []}, {"stage": "Months 1–2", "start": 30, "end": 60, "title": "Monthly Business Reviews", "customer": ["MBR #1 (about Day 30) and MBR #2 (about Day 60): progress vs baseline on each progress measure, what we found, what's next."], "phil": ["Optional at MBR #1. Joins MBR #2 if there's a commercial topic."], "architect": ["Runs each MBR from the dashboard and the Friday updates, and updates Next MBR.", "Day 45: adoption check (logins, emails sent, workflows on)."], "ops": [], "work": ["Next MBR moves to the next date."], "done": [["6.03", "Adoption check #1"]], "days": "Day 30–60", "dates": "Dec 2, 2026 – Jan 1, 2027", "wont": []}, {"stage": "Day 55", "start": 55, "end": 55, "title": "What's next prep", "customer": [], "phil": ["Reviews Option A and Option B before the call."], "architect": ["Edits the draft: results, issues found, 'not now' ideas, two next-phase options and the offer that fits."], "ops": [], "work": ["What's Next Prep fires 35 days before the Target end date and writes the draft in the Update table.", "The customer shows up in the Ending soon view."], "done": [["8.01", "Prep next-phase options"]], "note": "In the example, Day 55 is Sunday, Dec 27. The agent still runs; the Architect edits the draft on Monday.", "days": "Day 55", "dates": "Sun Dec 27", "wont": []}, {"stage": "Day 60–65", "start": 60, "end": 65, "title": "The what's next call", "customer": ["Sees the results so far and the long-term vision, chooses Option A or B, and hears about the 6 months of free KPI monitoring."], "phil": ["Helps price the proposal if needed."], "architect": ["Runs the call.", "Creates the next-phase deal in the Sales Pipeline and sends the proposal."], "ops": [], "work": ["The What's next options update is marked Sent."], "done": [["8.02", "'What's next' call"], ["8.03", "Next-phase proposal"]], "note": "In the example, Day 60 is New Year's Day. Book the call for Jan 4–6 at kickoff.", "days": "Day 60–65", "dates": "Jan 1 – Jan 6, 2027", "wont": []}, {"stage": "Weeks 11–13", "start": 75, "end": 88, "title": "Finish strong", "customer": ["Gets the admin handbook in Supered.", "Final results review: before vs after, what was built, what's still open."], "phil": [], "architect": ["Adoption check #2 (Day 75), the admin handbook, and the final results review."], "ops": [], "work": [], "done": [["6.04", "Admin handbook (Supered Base)"], ["6.05", "Adoption check #2"], ["8.04", "Final results review"]], "days": "Day 75–88", "dates": "Jan 16 – Jan 29, 2027", "wont": []}, {"stage": "Day 85–90", "start": 85, "end": 90, "title": "Close the program", "customer": ["Gets a thank-you, a short feedback survey and a testimonial ask."], "phil": ["Reads the feedback."], "architect": ["Marks every remaining P1–P8 task Done or Won't do, including the recurring P7 tasks.", "Schedules the monthly dashboard email for the monitoring period."], "ops": ["Archives the Supered plan."], "work": ["Portfolio Sync moves Current section to P9 once the Target end date passes."], "done": [["8.05", "Close the program"], ["7.01", "Office hours"], ["7.02", "Weekly update"], ["7.03", "Handle requests by urgency"], ["7.04", "Log issues and 'not now' ideas"], ["7.05", "Health check"], ["7.06", "Monthly Business Review"], ["7.07", "Internal delivery review"]], "note": "In the example, Day 90 is Sunday, Jan 31. Close out by Friday, Jan 29.", "days": "Day 85–90", "dates": "Jan 26 – Jan 31, 2027", "wont": []}, {"stage": "After: months 1–6", "start": 90, "end": 270, "title": "Free KPI monitoring", "customer": ["Gets a monthly KPI snapshot email with 3 short notes.", "Hears from us if something breaks (deliverability drop, workflow errors, form submissions falling).", "Can still send requests at $250 each."], "phil": [], "architect": ["On the 1st of each month: adds the numbers to the KPI snapshot draft and sends it with the dashboard email.", "Acts on health alerts."], "ops": [], "work": ["KPI Snapshot Drafter runs on the 1st of the month at 9:00 AM."], "done": [["9.01", "Monthly KPI snapshot"], ["9.02", "Portal health alerts"]], "days": "Day 90–270", "dates": "Jan 31 – Jul 30, 2027", "wont": []}, {"stage": "After: months 3, 5, 6", "start": 180, "end": 270, "title": "Check-ins and the paid next step", "customer": ["Month 3: a 30-minute check-in.", "Month 5: hears the paid options (team support at $1,670/mo, building internal capacity, one initiative a month).", "Month 6: last check-in. Picks a paid offer, or monitoring ends."], "phil": ["Joins the month-5 conversation if useful."], "architect": ["Runs all three calls.", "A paid offer becomes a new deal. With no paid offer, sets Current section = Completed."], "ops": [], "work": ["Once the row is Completed, the customer drops out of every active view."], "done": [["9.03", "Check-in call: month 3"], ["9.04", "Paid offer conversation: month 5"], ["9.05", "Check-in call: month 6"]], "days": "Day 180–270", "dates": "May 1 – Jul 30, 2027", "wont": []}], "status": [["Not started", "Default when the Task Generator copies the task in."], ["In progress", "Someone has started it. Move it the day you start."], ["Waiting on client", "Blocked on the customer: access, DNS, content or an answer. The Delay Flagger chases after 3 days."], ["In review", "Built and waiting for the customer's sign-off."], ["Done", "The definition of done is met and checked. The Architect marks client-owned tasks Done once verified. Recurring tasks are marked Done at close-out."], ["Won't do", "Doesn't apply to this customer, such as an optional measure they didn't buy or an Enterprise-only item for a Pro customer. Add a note saying why."]], "requests": [["Customer asks", "By email, Slack, in office hours or in Supered."], ["Logged the same day", "The Architect adds a Requests row: Customer, Request, Type = Client request, Logged on = today."], ["Agent triage", "Request Triage sets Urgency, Price and Due date. A Critical request alerts the Architect and Phil."], ["Customer confirms", "The Architect checks the triage, then tells the customer the class, turnaround and price. Paid requests wait for their OK. Fixing something we built never does."], ["Work", "New → In progress once they say yes → Done. Bigger than about 2 hours → Quoted → a proposal. An idea for later → Parked."], ["Billing", "Suggested: Ops bills every Done request with a price at the end of the month."], ["What we find ourselves", "Issues the Architect finds are logged as Issue found, ideas as Client idea. Both feed the Friday update and the what's next call."]], "rhythm": [["Every day, 6:00 AM", "HubSpot Work", "Portfolio Sync updates Current section and Next due task."], ["Weekdays, 8:00 AM", "HubSpot Work", "Delay Flagger messages the Architect about overdue or stuck tasks."], ["Monday", "Architect", "Plans the week from My tasks and This week, and moves tasks to In progress."], ["Any day", "Customer", "Books office hours and sends requests."], ["Any day", "Architect", "Logs requests the day they arrive."], ["Once a week", "Phil + Architects", "Delivery review: Health board, Overdue view, Capacity report."], ["Thursday, 9:00 AM", "HubSpot Work", "Weekly Update Drafter writes each customer's draft."], ["Friday", "Architect", "Adds the numbers, sends the update, marks it Sent and sets Health."]], "exceptions": [["The customer is slow with access or the intake", "Task goes to Waiting on client. Chase on Day 3. On Day 7, escalate to Phil using the escalation path and set Health to At risk."], ["A pre-sale item is missing at handoff", "The Architect flags it on the P0 task. Phil fixes it within 24 hours."], ["The customer wants to pause", "Set Health to Off track with a note. If the pause is longer than 2 weeks, move the Start date forward by the pause length. The Task Generator re-dates every task."], ["The Architect changes", "Change the Architect on the Customers row. The Task Generator moves the open Architect tasks to the new person."], ["The program length changes", "Change Program length (60, 75 or 90). Every due date recalculates."], ["A due date lands on a weekend or holiday", "Dates are calendar days, so treat it as the next business day. In the example, Day 24 is Thanksgiving, Day 53 is Christmas and Day 60 is New Year's Day."], ["Something live breaks", "Log it as a Critical request. Fix it within 1 business day. It's free if it's in something we built."], ["The customer wants to buy more mid-program", "Log a request. It becomes Quoted, then a deal. This program's tasks don't change."], ["The customer buys another hub mid-program", "Add it to Products purchased and tick Create tasks. The Task Generator adds only that hub's tasks, dated from that day. Core tasks aren't duplicated."]]};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const laneColor = (k) => `--lc: var(--l-${k})`;
+const LANE = Object.fromEntries(D.lanes.map(([k, n, h]) => [k, { name: n, help: h }]));
+
+const E = D.example;
+$("example").innerHTML = [
+  ["Example customer", E.customer], ["Hub", E.tier], ["Program", `${E.program_days} days`],
+  ["Day 0", E.day0Label], ["Program ends", E.endLabel], ["Progress measures", E.measures], ["Moving from", E.migration],
+].map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("") + `<div class="tag">${esc(E.note)}</div>`;
+
+let lens = "all";
+function renderLens() {
+  $("lens").innerHTML = `<span class="lab">Whose view</span>` +
+    [["all", "Everyone"], ...D.lanes.map(([k, n]) => [k, n])].map(([k, n]) =>
+      `<button type="button" data-k="${k}" aria-pressed="${k === lens}" style="${k === "all" ? "" : laneColor(k)}">${k === "all" ? "" : '<span class="dot"></span>'}${esc(n)}</button>`).join("");
+  $("lanehelp").textContent = lens === "all" ? "Each moment shows all five lanes. Pick one to read it as that person's script." : LANE[lens].help;
+}
+$("lens").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  lens = b.dataset.k; renderLens(); renderMoments();
+});
+
+function laneHtml(k, items) {
+  const head = `<h4>${esc(LANE[k].name)}</h4>`;
+  if (!items.length) return `<div class="lane empty" style="${laneColor(k)}">${head}<p>Nothing here</p></div>`;
+  return `<div class="lane" style="${laneColor(k)}">${head}<ul>${items.map(i => `<li>${esc(i)}</li>`).join("")}</ul></div>`;
+}
+
+function renderMoments() {
+  let html = "", lastStage = "";
+  const shown = D.moments.filter(m => lens === "all" || m[lens].length);
+  for (const m of shown) {
+    if (m.stage !== lastStage) { html += `<div class="stagehead">${esc(m.stage)}</div>`; lastStage = m.stage; }
+    const lanes = lens === "all" ? D.lanes.map(([k]) => laneHtml(k, m[k])).join("") : laneHtml(lens, m[lens]);
+    const n = m.done.length + m.wont.length;
+    const done = n ? `<details class="done"><summary>Mark Done in HubSpot Work: ${m.done.length} task${m.done.length === 1 ? "" : "s"}${m.wont.length ? ` · Won't do: ${m.wont.length}` : ""}</summary><div class="chips">` +
+      m.done.map(([i, t]) => `<span class="chip"><b>${i}</b>${esc(t)}</span>`).join("") +
+      m.wont.map(([i, t]) => `<span class="chip wont"><b>${i}</b>${esc(t)} · Won't do</span>`).join("") + `</div></details>` : "";
+    html += `<article class="box moment"><div class="when"><span class="d">${esc(m.days)}</span><span class="c">${esc(m.dates)}</span></div>
+      <div class="body"><h3>${esc(m.title)}</h3><div class="lanes${lens === "all" ? "" : " one"}">${lanes}</div>${m.note ? `<p class="note">${esc(m.note)}</p>` : ""}${done}</div></article>`;
+  }
+  $("moments").innerHTML = html;
+}
+
+const whoKey = (w) => w.startsWith("HubSpot") ? "work" : w.startsWith("Customer") ? "customer" : w.startsWith("Phil") ? "phil" : "architect";
+$("rhythm").innerHTML = `<thead><tr><th>When</th><th>Who</th><th>What happens</th></tr></thead><tbody>` +
+  D.rhythm.map(([w, who, what]) => `<tr><td class="mono" style="white-space:nowrap">${esc(w)}</td><td><span class="who" style="${laneColor(whoKey(who))}"><span class="dot"></span>${esc(who)}</span></td><td>${esc(what)}</td></tr>`).join("") + `</tbody>`;
+
+$("requests").innerHTML = D.requests.map(([h, t]) => `<li><div><b>${esc(h)}</b><span>${esc(t)}</span></div></li>`).join("");
+$("status").innerHTML = D.status.map(([s, t]) => `<div><span class="pill ${esc(s.split(" ")[0])}">${esc(s)}</span><span>${esc(t)}</span></div>`).join("");
+$("exceptions").innerHTML = D.exceptions.map(([h, t]) => `<div class="box card"><h3>${esc(h)}</h3><p>${esc(t)}</p></div>`).join("");
+
+renderLens(); renderMoments();
+</script>

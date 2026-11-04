@@ -1,0 +1,48 @@
+Add the Sales Hub module to the "Task Library" table in the "Onboarding Task Library" project. Add each task to its section with Module = Sales Hub, Status = Not started, and Task ID, Owner role, Client-facing, Start day, Due day, Repeats, Depends on and Definition of done ("Done when") from its line. Add the "Subtasks" as a checklist under the task. Don't change any existing task.
+
+Section P4 · Foundations (Day 7 to 30)
+- SH-4.01 Sales users, seats & inboxes | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 7–12 | Depends on: 2.01
+  Done when: Sales Hub seats assigned, teams and permission sets set, every rep's inbox and calendar connected, email tracking and logging on.
+  Subtasks: Assign Sales Hub seats; Teams & permission sets; Connect rep inboxes & calendars
+- SH-4.02 Deal pipelines & stages | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 8–18 | Depends on: 2.06
+  Done when: One pipeline per sales motion. Each stage has exit criteria, a probability and required properties, agreed with the sales lead.
+  Subtasks: One pipeline per sales motion; Stage exit criteria & probabilities; Required properties per stage
+- SH-4.03 Lead management & assignment | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 10–21 | Depends on: 4.05
+  Done when: Lead status and lifecycle definitions agreed with marketing, assignment rules (rotation or territory), follow-up SLA.
+  Subtasks: Lead status & lifecycle definitions; Assignment rules
+- SH-4.04 Products, quotes & e-signature | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 14–25 | Depends on: SH-4.02
+  Done when: Product library, quote templates, e-signature, payments if they use them.
+  Subtasks: Product library; Quote templates & e-signature
+- SH-4.05 CRM migration | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 10–25 | Depends on: 2.03
+  Done when: Companies, contacts, open deals, owners and activity history moved from the old CRM or spreadsheets, using a field map the client approved.
+  Subtasks: Field map approved by the client; Import companies, contacts & open deals; Import activity history
+- SH-4.06 Sales integrations | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 14–28 | Depends on: 2.03
+  Done when: Calling, Zoom or Teams, LinkedIn Sales Navigator, accounting or ERP if needed.
+  Subtasks: Calling and video meetings; LinkedIn Sales Navigator
+
+Section P5 · Build & launch (Day 21 to 75)
+- SH-5.01 Build 2.1 Lead → Contacted | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 21–40 | Depends on: SH-4.03, 4.11
+  Done when: Lead rotation, task queues, a first-touch sequence and new-lead notifications. Measure: share of leads contacted within 24 hours.
+  Subtasks: Lead rotation & task queues; First-touch sequence
+- SH-5.02 Build 2.2 Meeting → Qualified deal | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 28–50 | Depends on: SH-5.01
+  Done when: Meetings links per rep, qualification properties, deal creation from meetings, call playbooks. Measure: meeting-to-deal rate.
+  Subtasks: Qualification properties & playbooks
+- SH-5.03 Build 3.1 Deal → Proposal sent (if bought) | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 35–55 | Depends on: SH-4.02
+  Done when: Stage-based tasks and reminders, deal workflows, quote steps in the pipeline. Measure: stage conversion and days in stage.
+- SH-5.04 Build 3.2 Proposal → Closed won | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 35–60 | Depends on: SH-4.04
+  Done when: Quotes and e-signature in the flow, a closed-won handoff workflow, closed-lost reasons. Measure: win rate and sales cycle length.
+  Subtasks: Closed-won handoff workflow; Closed-lost reasons
+- SH-5.05 Templates, snippets & sequences | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 30–55 | Depends on: SH-5.01
+  Done when: Email templates, snippets and sequences per persona and stage, approved by the sales lead.
+- SH-5.06 Sales reporting & forecasting | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 45–70 | Depends on: 4.10
+  Done when: Pipeline dashboard, forecast, goals or quotas, rep activity report.
+  Subtasks: Pipeline dashboard & forecast
+- SH-5.07 AI / Breeze for sales | Module: Sales Hub | Owner: Architect | Client-facing: No | Day 45–70 | Depends on: SH-4.01
+  Done when: Prospecting and deal tools, only within the AI terms in the agreement.
+
+Section P6 · Training & adoption (Day 14 to 85)
+- SH-6.02 Deliver Sales Hub training | Module: Sales Hub | Owner: Architect | Client-facing: Yes | Day 14–85 | Depends on: 6.01
+  Done when: Modules S1–S5 as Supered videos + practice in office hours, timed to when each feature ships.
+  Subtasks: S1 · CRM every day; S2 · Pipeline & deals; S3 · Sequences & templates; S4 · Quotes & closing; S5 · Forecast & reports
+
+Show me the plan and wait for my approval before you change anything. When you're done, confirm: 14 new Sales Hub tasks and 26 subtasks.

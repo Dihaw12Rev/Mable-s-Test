@@ -1,0 +1,17 @@
+Update the "Onboarding Portfolio" project in "Client Onboarding" so a customer's tasks come from the products they bought. Don't create agents, documents or forms.
+
+1. CUSTOMERS TABLE
+- Add "Products purchased" (Multi-select: Marketing Hub Onboarding, Sales Hub Onboarding, Service Hub Onboarding).
+- Add "Create tasks" (Checkbox). Ops ticks it to create or add a customer's tasks.
+- Replace "Tasks created" with "Tasks created for" (Multi-select, same options as Products purchased). The Task Generator agent fills it with the products whose tasks exist.
+- Replace "Marketing Hub tier" with "Hub tiers" (Text, e.g. "Marketing Pro, Sales Enterprise").
+- Update the Start date description: "Day 0 = the day the deal reached Start Payment Received, not the kickoff date."
+
+2. CUSTOMER TASK TABLE
+Add a "Module" column (Dropdown: Core, Marketing Hub, Sales Hub, Service Hub) right after Task, and a view "By module" (grouped by Customer, then Module).
+
+3. AUTOMATION CLEANUP
+- If a task-seeding workflow exists, turn it off. The Onboarding Task Generator agent replaces it.
+- Change the Handoff Brief agent's trigger from "Tasks created changes to Yes" to "Tasks created for changes from empty to having a value".
+
+Show me the plan and wait for my approval before you change anything. When you're done, confirm the five Customers changes, the Module column on Customer Task, and the state of the task-seeding workflow and the Handoff Brief trigger.

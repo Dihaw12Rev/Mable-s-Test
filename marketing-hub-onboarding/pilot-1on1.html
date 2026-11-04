@@ -1,0 +1,250 @@
+<title>New Client Pilot Plan</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a single reading column for a meeting brief; three-column scope board and dated timeline sit inside it. */
+:root {
+  --bg: #f6f8fa; --surface: #ffffff; --fg: #17222e; --muted: #5b6876; --line: #dbe2e9; --chip: #eef3f7;
+  --navy: #1f3a5f; --accent: #2e7d7a; --accent-soft: #dcefea; --amber: #a85a0c; --amber-soft: #fbeedd;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f151c; --surface: #16202a; --fg: #e4ebf1; --muted: #98a6b4; --line: #2a3744; --chip: #1e2a36;
+  --navy: #9cc0e8; --accent: #5cc2bb; --accent-soft: #173a38; --amber: #f0a35a; --amber-soft: #3a2a17; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f151c; --surface: #16202a; --fg: #e4ebf1; --muted: #98a6b4; --line: #2a3744; --chip: #1e2a36;
+  --navy: #9cc0e8; --accent: #5cc2bb; --accent-soft: #173a38; --amber: #f0a35a; --amber-soft: #3a2a17; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 980px; margin: 0 auto; padding-block: 40px 72px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 44px; }
+h1, h2, h3 { font-family: var(--display); color: var(--navy); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(28px, 5vw, 40px); }
+h2 { font-size: 22px; }
+h3 { font-size: 16px; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.muted { color: var(--muted); }
+section { display: grid; gap: 14px; min-width: 0; }
+header { display: grid; gap: 12px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 20px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.facts b { color: var(--fg); font-weight: 500; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.quote { border-left: 3px solid var(--accent); padding: 4px 0 4px 14px; color: var(--muted); font-size: 14.5px; max-width: 72ch; }
+
+/* scope board */
+.board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.col { padding: 14px 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.col h3 { display: flex; align-items: center; gap: 8px; }
+.col h3 i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.col ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; font-size: 14px; }
+.col li b { font-weight: 600; }
+.c-now i { background: var(--accent); }
+.c-hand i { background: var(--amber); }
+.c-later i { background: var(--muted); }
+
+/* tables */
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+.mono { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sub { color: var(--muted); font-size: 13px; }
+
+/* checklist */
+.check { list-style: none; margin: 0; padding: 6px 0; }
+.check li { display: grid; grid-template-columns: 28px 1fr; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--line); align-items: start; }
+.check li:last-child { border-bottom: 0; }
+.check input { width: 18px; height: 18px; margin: 3px 0 0; accent-color: var(--accent); }
+.check label { cursor: pointer; }
+.check label b { display: block; }
+.check label span { color: var(--muted); font-size: 14px; }
+input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* agenda */
+.agenda { display: grid; gap: 0; }
+.agenda > div { display: grid; grid-template-columns: 92px 1fr; gap: 14px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.agenda > div:last-child { border-bottom: 0; }
+.agenda .t { font-family: var(--mono); font-size: 13px; color: var(--accent); padding-top: 2px; }
+.agenda p { color: var(--muted); font-size: 14px; }
+
+/* questions */
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 12px; max-width: 76ch; }
+ol.q li > span { display: block; color: var(--muted); font-size: 14px; }
+.rec { display: inline-block; font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 0 6px; margin-right: 6px; }
+
+/* timeline */
+.tl { display: grid; gap: 0; }
+.tl > div { display: grid; grid-template-columns: 150px 1fr; gap: 14px; padding: 11px 16px; border-bottom: 1px solid var(--line); }
+.tl > div:last-child { border-bottom: 0; }
+.tl .d { font-family: var(--mono); font-size: 13px; }
+.tl .d span { display: block; color: var(--muted); font-size: 12px; }
+.tl .flag { color: var(--amber); }
+.note { font-size: 13.5px; color: var(--amber); background: var(--amber-soft); border-radius: 8px; padding: 10px 14px; max-width: 76ch; }
+footer { font-size: 13px; color: var(--muted); }
+
+@media (max-width: 760px) {
+  .board { grid-template-columns: 1fr; }
+  .agenda > div, .tl > div { grid-template-columns: 1fr; gap: 4px; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">1:1 prep · Thursday, Nov 5, 2026</div>
+    <h1>Running the new client on the new way of working</h1>
+    <p>A lean launch for the client starting today: HubSpot Work for the work, FigJam jam sessions as the calls, Supered for everything the client sees. Anything not ready yet is done by hand for this client, then automated.</p>
+    <div class="facts"><span><b>Day 0</b> Thu Nov 5</span><span><b>Program</b> 90 days</span><span><b>Ends</b> Wed Feb 3, 2027</span><span><b>Hub</b> Marketing Pro</span></div>
+    <p class="quote">"Maybe it's only using HubSpot Work + having jam sessions as the call times + Supered for announcements. And other things won't be ready, like the email cadences."</p>
+  </header>
+
+  <section aria-labelledby="t-scope">
+    <div class="eyebrow">Proposal</div>
+    <h2 id="t-scope">What we use, what we do by hand, what waits</h2>
+    <div class="board">
+      <div class="box col c-now"><h3><i></i>Use from day one</h3><ul>
+        <li><b>HubSpot Work:</b> the client's Customers row, their 74 tasks, requests and update drafts.</li>
+        <li><b>Jam sessions</b> on one FigJam board as every call: handoff, kickoff, weekly, MBRs, what's next.</li>
+        <li><b>Supered</b> for the Action Plan, announcements, weekly updates and delivery videos.</li>
+        <li><b>Agents on</b> (credits are fine): Task Generator, Handoff Brief, Delay Flagger, Portfolio Sync, Request Triage, Weekly Update Drafter.</li>
+      </ul></div>
+      <div class="box col c-hand"><h3><i></i>By hand for this client</h3><ul>
+        <li><b>Welcome emails</b> #1 and #2: one personal email from the Architect, plus a "How we work" Supered announcement.</li>
+        <li><b>Reminders:</b> the Delay Flagger flags; the Architect chases.</li>
+        <li><b>Intake form:</b> the questions go out as a Supered to-do, and the rest are covered in the kickoff jam.</li>
+        <li><b>Supered Action Plan:</b> built for this client instead of from a template.</li>
+        <li><b>Config work:</b> built in the portal as usual until templates exist.</li>
+      </ul></div>
+      <div class="box col c-later"><h3><i></i>After this client</h3><ul>
+        <li>Email cadences (welcome series, reminders) in HubSpot.</li>
+        <li>Supered "HubSpot config templates" mapped to library tasks.</li>
+        <li>Supered Action Plan template per hub.</li>
+        <li>Intake form.</li>
+        <li>First Sales or Service Hub client on their libraries.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-jam">
+    <div class="eyebrow">Calls become jam sessions</div>
+    <h2 id="t-jam">One FigJam board, every call</h2>
+    <p class="muted">Start the client's board from the sales FigJam, so the From→To goal and progress measures are already on it. Sections: Goal, Progress measures, This week, Decisions, Not now. Every action item from a jam becomes a task or request in HubSpot Work the same day.</p>
+    <div class="box scroll"><table style="min-width:640px">
+      <thead><tr><th>Jam session</th><th>When</th><th>Length</th><th>Lands in HubSpot Work as</th></tr></thead>
+      <tbody>
+        <tr><td><b>Handoff jam</b><div class="sub">Phil + Architect, internal</div></td><td class="mono">Day 1–3</td><td>30 min</td><td>P0 checklist marked Done or sent back to Phil; progress measures on the Customers row</td></tr>
+        <tr><td><b>Kickoff jam</b></td><td class="mono">Day 5–10</td><td>30 min</td><td>Missing items as tasks; Next MBR filled; training plan confirmed</td></tr>
+        <tr><td><b>Weekly jam</b><div class="sub">replaces office hours</div></td><td class="mono">Same day each week</td><td>30 min</td><td>New tasks and requests; Health set; Friday update drafted from the jam</td></tr>
+        <tr><td><b>MBR jam</b></td><td class="mono">~Day 30, ~Day 60</td><td>45 min</td><td>Progress vs baseline on the board; risks and decisions as tasks</td></tr>
+        <tr><td><b>What's next jam</b></td><td class="mono">~Day 60–65</td><td>45 min</td><td>Option A or B chosen; next-phase deal</td></tr>
+        <tr><td><b>Final results jam</b></td><td class="mono">~Day 80–88</td><td>45 min</td><td>Graduation gate checked; open items finished, handed over or parked</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section aria-labelledby="t-sup">
+    <div class="eyebrow">Supered config templates</div>
+    <h2 id="t-sup">Deploy a template, close a task</h2>
+    <p class="muted">If Supered can deploy pre-built HubSpot setups into a client portal, each template closes a library task: deploy it, check it in the portal, get the client's OK where the task is client-facing, then mark the task Done. We'd add a "Supered template" column to the library so the task says which template to use. I haven't confirmed what Supered can deploy, so the list below is the candidates to check.</p>
+    <div class="box scroll"><table style="min-width:600px">
+      <thead><tr><th>Task</th><th>Template it could be</th><th>Hub</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">4.05</td><td>Lifecycle stages, lead status and standard properties</td><td>Core</td></tr>
+        <tr><td class="mono">4.07</td><td>Data hygiene workflows</td><td>Core</td></tr>
+        <tr><td class="mono">4.10</td><td>Progress-measure baseline dashboard</td><td>Core</td></tr>
+        <tr><td class="mono">MH-4.04</td><td>Subscription types and email templates</td><td>Marketing</td></tr>
+        <tr><td class="mono">MH-5.02</td><td>Lead scoring and a nurture workflow skeleton</td><td>Marketing</td></tr>
+        <tr><td class="mono">MH-5.03</td><td>MQL assignment and notification workflows</td><td>Marketing</td></tr>
+        <tr><td class="mono">MH-5.09</td><td>Marketing performance dashboard</td><td>Marketing</td></tr>
+        <tr><td class="mono">SH-4.02, SH-5.05</td><td>Deal pipeline; sequences and templates</td><td>Sales (later)</td></tr>
+        <tr><td class="mono">SV-4.03, SV-5.01</td><td>Ticket pipeline; snippets and ticket automation</td><td>Service (later)</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section aria-labelledby="t-before">
+    <div class="eyebrow">Manuel, before the 1:1</div>
+    <h2 id="t-before">Prep checklist</h2>
+    <ul class="box check" id="prep">
+      <li><input type="checkbox" id="p1"><label for="p1"><b>Paste the fix-up prompt in the workspace chat</b><span>Restores the 13 Core tasks, adds Products purchased and Create tasks, moves schedules to Bogotá time.</span></label></li>
+      <li><input type="checkbox" id="p2"><label for="p2"><b>Build the Task Generator, Weekly Update Drafter and Request Triage agents</b><span>From the agent prompts file. Credits are approved.</span></label></li>
+      <li><input type="checkbox" id="p3"><label for="p3"><b>Fill the client's Customers row</b><span>Products purchased = Marketing Hub Onboarding, Hub tiers, progress measure names. Leave Create tasks unticked so we tick it together.</span></label></li>
+      <li><input type="checkbox" id="p4"><label for="p4"><b>Share the workspace with Phil</b><span>He can't open the project yet, and we want to walk it together.</span></label></li>
+      <li><input type="checkbox" id="p5"><label for="p5"><b>Copy the sales FigJam into the client's jam board</b><span>Add the sections Goal, Progress measures, This week, Decisions, Not now.</span></label></li>
+      <li><input type="checkbox" id="p6"><label for="p6"><b>Draft the welcome email and the "How we work" Supered announcement</b><span>They replace the automated welcome series for this client.</span></label></li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="t-agenda">
+    <div class="eyebrow">45 minutes</div>
+    <h2 id="t-agenda">Agenda</h2>
+    <div class="box agenda">
+      <div><span class="t">0–5</span><div><b>Tick Create tasks together</b><p>Watch 74 tasks appear for the client. Spot-check: 4.11 due Dec 5, 8.05 due Feb 3, P0 undated.</p></div></div>
+      <div><span class="t">5–15</span><div><b>Agree the lean launch</b><p>Go through the three columns above and move anything that's in the wrong place.</p></div></div>
+      <div><span class="t">15–25</span><div><b>Jam sessions</b><p>Cadence, length, the board's sections, and the rule that every action item lands in HubSpot Work the same day.</p></div></div>
+      <div><span class="t">25–35</span><div><b>Supered config templates</b><p>What exists today, which tasks they close, and the first three to package.</p></div></div>
+      <div><span class="t">35–40</span><div><b>Agents</b><p>Confirm the six to switch on now. What's Next Prep and KPI Snapshot won't fire until January and February.</p></div></div>
+      <div><span class="t">40–45</span><div><b>This client's handoff</b><p>Progress measures and baselines, P0 gaps, kickoff jam date, who sends the welcome.</p></div></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="t-dec">
+    <div class="eyebrow">Decisions</div>
+    <h2 id="t-dec">To settle in the 1:1</h2>
+    <ol class="q">
+      <li>Do jam sessions replace bookable office hours completely?<span><span class="rec">Suggested</span>Yes for this client: one weekly jam is easier to run than open slots.</span></li>
+      <li>Weekly jam: which day, and is 30 minutes right?<span><span class="rec">Suggested</span>Thursday, so the Friday update can summarize it.</span></li>
+      <li>Does the weekly update go out as a Supered announcement instead of an email?<span><span class="rec">Suggested</span>Yes, since email cadences aren't ready. The agent drafts it; the Architect posts it.</span></li>
+      <li>Is the kickoff a 15-minute call or the first 30-minute jam?<span><span class="rec">Suggested</span>A 30-minute jam, since it's the client's first look at the board.</span></li>
+      <li>Which Supered config templates exist today, and who keeps them up to date?<span>Needed before we add the "Supered template" column to the library.</span></li>
+      <li>Who sends the welcome while there's no email cadence: Phil or the Architect?<span><span class="rec">Suggested</span>The Architect, from Phil's draft, so the client meets their main contact from day one.</span></li>
+      <li>What are this client's progress measures and baselines?<span>The Customers row has none yet. The Handoff Brief and every weekly update depend on them.</span></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="t-tl">
+    <div class="eyebrow">This client</div>
+    <h2 id="t-tl">The first two weeks, dated</h2>
+    <div class="box tl">
+      <div><span class="d">Wed Nov 4<span>today</span></span><div>Prep checklist above.</div></div>
+      <div><span class="d">Thu Nov 5<span>Day 0</span></span><div>1:1. Tick Create tasks. Welcome email and "How we work" announcement go out. Handoff Brief drafts.</div></div>
+      <div><span class="d">Fri Nov 6 – Mon Nov 9<span>Days 1–4</span></span><div>Handoff jam (Phil + Architect). Access and intake to-dos in Supered. Day 3 falls on a Sunday, so chase on Monday.</div></div>
+      <div><span class="d">Tue Nov 10 – Fri Nov 13<span>Days 5–8</span></span><div>Kickoff jam. Book the weekly jam, MBR jams (Fri Dec 4, Mon Jan 4), the what's next jam (week of Jan 4) and the final results jam (last week of January). Recap within 24 hours.</div></div>
+      <div><span class="d">Fri Nov 13<span>Day 8</span></span><div>First weekly update, as a Supered announcement.</div></div>
+      <div><span class="d">Week of Nov 16<span>Days 11–15</span></span><div>First weekly jam. Foundations under way.</div></div>
+      <div><span class="d flag">Thu Nov 26<span>Day 21</span></span><div>Thanksgiving. Avoid asking for client sign-offs that week.</div></div>
+    </div>
+    <p class="note">MBR #1 lands on Day 30, a Saturday (Dec 5), so it's booked for Friday, Dec 4. Christmas (Day 50) and New Year's Day (Day 57) fall inside the build. Plan the what's next jam for the week of January 4.</p>
+  </section>
+
+  <section aria-labelledby="t-after">
+    <div class="eyebrow">After the 1:1</div>
+    <h2 id="t-after">What I'll update</h2>
+    <ul class="box check" id="after">
+      <li><input type="checkbox" id="a1"><label for="a1"><b>SOP and task library</b><span>Jam sessions replace office hours and calls; the weekly update goes out through Supered; the welcome is a manual step until cadences exist.</span></label></li>
+      <li><input type="checkbox" id="a2"><label for="a2"><b>"Supered template" column</b><span>Added to the four library tables, filled for the templates Phil confirms.</span></label></li>
+      <li><input type="checkbox" id="a3"><label for="a3"><b>Agent prompts</b><span>Weekly Update Drafter writes a Supered announcement draft from the weekly jam.</span></label></li>
+    </ul>
+  </section>
+
+  <footer>Based on the Customer Onboarding SOP v1.0 and the client's Customers row (Day 0 Nov 5, 90 days, Marketing Hub Pro). Checkboxes are saved in your browser only.</footer>
+</div>
+
+<script>
+const KEY = "pilot-1on1-checks";
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+document.querySelectorAll('.check input[type="checkbox"]').forEach(cb => {
+  cb.checked = !!saved[cb.id];
+  cb.addEventListener("change", () => {
+    saved[cb.id] = cb.checked;
+    try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+  });
+});
+</script>

@@ -1,0 +1,298 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>RevGravy New Client Start SOP</title><style>
+@page { size: Letter; margin: 0.7in 0.7in 0.75in 0.7in; }
+@page :first { margin: 0; }
+:root { --navy:#1f3a5f; --teal:#2e7d7a; --teal-soft:#dcefea; --ink:#17222e; --muted:#5b6876; --line:#d9e1e8; --chip:#eef3f7; --amber:#a85a0c; --amber-soft:#fbeedd; --violet:#6a4bb5; }
+* { box-sizing: border-box; }
+body { margin:0; font-family:"Inter", "Liberation Sans", sans-serif; font-size:9.6pt; line-height:1.5; color:var(--ink); -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+h1,h2,h3 { font-family:"Inter Display","Inter",sans-serif; color:var(--navy); margin:0; line-height:1.2; }
+h2 { font-size:19pt; font-weight:700; margin:0 0 4pt; }
+h3 { font-size:12pt; font-weight:600; }
+p { margin:0 0 6pt; }
+ul { margin:4pt 0 6pt; padding-left:14pt; }
+li { margin:0 0 3pt; }
+.mono { font-family:"JetBrains Mono", monospace; font-size:8.4pt; }
+.eyebrow { font-family:"JetBrains Mono", monospace; font-size:7.6pt; letter-spacing:.12em; text-transform:uppercase; color:var(--teal); margin-bottom:4pt; }
+.lede { font-size:10.5pt; color:var(--muted); max-width:6.2in; margin-bottom:12pt; }
+.chapter { break-before:page; }
+.keep { break-inside:avoid; }
+
+/* cover */
+.cover { height:11in; width:8.5in; display:flex; flex-direction:column; justify-content:space-between; padding:0.9in 0.85in; background:var(--navy); color:#fff; }
+.cover .brand { font-family:"JetBrains Mono",monospace; font-size:9pt; letter-spacing:.18em; text-transform:uppercase; color:#9fd3cf; }
+.cover h1 { color:#fff; font-size:38pt; font-weight:700; letter-spacing:-.01em; margin-top:1.6in; }
+.cover .sub { font-size:14pt; color:#c9d6e3; margin-top:10pt; max-width:5.6in; line-height:1.4; }
+.cover .hubs { display:flex; gap:8pt; margin-top:22pt; }
+.cover .hubs span { border:1px solid #6f8fb3; border-radius:999px; padding:4pt 12pt; font-size:9.5pt; color:#e4ecf4; }
+.cover .foot { display:grid; grid-template-columns:repeat(3,1fr); gap:12pt; border-top:1px solid #4a6a8f; padding-top:14pt; font-size:9pt; color:#c9d6e3; }
+.cover .foot b { display:block; color:#fff; font-weight:600; margin-bottom:2pt; }
+.cover .bars { display:grid; gap:5pt; margin-top:28pt; max-width:5.4in; }
+.cover .bars i { display:block; height:7pt; border-radius:4pt; background:#2e7d7a; }
+
+/* contents */
+.toc { columns:2; column-gap:28pt; margin-top:10pt; }
+.toc div { display:flex; gap:8pt; padding:5pt 0; border-bottom:1px solid var(--line); break-inside:avoid; font-size:10pt; }
+.toc span { font-family:"JetBrains Mono",monospace; color:var(--teal); width:22pt; }
+
+/* cards & grids */
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:8pt; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:8pt; }
+.card { border:1px solid var(--line); border-radius:6pt; padding:9pt 10pt; break-inside:avoid; }
+.card h4 { margin:0 0 3pt; font-size:10pt; color:var(--navy); font-family:"Inter Display","Inter",sans-serif; }
+.card p { margin:0; color:var(--muted); font-size:9pt; }
+.stat { border-left:3px solid var(--teal); padding:2pt 0 2pt 9pt; }
+.stat b { display:block; font-family:"Inter Display","Inter",sans-serif; font-size:18pt; color:var(--navy); line-height:1.1; }
+.stat span { font-size:8.6pt; color:var(--muted); }
+
+/* timeline */
+.timeline { border:1px solid var(--line); border-radius:6pt; padding:10pt 12pt; margin:8pt 0 12pt; break-inside:avoid; }
+.tl-row, .tl-axis { display:grid; grid-template-columns:1.75in 1fr 0.8in; align-items:center; gap:8pt; }
+.tl-row { height:17pt; }
+.tl-label { font-size:8.6pt; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tl-label b { font-family:"JetBrains Mono",monospace; color:var(--teal); font-weight:500; margin-right:3pt; }
+.tl-track { position:relative; height:9pt; background:linear-gradient(90deg, var(--chip) 1px, transparent 1px) 0 0/20% 100%; }
+.tl-bar { position:absolute; top:0; height:9pt; border-radius:3pt; background:var(--teal); }
+.tl-bar.pre { background:#9aa7b4; }
+.tl-bar.post { background:repeating-linear-gradient(45deg, var(--teal), var(--teal) 4pt, var(--teal-soft) 4pt, var(--teal-soft) 8pt); }
+.tl-days { font-family:"JetBrains Mono",monospace; font-size:7.6pt; color:var(--muted); text-align:right; }
+.tl-ticks { position:relative; height:12pt; }
+.tl-ticks span { position:absolute; transform:translateX(-50%); font-family:"JetBrains Mono",monospace; font-size:7pt; color:var(--muted); white-space:nowrap; }
+
+/* steps */
+.step { border:1px solid var(--line); border-radius:6pt; padding:10pt 12pt 8pt; margin:0 0 9pt; break-inside:avoid; }
+.step-head { display:grid; grid-template-columns:30pt 1fr; gap:6pt; align-items:start; margin-bottom:2pt; }
+.num { font-family:"JetBrains Mono",monospace; font-size:14pt; color:var(--teal); font-weight:500; }
+.meta { display:flex; flex-wrap:wrap; gap:5pt; margin-top:3pt; align-items:center; }
+.when { font-family:"JetBrains Mono",monospace; font-size:7.8pt; color:var(--muted); margin-right:4pt; }
+.who { font-size:7.6pt; font-weight:600; padding:1pt 7pt; border-radius:999px; background:var(--chip); color:var(--navy); }
+.step ul { margin-left:36pt; padding-left:14pt; }
+.done { margin:5pt 0 0 36pt; padding:5pt 8pt; border-radius:4pt; background:var(--teal-soft); font-size:9pt; }
+.done b { color:var(--teal); margin-right:4pt; }
+
+/* tables */
+table { width:100%; border-collapse:collapse; font-size:8.6pt; margin:6pt 0 12pt; }
+thead { display:table-header-group; }
+tr { break-inside:avoid; }
+th { text-align:left; font-size:7.4pt; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; padding:5pt 6pt; border-bottom:1.5px solid var(--navy); }
+td { padding:5pt 6pt; border-bottom:1px solid var(--line); vertical-align:top; }
+td .sub { color:var(--muted); font-size:8pt; margin-top:1pt; }
+.lib td:nth-child(1) { width:0.68in; white-space:nowrap; } .lib td:nth-child(3) { width:0.7in; } .lib td:nth-child(4) { width:0.75in; } .lib td:nth-child(5) { width:0.85in; } .lib td:nth-child(6) { width:0.4in; }
+.lib-h { margin-top:12pt; font-size:11pt; break-after:avoid; }
+.lib-h span { font-family:"JetBrains Mono",monospace; font-size:8pt; color:var(--muted); font-weight:400; margin-left:6pt; }
+.mod { font-size:7.4pt; font-weight:600; padding:1pt 6pt; border-radius:999px; white-space:nowrap; }
+.mod-Core { background:var(--chip); color:var(--navy); }
+.mod-MH { background:var(--teal-soft); color:var(--teal); }
+.mod-SH { background:var(--amber-soft); color:var(--amber); }
+.mod-SV { background:#ece6f8; color:var(--violet); }
+.callout { border-left:3px solid var(--amber); background:var(--amber-soft); padding:8pt 10pt; border-radius:0 6pt 6pt 0; margin:8pt 0 12pt; font-size:9.2pt; break-inside:avoid; }
+.check li { list-style:none; position:relative; }
+.check li::before { content:""; position:absolute; left:-13pt; top:3pt; width:8pt; height:8pt; border:1.2px solid var(--teal); border-radius:2pt; }
+ol.flow { padding-left:16pt; }
+
+.outcome { display:grid; grid-template-columns:1fr 1fr; gap:8pt; }
+.outcome .card b { display:block; color:var(--navy); font-size:10pt; margin-bottom:2pt; }
+.prep { border:1px solid var(--line); border-radius:6pt; padding:10pt 12pt; margin:0 0 8pt; break-inside:avoid; }
+.prep h3 { font-size:11.5pt; }
+.prep .where { font-size:8.8pt; color:var(--muted); margin:2pt 0 4pt; }
+.prep ul.check { margin-left:14pt; }
+.block { border:1px solid var(--line); border-radius:6pt; margin:0 0 9pt; break-inside:avoid; overflow:hidden; }
+.block-head { display:grid; grid-template-columns:62pt 1fr; gap:8pt; padding:9pt 12pt 6pt; border-bottom:1px solid var(--line); background:var(--chip); }
+.block-head .t { font-family:"JetBrains Mono",monospace; font-size:11pt; color:var(--teal); }
+.block-head h3 { font-size:11.5pt; }
+.block-head p { margin:1pt 0 0; font-size:9pt; color:var(--muted); }
+.block-body { display:grid; grid-template-columns:1.25fr 1fr; gap:12pt; padding:8pt 12pt 10pt; }
+.block-body h4 { margin:0 0 3pt; font-size:7.6pt; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-family:"JetBrains Mono",monospace; font-weight:500; }
+.block-body ul { margin:0 0 6pt; }
+.iff { grid-column:1 / -1; font-size:8.8pt; background:var(--amber-soft); border-radius:4pt; padding:5pt 8pt; }
+.iff b { color:var(--amber); margin-right:4pt; }
+.log td { height:26pt; }
+.log td:first-child { width:18pt; font-family:"JetBrains Mono",monospace; color:var(--muted); }
+.log td:nth-child(2) { width:2.1in; }
+.marks { margin-top:4pt; display:flex; flex-wrap:wrap; gap:4pt; align-items:center; font-size:8pt; }
+.marks span { color:var(--teal); font-weight:600; margin-right:2pt; }
+.marks em { font-style:normal; background:var(--teal-soft); border-radius:4pt; padding:1pt 5pt; }
+.marks em b { font-family:"JetBrains Mono",monospace; font-weight:500; color:var(--teal); }
+.tl2 { border:1px solid var(--line); border-radius:6pt; }
+.tl2 > div { display:grid; grid-template-columns:1.25in 1fr; gap:10pt; padding:8pt 12pt; border-bottom:1px solid var(--line); break-inside:avoid; }
+.tl2 > div:last-child { border-bottom:0; }
+.tl2 .d { font-family:"JetBrains Mono",monospace; font-size:8.6pt; }
+.tl2 .d span { display:block; color:var(--muted); font-size:7.8pt; }
+pre.tpl { white-space:pre-wrap; font-family:"Inter",sans-serif; font-size:9pt; line-height:1.5; border:1px solid var(--line); border-left:3px solid var(--teal); border-radius:0 6pt 6pt 0; padding:10pt 12pt; margin:4pt 0 12pt; break-inside:avoid; background:#fff; }
+.goal-banner { border-radius:8pt; background:var(--navy); color:#fff; padding:14pt 16pt; margin:8pt 0 14pt; break-inside:avoid; }
+.goal-banner .eyebrow { color:#9fd3cf; }
+.goal-banner p { color:#fff; font-size:12.5pt; line-height:1.45; margin:0; font-family:"Inter Display","Inter",sans-serif; }
+</style></head><body>
+
+<div class="cover">
+  <div>
+    <div class="brand">RevGravy · Standard operating procedure</div>
+    <h1>Starting a New Client</h1>
+    <div class="sub">How to put a new Marketing Hub client live on HubSpot Work, jam sessions and Supered: the prep, the launch meeting, Day 0, and the first two weeks.</div>
+    <div class="hubs"><span>Day 0 · Thu Nov 5, 2026</span><span>90 days</span><span>Marketing Hub Pro</span></div>
+  </div>
+  <div class="foot">
+    <div><b>Version</b>1.0 · November 2026</div>
+    <div><b>Companion to</b>Customer Onboarding SOP v1.0</div>
+    <div><b>Owner</b>RevGravy Operations</div>
+  </div>
+</div>
+
+<section class="chapter">
+  <div class="eyebrow">01 · The goal</div>
+  <h2>What good looks like</h2>
+  <div class="goal-banner"><div class="eyebrow">By the end of the launch meeting</div>
+    <p>The client is live in HubSpot Work, everyone knows the plan for the first ten days, and every open decision has an owner and a date.</p></div>
+  <h3>The meeting is done when</h3>
+  <div class="outcome" style="margin-top:6pt"><div class="card"><b>The client is live in HubSpot Work</b><p>The Customers row is complete, Create tasks has run, and 74 tasks show with the right dates.</p></div><div class="card"><b>The launch scope is agreed</b><p>What we use from day one, what we do by hand for this client, and what waits.</p></div><div class="card"><b>The call rhythm is set</b><p>Weekly jam day and time, the kickoff jam window, and MBR dates.</p></div><div class="card"><b>Supered has a job list</b><p>Who posts the welcome, the weekly update and delivery videos, and who owns the config templates.</p></div><div class="card"><b>Agents are on</b><p>The ones that help from day one are switched on.</p></div><div class="card"><b>Progress measures are written</b><p>Names, where the baseline comes from, and a target, even if the numbers come later.</p></div><div class="card"><b>Every open item has an owner and a date</b><p>Nothing leaves the meeting as &quot;we&#x27;ll figure it out&quot;.</p></div></div>
+  <h3 style="margin-top:14pt">Two weeks later, on Fri Nov 20</h3>
+  <ul class="check"><li><b>Access and intake are in</b> By Day 7 (Thu Nov 12).</li><li><b>The kickoff jam has happened</b> Between Day 5 and Day 10 (Tue Nov 10 – Sun Nov 15).</li><li><b>The first weekly update is posted</b> In Supered on Fri Nov 13.</li><li><b>The first weekly jam has happened</b> In the week of Nov 16.</li><li><b>Health is On track</b> With no P1–P3 task overdue.</li></ul>
+  <p class="muted" style="margin-top:8pt">Chapter 07 has the measures we'll use to judge the new way of working at the two-week check-in.</p>
+</section>
+
+<section class="chapter">
+  <div class="eyebrow">02 · Before the meeting</div>
+  <h2>Prep, in order</h2>
+  <p class="lede">About an hour. Each step says where to go in HubSpot Work and what to check before moving on.</p>
+  <div class="prep"><div class="step-head"><span class="num">01</span><div><h3>Paste the fix-up prompt</h3>
+  <div class="where">HubSpot Work › Client Onboarding › chat. Paste hubspot-work-fix-prompt.txt and approve the plan.</div><ul class="check"><li>Onboarding Library shows 58 tasks.</li><li>Customers has Products purchased, Create tasks and Tasks created for.</li><li>Agent schedules show Bogotá time.</li></ul></div></div></div><div class="prep"><div class="step-head"><span class="num">02</span><div><h3>Build the missing agents</h3>
+  <div class="where">HubSpot Work › Agents › New agent. For each, start from the named sample or a blank agent and paste its prompt from hubspot-work-agent-prompts.md.</div><ul class="check"><li>Onboarding Task Generator (sample: Auto-create customer onboarding).</li><li>Weekly Update Drafter (sample: Weekly stakeholder updates).</li><li>Request Triage (sample: Auto-route requests).</li></ul></div></div></div><div class="prep"><div class="step-head"><span class="num">03</span><div><h3>Fill the client&#x27;s Customers row</h3>
+  <div class="where">Onboarding Portfolio › Customers › the row starting Nov 5.</div><ul class="check"><li>Products purchased = Marketing Hub Onboarding.</li><li>Program length = 90, Start date = Nov 5, Hub tiers = Marketing Pro.</li><li>Architect, Company and Deal filled.</li><li>Progress measures: 0.1, 1.1, 1.2, 1.3, with baseline &#x27;to measure in the audit&#x27; and a target if Phil has one.</li><li>Leave Create tasks unticked. You&#x27;ll tick it in the meeting.</li></ul></div></div></div><div class="prep"><div class="step-head"><span class="num">04</span><div><h3>Share the workspace</h3>
+  <div class="where">Share on the Client Onboarding workspace.</div><ul class="check"><li>Phil and the Architect can open both projects.</li></ul></div></div></div><div class="prep"><div class="step-head"><span class="num">05</span><div><h3>Set up the jam board</h3>
+  <div class="where">Duplicate the sales FigJam for this client.</div><ul class="check"><li>Sections: Goal, Progress measures, This week, Decisions, Not now.</li><li>Link saved in the Customers row&#x27;s FigJam link.</li></ul></div></div></div><div class="prep"><div class="step-head"><span class="num">06</span><div><h3>Draft the welcome pieces</h3>
+  <div class="where">Use the drafts in Appendix A.</div><ul class="check"><li>Welcome email, ready to send.</li><li>&quot;How we work&quot; Supered announcement, ready to post.</li></ul></div></div></div>
+  <div class="callout"><b>Bring to the meeting:</b> the Customer Onboarding SOP, this guide with the decision log (chapter 04) printed or open, and HubSpot Work open on the client's Customers row.</div>
+</section>
+
+<section class="chapter">
+  <div class="eyebrow">03 · Running the meeting</div>
+  <h2>45 minutes, six blocks</h2>
+  <p class="lede">Keep to the blocks. Each one has a goal, what to do on screen, what to check before moving on, and what to do if it goes sideways. Write every decision in the log as you go.</p>
+  <div class="block">
+  <div class="block-head"><span class="t">0–5 min</span><div><h3>Put the client live</h3><p>See the tasks appear.</p></div></div>
+  <div class="block-body">
+    <div><h4>Do</h4><ul><li>Open Onboarding Portfolio › Customers and show the client&#x27;s row.</li><li>Tick Create tasks.</li><li>Open Customer Task › By customer and filter to the client.</li></ul></div>
+    <div><h4>Check before moving on</h4><ul class="check"><li>74 tasks appear (Core + Marketing Hub).</li><li>4.11 is due Dec 5, 8.05 is due Feb 3, 2027; P0 tasks have no date.</li><li>Tasks created for = Marketing Hub Onboarding; Create tasks unticked itself.</li></ul></div>
+    <div class="iff"><b>If it goes sideways</b>If no tasks appear within 15 minutes, move on. Ops copies them by hand after the meeting.</div>
+  </div>
+</div><div class="block">
+  <div class="block-head"><span class="t">5–15 min</span><div><h3>Agree the launch scope</h3><p>Everyone knows what&#x27;s real for this client.</p></div></div>
+  <div class="block-body">
+    <div><h4>Do</h4><ul><li>Walk the three lists: use from day one, by hand for this client, after this client.</li><li>Move anything that&#x27;s in the wrong list.</li></ul></div>
+    <div><h4>Check before moving on</h4><ul class="check"><li>Decision log rows 1–2 filled.</li></ul></div>
+    <div class="iff"><b>If it goes sideways</b>If something is in neither list, it waits until after this client.</div>
+  </div>
+</div><div class="block">
+  <div class="block-head"><span class="t">15–25 min</span><div><h3>Set the jam rhythm</h3><p>The calendar for the next 90 days is decided.</p></div></div>
+  <div class="block-body">
+    <div><h4>Do</h4><ul><li>Pick the weekly jam day, time and length. Suggested: Thursday, 30 minutes, so the Friday update can summarize it.</li><li>Confirm the kickoff jam is 30 minutes, between Nov 10 and Nov 15.</li><li>Confirm the MBR jams: Fri Dec 4 (Day 30 is a Saturday) and Mon Jan 4.</li><li>Agree the rule: every jam action item becomes a task or request in HubSpot Work the same day.</li></ul></div>
+    <div><h4>Check before moving on</h4><ul class="check"><li>Decision log rows 3–5 filled.</li></ul></div>
+    <div class="iff"><b>If it goes sideways</b>If the day can&#x27;t be fixed yet, the Architect proposes it to the client in the welcome email.</div>
+  </div>
+</div><div class="block">
+  <div class="block-head"><span class="t">25–35 min</span><div><h3>Supered: announcements and templates</h3><p>Supered has clear jobs and an owner.</p></div></div>
+  <div class="block-body">
+    <div><h4>Do</h4><ul><li>Agree what Supered carries: the Action Plan, the welcome announcement, the Friday update, delivery videos.</li><li>Ask which HubSpot config templates Supered holds today.</li><li>Pick the first three templates to map to library tasks (candidates: 4.05 lifecycle stages, 4.10 baseline dashboard, MH-5.02 lead scoring and nurture).</li></ul></div>
+    <div><h4>Check before moving on</h4><ul class="check"><li>Decision log rows 6–7 filled.</li><li>Template owner named.</li></ul></div>
+    <div class="iff"><b>If it goes sideways</b>If no templates exist yet, build in the portal as usual and note which builds should become templates.</div>
+  </div>
+</div><div class="block">
+  <div class="block-head"><span class="t">35–40 min</span><div><h3>Switch the agents on</h3><p>The automation that helps from day one is running.</p></div></div>
+  <div class="block-body">
+    <div><h4>Do</h4><ul><li>Resume: Task Generator, Handoff Brief, Delay Flagger, Portfolio Sync, Request Triage, Weekly Update Drafter.</li><li>Leave What&#x27;s Next Prep and KPI Snapshot as they are; they don&#x27;t fire until January and February.</li></ul></div>
+    <div><h4>Check before moving on</h4><ul class="check"><li>Decision log row 8 filled.</li></ul></div>
+    <div class="iff"><b>If it goes sideways</b>If one misbehaves later, pause just that one and keep going by hand.</div>
+  </div>
+</div><div class="block">
+  <div class="block-head"><span class="t">40–45 min</span><div><h3>Close out this client&#x27;s handoff</h3><p>The Architect can start tomorrow without questions.</p></div></div>
+  <div class="block-body">
+    <div><h4>Do</h4><ul><li>Confirm the progress measures and where each baseline will come from.</li><li>List any missing pre-sale items and who fixes them.</li><li>Confirm who sends the welcome (suggested: the Architect, today).</li></ul></div>
+    <div><h4>Check before moving on</h4><ul class="check"><li>Decision log rows 9–10 filled.</li><li>Every row has an owner and a date.</li></ul></div>
+    <div class="iff"><b>If it goes sideways</b>If a measure can&#x27;t be agreed, leave it blank with an owner. Decide it at the handoff jam.</div>
+  </div>
+</div>
+</section>
+
+<section class="chapter">
+  <div class="eyebrow">04 · Decision log</div>
+  <h2>Fill this in during the meeting</h2>
+  <p class="lede">One row per decision. A row without an owner and a date isn't finished.</p>
+  <table class="log"><thead><tr><th>#</th><th>Decision</th><th>What we chose</th><th>Owner</th><th>By when</th></tr></thead><tbody>
+  <tr><td>1</td><td>Launch scope: anything moved between the three lists</td><td></td><td></td><td></td></tr><tr><td>2</td><td>Welcome email: who sends it, and when</td><td></td><td></td><td></td></tr><tr><td>3</td><td>Weekly jam: day, time, length</td><td></td><td></td><td></td></tr><tr><td>4</td><td>Kickoff jam: length and date window</td><td></td><td></td><td></td></tr><tr><td>5</td><td>Office hours: replaced by the weekly jam, yes or no</td><td></td><td></td><td></td></tr><tr><td>6</td><td>Weekly update: Supered announcement, yes or no</td><td></td><td></td><td></td></tr><tr><td>7</td><td>Supered config templates: owner and first three</td><td></td><td></td><td></td></tr><tr><td>8</td><td>Agents switched on</td><td></td><td></td><td></td></tr><tr><td>9</td><td>Progress measures: names, baseline source, target</td><td></td><td></td><td></td></tr><tr><td>10</td><td>Missing pre-sale items: owner and fix date</td><td></td><td></td><td></td></tr>
+  <tr><td>11</td><td></td><td></td><td></td><td></td></tr><tr><td>12</td><td></td><td></td><td></td><td></td></tr><tr><td>13</td><td></td><td></td><td></td><td></td></tr>
+  </tbody></table>
+</section>
+
+<section class="chapter">
+  <div class="eyebrow">05 · Right after the meeting</div>
+  <h2>Day 0, same day</h2>
+  <p class="lede">In this order, before the end of Thu Nov 5.</p>
+  <div class="prep"><div class="step-head"><span class="num">01</span><div><h3>Send the welcome email</h3><div class="where">From the Architect, using Appendix A. Mark 1.03 Done.</div><div class="marks"><span>Mark Done in HubSpot Work</span><em><b>1.03</b> Welcome email #1: welcome + Action Plan</em></div></div></div></div><div class="prep"><div class="step-head"><span class="num">02</span><div><h3>Post the &quot;How we work&quot; announcement</h3><div class="where">In Supered, using Appendix A. It replaces welcome email #2 for this client.</div><div class="marks"><span>Mark Done in HubSpot Work</span><em><b>1.08</b> Welcome email #2: how we work</em></div></div></div></div><div class="prep"><div class="step-head"><span class="num">03</span><div><h3>Build the Supered Action Plan</h3><div class="where">Two to-dos for the client this week: grant HubSpot access, and answer the intake questions. Add the kickoff booking link.</div><div class="marks"><span>Mark Done in HubSpot Work</span><em><b>1.04</b> Build the Supered Action Plan</em></div></div></div></div><div class="prep"><div class="step-head"><span class="num">04</span><div><h3>Book the handoff jam</h3><div class="where">Phil and the Architect, 30 minutes, before Sun Nov 8 (use Monday Nov 9 because Day 3 is a Sunday).</div></div></div></div><div class="prep"><div class="step-head"><span class="num">05</span><div><h3>Close the Day 0 tasks</h3><div class="where">Architect picked, customer added in HubSpot Work.</div><div class="marks"><span>Mark Done in HubSpot Work</span><em><b>1.01</b> Pick the Architect</em><em><b>1.02</b> Add the customer in HubSpot Work</em></div></div></div></div><div class="prep"><div class="step-head"><span class="num">06</span><div><h3>Send me the decision log</h3><div class="where">So the SOP, the library and the agent prompts get updated to match.</div></div></div></div>
+
+  <div class="eyebrow" style="margin-top:16pt">06 · The first ten days</div>
+  <h2>What happens, and what to mark Done</h2>
+  <div class="tl2"><div><span class="d">Nov 5<span>Day 0</span></span><div>1:1. Client goes live. Welcome email and announcement out.<div class="marks"><span>Mark Done in HubSpot Work</span><em><b>1.01</b> Pick the Architect</em><em><b>1.02</b> Add the customer in HubSpot Work</em><em><b>1.03</b> Welcome email #1: welcome + Action Plan</em><em><b>1.04</b> Build the Supered Action Plan</em></div></div></div><div><span class="d">Nov 6 – Nov 9<span>Days 1–4</span></span><div>Handoff jam (Phil + Architect): walk P0, record progress measures, mark P0 Done or send gaps back to Phil. Client works on access and intake. Chase on Monday Nov 9.<div class="marks"><span>Mark Done in HubSpot Work</span><em><b>1.05</b> Phil ↔ Architect handoff (30 min)</em><em><b>1.06</b> Set up progress measures</em><em><b>1.07</b> Office hours booking link</em><em><b>1.09</b> Kickoff booked</em></div></div></div><div><span class="d">Nov 8 – Nov 12<span>Days 3–7</span></span><div>Portal audit and baseline numbers as soon as access works.<div class="marks"><span>Mark Done in HubSpot Work</span><em><b>2.01</b> HubSpot access granted</em><em><b>2.02</b> Intake form submitted</em><em><b>2.06</b> Portal audit</em><em><b>2.07</b> Baseline numbers</em></div></div></div><div><span class="d">Nov 10 – Nov 13<span>Days 5–8</span></span><div>Kickoff jam (30 min). Book the weekly jam, MBR jams, what&#x27;s next jam and final results jam. Send the recap within 24 hours.<div class="marks"><span>Mark Done in HubSpot Work</span><em><b>3.01</b> Kickoff agenda</em><em><b>3.02</b> Kickoff session (15 min)</em><em><b>3.03</b> Book MBRs and the &#x27;what&#x27;s next&#x27; call</em><em><b>3.04</b> Kickoff recap within 24h</em></div></div></div><div><span class="d">Nov 13<span>Day 8</span></span><div>First Friday update posted in Supered.</div></div><div><span class="d">Nov 16 – Nov 20<span>Days 11–15</span></span><div>First weekly jam. Foundations start (account, tracking, domains, email).</div></div></div>
+  <div class="callout" style="margin-top:12pt"><b>Dates to keep in mind.</b> Thanksgiving is Day 21 (Thu Nov 26); avoid asking for sign-offs that week. MBR #1 is Fri Dec 4, because Day 30 is a Saturday. Christmas is Day 50 and New Year's Day is Day 57, so plan the what's next jam for the week of Jan 4.</div>
+
+  <div class="eyebrow" style="margin-top:16pt">07 · Two-week check-in</div>
+  <h2>Fri Nov 20, 15 minutes</h2>
+  <table class=""><thead><tr><th>Measure</th><th>Target</th><th>Where to see it</th></tr></thead><tbody><tr><td><b>Access and intake complete</b></td><td>By Day 7</td><td>Customer Task 2.01–2.04 Done</td></tr><tr><td><b>Kickoff jam held</b></td><td>By Day 10</td><td>Task 3.02 Done</td></tr><tr><td><b>Jam action items logged</b></td><td>Within 24 hours, every time</td><td>New tasks or requests dated the jam day</td></tr><tr><td><b>Friday update posted</b></td><td>Every week</td><td>Update rows marked Sent</td></tr><tr><td><b>Overdue tasks flagged</b></td><td>None overdue more than 3 days without a flag</td><td>Overdue view + Delay Flagger</td></tr><tr><td><b>Architect admin time</b></td><td>Noted each week</td><td>The Architect&#x27;s own estimate</td></tr></tbody></table>
+  <ul class="check"><li>Go through the measures above. Which were hit, which weren't, and why.</li>
+  <li>Decide the next thing to automate. Suggested order: welcome email series, then the intake form, then Supered config templates.</li>
+  <li>Decide whether the next client starts the same way, or with changes.</li></ul>
+</section>
+
+<section class="chapter">
+  <div class="eyebrow">Appendix A</div>
+  <h2>Ready-to-use drafts</h2>
+  <p class="lede">Replace everything in {curly brackets}. Keep the tone plain and short.</p>
+  <h3>Welcome email (from the Architect, Day 0)</h3>
+  <pre class="tpl">Subject: Welcome to RevGravy: here&#x27;s how we start
+
+Hi {first name},
+
+Welcome aboard. I&#x27;m {Architect}, your Architect for the next 90 days. I&#x27;ll lead the work and I&#x27;m your main contact.
+
+This week:
+1. Your Action Plan is live in Supered: {Supered link}. It has two things for you: give us access to HubSpot, and answer a few intake questions. Together they take about 15 minutes.
+2. Book our kickoff: a 30-minute working session on a shared board. Any slot from Tue Nov 10 to Fri Nov 13: {booking link}.
+
+After that, we meet every {Thursday} for 30 minutes, and you&#x27;ll get a short update in Supered every Friday.
+
+Our goal together: {From→To goal}.
+
+If anything is urgent, reply to this email. I&#x27;ll get back to you within one business day.
+
+{Architect}
+RevGravy</pre>
+  <h3>"How we work" Supered announcement (Day 0)</h3>
+  <pre class="tpl">Title: How we&#x27;ll work together
+
+Where things live
+- Supered: your Action Plan, our updates and short videos of what we build.
+- Our shared board: every call is a working session on the same board, so decisions stay in one place.
+- Email: anything urgent.
+
+Our rhythm
+- Every {Thursday}: a 30-minute working session.
+- Every Friday: a short update here with what we did and why it matters, your numbers against where we started, anything we found, next week&#x27;s plan, and your to-dos.
+- Monthly reviews: around Dec 4 and Jan 4.
+
+Requests
+- Small extra requests (about 2 hours of work) are $250 each. We confirm the price before we start.
+- If something we built breaks, we fix it within one business day at no charge.
+- We reply to every other request within one business day.
+
+AI
+- We use AI to draft some updates. A person reviews everything before it reaches you.</pre>
+  <h3>Kickoff jam agenda (30 minutes)</h3>
+  <table class=""><thead><tr><th>Minutes</th><th>On the board</th></tr></thead><tbody><tr><td><span class="mono">0–5</span></td><td>Introductions: the Architect, the team, the client&#x27;s people and who decides what.</td></tr><tr><td><span class="mono">5–15</span></td><td>On the board: the From→To goal, the progress measures and the 90-day plan.</td></tr><tr><td><span class="mono">15–25</span></td><td>Missing items: access, intake answers, brand files. Each gets an owner and a date.</td></tr><tr><td><span class="mono">25–30</span></td><td>How we work: Thursday jams, Friday updates in Supered, MBRs, how to send a request.</td></tr></tbody></table>
+  <h3>Friday update (Supered announcement)</h3>
+  <pre class="tpl">Title: Week of {date}
+
+1. What we did, and why it matters: {two or three lines tied to the goal}
+2. Your numbers: {progress measures vs baseline}
+3. What we found: {anything outside the plan worth knowing}
+4. Next week: {two or three lines}
+5. Your to-dos: {items, with dates}</pre>
+</section>
+
+</body></html>

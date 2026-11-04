@@ -1,0 +1,66 @@
+Please make these fixes in "Client Onboarding". Show me the plan and wait for my approval before you change anything.
+
+1. RESTORE THE 13 MISSING CORE TASKS
+Add these to the "Onboarding Library" table in the "Onboarding Task Library" project, each in its section, with Module = Core, Status = Not started, and Task ID, Owner role, Client-facing, Start day, Due day, Repeats, Depends on and Definition of done ("Done when") from its line. Add the "Subtasks" as a checklist under the task.
+
+Section P4 · Foundations (Day 7 to 30)
+- 4.01 Account, users & security | Module: Core | Owner: Architect | Client-facing: No | Day 7–12 | Depends on: 2.01
+  Done when: Users, permission sets, 2FA; Enterprise extras where bought.
+  Subtasks: Users & permission sets; Require 2FA; Single sign-on (SSO) (Enterprise only); Brands / business units (Enterprise only); Sandbox account (Enterprise only)
+- 4.05 Data model | Module: Core | Owner: Architect | Client-facing: No | Day 10–21 | Depends on: 2.06
+  Done when: Property audit, lifecycle stage definitions, lead status, marketing-contact rules.
+  Subtasks: Property audit; Lifecycle stages & lead status; Marketing contact rules; Custom behavioral events (Enterprise only)
+- 4.07 Data import & cleanup | Module: Core | Owner: Architect | Client-facing: No | Day 14–25 | Depends on: 4.05
+  Done when: Import contacts and companies (including migrated data, with consent mapped and unsubscribes suppressed), dedupe, associations, marketing contacts.
+  Subtasks: Import contacts & companies; Data hygiene workflows
+- 4.09 Integrations | Module: Core | Owner: Architect | Client-facing: No | Day 14–28 | Depends on: 2.03
+  Done when: Every integration the intake lists: GA4, ad and social accounts, webinar tool, Slack, CRM sync if their CRM isn't HubSpot. Mark the ones this customer doesn't need as not applicable.
+  Subtasks: GA4; Ad accounts; Social accounts; Webinar, Slack, other apps; CRM sync (if CRM isn't HubSpot)
+- 4.10 Baseline dashboard | Module: Core | Owner: Architect | Client-facing: Yes | Day 18–28 | Depends on: 2.07
+  Done when: One report per progress measure, showing baseline vs now. Used in every weekly update.
+  Subtasks: Baseline dashboard
+- 4.11 Foundation QA | Module: Core | Owner: Architect | Client-facing: No | Day 25–30 | Depends on: 4.07 and each hub's foundation tasks
+  Done when: Test the main flow end to end for each hub bought (Marketing: visit → form → contact → email; Sales: lead → owner → deal; Service: email → ticket → reply).
+  Subtasks: End-to-end test
+- 4.12 Supered video: foundations done | Module: Core | Owner: Architect | Client-facing: Yes | Day 28–30 | Depends on: 4.11
+  Done when: What changed for the customer and why it matters.
+
+Section P5 · Build & launch (Day 21 to 75)
+- 5.11 Client sign-off per progress measure | Module: Core | Owner: Client POC | Client-facing: Yes | Day 35–75 | Depends on: Each hub's build tasks
+  Done when: Client approves each build before it goes live.
+- 5.12 Supered video per delivery | Module: Core | Owner: Architect | Client-facing: Yes | Day 35–75 | Repeats: After each delivery | Depends on: 5.11
+  Done when: What was built, how to use it, why it matters.
+
+Section P6 · Training & adoption (Day 14 to 85)
+- 6.01 Confirm training plan | Module: Core | Owner: Architect | Client-facing: Yes | Day 10–14 | Depends on: 2.02
+  Done when: Who needs which modules (Training tab), from the intake.
+- 6.03 Adoption check #1 | Module: Core | Owner: Architect | Client-facing: No | Day 45 | Depends on: 6.01
+  Done when: Logins, emails sent, workflows active, dashboards viewed. Flag low adoption in the weekly update.
+- 6.04 Admin handbook (Supered Base) | Module: Core | Owner: Architect | Client-facing: Yes | Day 60–85 | Depends on: 5.11
+  Done when: How the portal is set up: naming, properties, workflows, who owns what.
+- 6.05 Adoption check #2 | Module: Core | Owner: Architect | Client-facing: No | Day 75 | Depends on: 6.03
+  Done when: Same check before the final results review.
+
+2. CUSTOMERS TABLE
+- Add "Products purchased" (Multi-select: Marketing Hub Onboarding, Sales Hub Onboarding, Service Hub Onboarding).
+- Add "Create tasks" (Checkbox). Ops ticks it to create or add a customer's tasks.
+- Replace "Tasks created" with "Tasks created for" (Multi-select, same options as Products purchased).
+- Replace "Marketing Hub tier" with "Hub tiers" (Text, e.g. "Marketing Pro, Sales Enterprise").
+- Add a "Module" column (Dropdown: Core, Marketing Hub, Sales Hub, Service Hub) to the Customer Task table, right after Task, and a "By module" view (grouped by Customer, then Module).
+- Change the Handoff Brief agent's trigger to "Tasks created for changes from empty to having a value". Keep its workflow off for now.
+
+3. AGENT SCHEDULES AND DELAY FLAGGER
+- Move every agent and workflow schedule to America/Bogota time, keeping the same local times.
+- Delay Flagger: send each customer's digest to that customer's Architect (from the Customers row), not to one fixed person. Turn its two workflows off until the first real customer has tasks, so it matches its paused agent.
+
+4. DOCUMENTS
+Make "RevGravy Customer Onboarding SOP Guide" the single source, and update it:
+- Scope: Marketing, Sales and Service Hub onboarding, Professional or Enterprise.
+- Step 2: Ops sets Products purchased and ticks Create tasks. Step 3: the Onboarding Task Generator agent copies the Onboarding Library once plus one library per product into Customer Task, then fills Tasks created for. Manual task creation is the fallback while the agent is paused.
+- Next MBR: about Day 30 and Day 60 (scaled for 60- or 75-day programs), not Day 45.
+- Requests: Critical = reply within 4 business hours, fixed within 1 business day (free if it's in something we built). High = reply within 1 business day, done within 5. Standard = reply within 1 business day, done within 10. Not now = reviewed at MBRs and the what's next call.
+- P9: 6 months of free KPI monitoring after the program (a monthly KPI snapshot email with the Architect's notes), check-ins at months 3 and 6 after the program, and a paid-offer conversation at month 5: team support ($1,670/mo Monthly Plan), building internal capacity, or one initiative a month.
+- Remove the "Coverage gap" note once step 1 is done.
+Then archive "End-to-End Customer Onboarding Experience", or replace its content with a link to the SOP. It's out of date (Day 0 as kickoff, Draft-only statuses, no Request owner, Phoenix time).
+
+When you're done, confirm: Onboarding Library has 58 tasks; the four Customers changes and the Customer Task Module column exist; all schedules are on Bogotá time; Delay Flagger's workflows are off; and the SOP is updated.
